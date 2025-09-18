@@ -23,6 +23,7 @@ const routes: RoutesConfig = {
   "/blog": true,
   "/gallery": true,
   "/projects": true,
+  "/demos": true,
 };
 
 const display: DisplayConfig = {
