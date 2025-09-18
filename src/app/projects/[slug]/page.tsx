@@ -11,16 +11,12 @@ import {
   Text,
   SmartLink,
   Avatar,
-  Media,
-  Line,
 } from "@once-ui-system/core";
 import { baseURL, about, projects, person } from "@/resources";
 import { formatDate } from "@/utils/formatDate";
 import { getPosts } from "@/utils/utils";
 import { Metadata } from "next";
 import React from "react";
-import { ProjectPosts } from "@/components/blog/ProjectPosts";
-import { ShareSection } from "@/components/blog/ShareSection";
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
   const posts = getPosts(["src", "app", "projects", "project-posts"]);
@@ -110,34 +106,8 @@ export default async function ProjectPost({ params }: { params: Promise<{ slug: 
               </Text>
             </Row>
           </Row>
-          {post.metadata.image && (
-            <Media
-              src={post.metadata.image}
-              alt={post.metadata.title}
-              aspectRatio="16/9"
-              priority
-              sizes="(min-width: 768px) 100vw, 768px"
-              border="neutral-alpha-weak"
-              radius="l"
-              marginTop="12"
-              marginBottom="8"
-            />
-          )}
           <Column as="article" maxWidth="s">
             <CustomMDX source={post.content} />
-          </Column>
-          
-          <ShareSection 
-            title={post.metadata.title} 
-            url={`${baseURL}${projects.path}/${post.slug}`} 
-          />
-
-          <Column fillWidth gap="40" horizontal="center" marginTop="40">
-            <Line maxWidth="40" />
-            <Heading as="h2" variant="heading-strong-xl" marginBottom="24">
-              Recent projects
-            </Heading>
-            <ProjectPosts exclude={[post.slug]} range={[1, 2]} columns="2" thumbnail direction="column" />
           </Column>
           <ScrollToHash />
         </Column>

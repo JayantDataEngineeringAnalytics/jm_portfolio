@@ -32,12 +32,7 @@ export default function Projects() {
         {projects.title}
       </Heading>
       <Column fillWidth flex={1} gap="40">
-  <ProjectPosts range={[1, 1]} thumbnail />
-  <ProjectPosts range={[2, 3]} columns="2" thumbnail direction="column" />
-        <Heading as="h2" variant="heading-strong-xl" marginLeft="l">
-          Earlier posts
-        </Heading>
-  <ProjectPosts range={[4]} columns="2" />
+        <ProjectPosts columns="2" direction="column" />
       </Column>
     </Column>
   );
