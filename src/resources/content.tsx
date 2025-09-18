@@ -252,6 +252,13 @@ const projects = {
   description: `Explore articles and posts by ${person.name}`,
 };
 
+const demos = {
+  path: "/demos",
+  label: "Demos",
+  title: "Live demonstrations and examples",
+  description: `Interactive demos and examples by ${person.name}`,
+};
+
 const gallery = {
   path: "/gallery",
   label: "Gallery",
@@ -301,4 +308,4 @@ const gallery = {
   ]
 };
 
-export { person, social, newsletter, home, about, work, projects, gallery };
+export { person, social, newsletter, home, about, work, projects, demos, gallery };
