@@ -1,6 +1,7 @@
-import { Column, Heading, Meta, Schema } from "@once-ui-system/core";
-import { ProjectPosts } from "@/components/blog/ProjectPosts";
+import { Column, Meta, Schema } from "@once-ui-system/core";
+import { FilterableProjectsList } from "@/components/blog/FilterableProjectsList";
 import { baseURL, projects, person } from "@/resources";
+import { getPosts } from "@/utils/utils";
 
 export async function generateMetadata() {
   return Meta.generate({
@@ -13,6 +14,9 @@ export async function generateMetadata() {
 }
 
 export default function Projects() {
+  // Fetch projects server-side
+  const allProjects = getPosts(["src", "app", "projects", "project-posts"]);
+
   return (
     <Column maxWidth="m" paddingTop="24">
       <Schema
@@ -28,11 +32,8 @@ export default function Projects() {
           image: `${baseURL}${person.avatar}`,
         }}
       />
-      <Heading marginBottom="l" variant="heading-strong-xl" marginLeft="24">
-        {projects.title}
-      </Heading>
       <Column fillWidth flex={1} gap="40">
-        <ProjectPosts columns="2" direction="column" />
+        <FilterableProjectsList projects={allProjects} columns="2" direction="column" />
       </Column>
     </Column>
   );

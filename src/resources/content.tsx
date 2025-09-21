@@ -248,8 +248,8 @@ const work = {
 const projects = {
   path: "/projects",
   label: "Projects",
-  title: "Insights, tutorials, and stories",
-  description: `Explore articles and posts by ${person.name}`,
+  title: "Projects",
+  description: `Explore projects and work by ${person.name}`,
 };
 
 const demos = {
