@@ -1,0 +1,59 @@
+---
+title: "Real-time Data Pipeline with Apache Kafka & Spark"
+summary: "Built a scalable real-time data processing pipeline handling 10M+ events daily using Apache Kafka, Spark Streaming, and Delta Lake."
+publishedAt: "2024-12-15"
+tag: "Data Engineering"
+image: "/images/projects/project-01/cover-01.jpg"
+skills:
+  - { name: "Apache Kafka", icon: "apacheKafka" }
+  - { name: "Apache Spark", icon: "apacheSpark" }
+  - { name: "Databricks", icon: "databricks" }
+  - { name: "Python", icon: "python" }
+  - { name: "Azure", icon: "azureBrand" }
+  - { name: "PostgreSQL", icon: "postgresql" }
+---
+
+## Project Overview
+
+Designed and implemented a real-time data processing pipeline that ingests, processes, and stores streaming data from multiple sources including web applications, IoT devices, and third-party APIs.
+
+## Architecture
+
+The pipeline leverages Apache Kafka for message streaming, Apache Spark for real-time processing, and Delta Lake for reliable data storage with ACID transactions.
+
+### Key Components
+
+- **Kafka Producers**: Custom producers for different data sources
+- **Spark Streaming**: Real-time data transformation and enrichment
+- **Delta Lake**: Versioned data storage with time travel capabilities
+- **Monitoring**: Grafana dashboards for pipeline health monitoring
+
+## Technical Implementation
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+from delta.tables import *
+
+# Initialize Spark session with Delta Lake
+spark = SparkSession.builder \
+    .appName("RealTimeDataPipeline") \
+    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
+    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
+    .getOrCreate()
+
+# Read streaming data from Kafka
+df = spark \
+    .readStream \
+    .format("kafka") \
+    .option("kafka.bootstrap.servers", "localhost:9092") \
+    .option("subscribe", "events-topic") \
+    .load()
+```
+
+## Results
+
+- **Performance**: Processing 10M+ events daily with sub-second latency
+- **Reliability**: 99.9% uptime with automatic failover mechanisms  
+- **Scalability**: Auto-scaling based on message volume
+- **Cost Optimization**: 30% reduction in processing costs through efficient resource utilization

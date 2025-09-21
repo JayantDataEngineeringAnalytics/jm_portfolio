@@ -11,6 +11,7 @@ import {
   Text,
   SmartLink,
   Avatar,
+  Tag,
 } from "@once-ui-system/core";
 import { baseURL, about, projects, person } from "@/resources";
 import { formatDate } from "@/utils/formatDate";
@@ -106,6 +107,16 @@ export default async function ProjectPost({ params }: { params: Promise<{ slug: 
               </Text>
             </Row>
           </Row>
+          {/* Display technical skill tags if available */}
+          {post.metadata.skills && post.metadata.skills.length > 0 && (
+            <Row gap="8" marginBottom="32" horizontal="center" wrap>
+              {post.metadata.skills.map((skill: { name: string; icon: string }, idx: number) => (
+                <Tag key={idx} size="l" prefixIcon={skill.icon}>
+                  {skill.name}
+                </Tag>
+              ))}
+            </Row>
+          )}
           <Column as="article" maxWidth="s">
             <CustomMDX source={post.content} />
           </Column>

@@ -1,0 +1,66 @@
+---
+title: "Power BI Analytics Dashboard for E-commerce"
+summary: "Comprehensive Power BI solution with DAX calculations, real-time data refresh, and executive dashboards for e-commerce analytics."
+publishedAt: "2024-11-20"
+tag: "Business Intelligence"
+image: "/images/projects/project-01/cover-02.jpg"
+skills:
+  - { name: "Power BI", icon: "googleAnalytics" }
+  - { name: "Azure", icon: "azureBrand" }
+  - { name: "SQL Server", icon: "mysql" }
+  - { name: "DAX", icon: "apacheSuperset" }
+  - { name: "Azure Data Factory", icon: "azure" }
+---
+
+## Project Overview
+
+Developed a comprehensive Power BI analytics solution for an e-commerce platform, providing real-time insights into sales performance, customer behavior, and inventory management.
+
+## Dashboard Features
+
+### Executive Dashboard
+- Revenue trends and KPI monitoring
+- Geographic sales distribution
+- Customer acquisition metrics
+- Profit margin analysis
+
+### Operations Dashboard
+- Inventory turnover rates
+- Supply chain optimization
+- Order fulfillment metrics
+- Vendor performance tracking
+
+## Technical Implementation
+
+### Data Sources
+- SQL Server transactional database
+- Azure Blob Storage for historical data
+- REST APIs for real-time updates
+- Excel files for supplementary data
+
+### Key DAX Measures
+
+```dax
+Total Revenue = 
+SUMX(
+    'Sales',
+    'Sales'[Quantity] * 'Sales'[Unit Price]
+)
+
+YoY Growth = 
+VAR CurrentYear = [Total Revenue]
+VAR PreviousYear = 
+    CALCULATE(
+        [Total Revenue],
+        DATEADD('Date'[Date], -1, YEAR)
+    )
+RETURN
+    DIVIDE(CurrentYear - PreviousYear, PreviousYear, 0)
+```
+
+## Results
+
+- **User Adoption**: 95% executive team adoption within 3 months
+- **Decision Speed**: 50% faster decision-making process
+- **Data Accuracy**: 99.5% data accuracy with automated validation
+- **Cost Savings**: $200K annual savings through inventory optimization
