@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, Column, Media, Row, Avatar, Text } from "@once-ui-system/core";
+import { Card, Column, Media, Row, Avatar, Text, Tag } from "@once-ui-system/core";
 import { formatDate } from "@/utils/formatDate";
 import { person } from "@/resources";
 
@@ -15,11 +15,11 @@ export default function Post({ post, thumbnail, direction }: PostProps) {
     <Card
       fillWidth
       key={post.slug}
-  href={`/projects/${post.slug}`}
+      href={`/projects/${post.slug}`}
       transition="micro-medium"
       direction={direction}
-      border="transparent"
-      background="transparent"
+      border="neutral-alpha-weak"
+      background="neutral-alpha-weak"
       padding="4"
       radius="l-4"
       gap={direction === "column" ? undefined : "24"}
@@ -55,6 +55,21 @@ export default function Post({ post, thumbnail, direction }: PostProps) {
             <Text variant="label-strong-s" onBackground="neutral-weak">
               {post.metadata.tag}
             </Text>
+          )}
+          {/* Render technical skill tags with icons if available */}
+          {post.metadata.skills && post.metadata.skills.length > 0 && (
+            <Row gap="8" marginTop="12" wrap>
+              {post.metadata.skills.slice(0, 4).map((skill: { name: string; icon: string }) => (
+                <Tag key={skill.name} size="l" prefixIcon={skill.icon}>
+                  {skill.name}
+                </Tag>
+              ))}
+              {post.metadata.skills.length > 4 && (
+                <Tag key="more-skills" size="l">
+                  +{post.metadata.skills.length - 4} more
+                </Tag>
+              )}
+            </Row>
           )}
         </Column>
       </Row>

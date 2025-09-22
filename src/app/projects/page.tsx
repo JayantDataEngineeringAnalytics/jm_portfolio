@@ -1,7 +1,7 @@
-import { Column, Heading, Meta, Schema } from "@once-ui-system/core";
-import { Mailchimp } from "@/components";
-import { ProjectPosts } from "@/components/blog/ProjectPosts";
-import { baseURL, projects, person, newsletter } from "@/resources";
+import { Column, Meta, Schema } from "@once-ui-system/core";
+import { FilterableProjectsList } from "@/components/blog/FilterableProjectsList";
+import { baseURL, projects, person } from "@/resources";
+import { getPosts } from "@/utils/utils";
 
 export async function generateMetadata() {
   return Meta.generate({
@@ -14,6 +14,9 @@ export async function generateMetadata() {
 }
 
 export default function Projects() {
+  // Fetch projects server-side
+  const allProjects = getPosts(["src", "app", "projects", "project-posts"]);
+
   return (
     <Column maxWidth="m" paddingTop="24">
       <Schema
@@ -29,17 +32,8 @@ export default function Projects() {
           image: `${baseURL}${person.avatar}`,
         }}
       />
-      <Heading marginBottom="l" variant="heading-strong-xl" marginLeft="24">
-        {projects.title}
-      </Heading>
       <Column fillWidth flex={1} gap="40">
-  <ProjectPosts range={[1, 1]} thumbnail />
-  <ProjectPosts range={[2, 3]} columns="2" thumbnail direction="column" />
-        <Mailchimp marginBottom="l" />
-        <Heading as="h2" variant="heading-strong-xl" marginLeft="l">
-          Earlier posts
-        </Heading>
-  <ProjectPosts range={[4]} columns="2" />
+        <FilterableProjectsList projects={allProjects} columns="2" direction="column" />
       </Column>
     </Column>
   );

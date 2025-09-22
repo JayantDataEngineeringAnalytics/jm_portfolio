@@ -1,26 +1,22 @@
 import { notFound } from "next/navigation";
-import { CustomMDX, ScrollToHash } from "@/components";
+import { CustomMDX, ScrollToHash, TopLevelHeadingNav } from "@/components";
 import {
   Meta,
   Schema,
   Column,
   Heading,
-  HeadingNav,
-  Icon,
   Row,
   Text,
   SmartLink,
   Avatar,
-  Media,
-  Line,
+  Tag,
+  Icon,
 } from "@once-ui-system/core";
 import { baseURL, about, projects, person } from "@/resources";
 import { formatDate } from "@/utils/formatDate";
 import { getPosts } from "@/utils/utils";
 import { Metadata } from "next";
 import React from "react";
-import { ProjectPosts } from "@/components/blog/ProjectPosts";
-import { ShareSection } from "@/components/blog/ShareSection";
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
   const posts = getPosts(["src", "app", "projects", "project-posts"]);
@@ -110,34 +106,18 @@ export default async function ProjectPost({ params }: { params: Promise<{ slug: 
               </Text>
             </Row>
           </Row>
-          {post.metadata.image && (
-            <Media
-              src={post.metadata.image}
-              alt={post.metadata.title}
-              aspectRatio="16/9"
-              priority
-              sizes="(min-width: 768px) 100vw, 768px"
-              border="neutral-alpha-weak"
-              radius="l"
-              marginTop="12"
-              marginBottom="8"
-            />
+          {/* Display technical skill tags if available */}
+          {post.metadata.skills && post.metadata.skills.length > 0 && (
+            <Row gap="8" marginBottom="32" horizontal="center" wrap>
+              {post.metadata.skills.map((skill: { name: string; icon: string }, idx: number) => (
+                <Tag key={idx} size="l" prefixIcon={skill.icon}>
+                  {skill.name}
+                </Tag>
+              ))}
+            </Row>
           )}
           <Column as="article" maxWidth="s">
             <CustomMDX source={post.content} />
-          </Column>
-          
-          <ShareSection 
-            title={post.metadata.title} 
-            url={`${baseURL}${projects.path}/${post.slug}`} 
-          />
-
-          <Column fillWidth gap="40" horizontal="center" marginTop="40">
-            <Line maxWidth="40" />
-            <Heading as="h2" variant="heading-strong-xl" marginBottom="24">
-              Recent projects
-            </Heading>
-            <ProjectPosts exclude={[post.slug]} range={[1, 2]} columns="2" thumbnail direction="column" />
           </Column>
           <ScrollToHash />
         </Column>
@@ -161,7 +141,7 @@ export default async function ProjectPost({ params }: { params: Promise<{ slug: 
           <Icon name="document" size="xs" />
           On this page
         </Row>
-        <HeadingNav fitHeight />
+        <TopLevelHeadingNav />
       </Column>
     </Row>
   );

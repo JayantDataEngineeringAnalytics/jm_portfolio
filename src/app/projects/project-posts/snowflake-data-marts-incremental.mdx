@@ -1,0 +1,554 @@
+---
+title: "Snowflake Data Marts with Incremental Ingestion (PostgreSQL, MongoDB, Databricks) via Apache Airflow"
+publishedAt: "2024-05-10"
+summary: "Designed and built Snowflake data marts with incremental ingestion from PostgreSQL, MongoDB, and Databricks (curated Delta exports), orchestrated end‑to‑end by Apache Airflow—using external stages, COPY INTO, Streams/Tasks, and MERGE for reliable CDC."
+skills: ["Snowflake", "Apache Airflow", "PostgreSQL", "MongoDB", "Databricks", "Azure", "Data Warehousing", "ETL/ELT", "CDC", "Data Architecture"]
+---
+
+# Snowflake Data Marts with Incremental Ingestion (PostgreSQL, MongoDB, Databricks) via Apache Airflow
+
+**One‑liner:** Designed and built **Snowflake data marts** with **incremental ingestion** from **PostgreSQL**, **MongoDB**, and **Databricks** (curated Delta exports), orchestrated end‑to‑end by **Apache Airflow**—using **external stages, COPY INTO, Streams/Tasks, and MERGE** for reliable CDC.
+
+---
+
+## Context / Problem
+
+Multiple source systems delivered data at different cadences/formats (row‑store DBs, nested JSON, lakehouse). Prior batch loads caused heavy compute and stale dashboards. We needed:
+
+* **Incremental loads** from each source with idempotent upserts
+* **Separation of concerns**: extract, stage, conform, and model layers
+* **Reliable orchestration & observability** via Airflow
+* **Snowflake‑native** CDC (Streams/Tasks) to minimize orchestration complexity
+
+**Assumptions** (no client names):
+
+* Cloud: Azure
+* Storage staging: **ADLS Gen2** containers; Snowflake **external stage** (Azure) for file landing
+* Sources: PostgreSQL (updated\_at or WAL logical decoding), MongoDB (change streams / watermark), Databricks (Parquet exports from curated Delta tables)
+* Consumption: Power BI / downstream apps via Snowflake views
+
+---
+
+## My Role
+
+* **Data Architect & Snowflake Lead** (3 engineers)
+* Defined target modeling, CDC strategy, Airflow DAGs, and Snowflake Streams/Tasks framework
+
+---
+
+## Architecture (Target)
+
+* **Extract (Airflow)**: source‑specific operators/python tasks fetch **incremental** slices and write files to **ADLS** (`/landing/<src>/<table>/load_date=`)
+* **Stage (Snowflake)**: External Stage on ADLS + `COPY INTO` → **staging tables** (raw typed)
+* **CDC & Conform**: **Streams** on staging tables capture new/changed rows; **Tasks** run `MERGE` into **marts** (`dim_*`, `fact_*`)
+* **Governance**: RBAC roles for `INGESTOR`, `TRANSFORMER`, `REPORTER`; masking policies on PII
+* **Observability**: Airflow SLAs, task metrics; Snowflake load history & task history; audit tables
+
+**Flow:** PostgreSQL/MongoDB/Databricks → Airflow → ADLS → Snowflake External Stage → `COPY INTO` staging → **Stream** → **Task MERGE** → **Data Marts** (views)
+
+---
+
+## Key Decisions & Patterns
+
+* **File formats**: Parquet preferred (types/size); JSON only when necessary
+* **Naming & schemas**: `stg_<src>_<entity>`, `ods_<domain>_*` (optional), `dm_<domain>_dim/fact`
+* **Idempotency**: `load_id` & `file_name` tracked; `COPY INTO` with `ON_ERROR='CONTINUE'` + **load metadata tables**
+* **Streams/Tasks** reduce Airflow complexity: Airflow triggers COPY; Snowflake handles downstream `MERGE`
+* **Mongo JSON**: flatten in Airflow/Databricks when heavily nested; otherwise use VARIANT then normalize
+* **Late‑arriving updates**: `MERGE` on business keys with `updated_at` conflict resolution
+
+---
+
+## Implementation Plan
+
+1. **Source inventory & contracts** (entities, keys, update fields, volume)
+2. **Airflow DAGs** per source/table (extract to ADLS, checksum, manifest)
+3. **Snowflake stage & file formats**; create staging/mart schemas
+4. **`COPY INTO`** patterns per format; record load metadata
+5. **Streams** on staging; **Tasks** to `MERGE` into marts on schedule / after COPY
+6. **Dual‑run & validation**; publish semantic **views** for BI
+
+---
+
+## Code Implementation & Data Pipeline Architecture
+
+To build a robust multi-source data warehouse on Snowflake, we implemented incremental ingestion patterns, native CDC capabilities, and orchestrated workflows. The key was leveraging Snowflake's native features while maintaining clear separation of concerns across extraction, staging, and mart layers.
+
+### Implementation Themes
+
+* **Multi-source ingestion**: standardized patterns for PostgreSQL, MongoDB, and Databricks data sources
+* **Snowflake-native CDC**: leverage Streams and Tasks to minimize external orchestration complexity
+* **File-based staging**: use ADLS Gen2 as intermediate storage with proper partitioning and formats
+* **Idempotent operations**: ensure reliable recovery and reprocessing capabilities
+* **Schema evolution**: handle source system changes gracefully with backward compatibility
+* **Performance optimization**: proper clustering, compression, and warehouse sizing strategies
+
+### Before → After Examples
+
+**1) Batch full loads → Incremental CDC with Streams**
+
+```sql
+-- BEFORE (full table refresh every night)
+TRUNCATE TABLE dim_customers;
+INSERT INTO dim_customers SELECT * FROM staging_customers;
+```
+
+```sql
+-- AFTER (incremental processing with Streams and Tasks)
+-- Stream captures changes automatically
+CREATE OR REPLACE STREAM str_mongo_customers ON TABLE stg_mongo.customers;
+
+-- Task processes only changed records
+CREATE OR REPLACE TASK t_merge_customers
+  WAREHOUSE = ETL_WH
+  SCHEDULE = 'USING CRON 5,20,35,50 * * * * UTC'
+AS
+MERGE INTO dm_sales.dim_customer t
+USING (SELECT * FROM str_mongo_customers) s
+ON t.customer_id = s.customer_id
+WHEN MATCHED THEN UPDATE SET name = s.name, email = s.email, updated_at = s.updated_at
+WHEN NOT MATCHED THEN INSERT (customer_id, name, email, updated_at)
+VALUES (s.customer_id, s.name, s.email, s.updated_at);
+```
+
+**2) Manual orchestration → Airflow automation**
+
+```python
+# BEFORE (manual scripts and cron jobs)
+# Separate scripts running on different schedules, no dependencies
+```
+
+```python
+# AFTER (coordinated Airflow DAG)
+from airflow import DAG
+from airflow.providers.snowflake.operators.snowflake import SnowflakeOperator
+from airflow.operators.python import PythonOperator
+
+with DAG(
+    dag_id="snowflake_marts_incremental",
+    start_date=days_ago(1),
+    schedule="*/15 * * * *",
+    catchup=False,
+) as dag:
+
+    extract_postgres = PythonOperator(
+        task_id="extract_postgres", 
+        python_callable=extract_postgres_incremental
+    )
+    
+    copy_to_snowflake = SnowflakeOperator(
+        task_id="copy_orders",
+        sql="COPY INTO stg_postgres.orders FROM @ext_adls/postgres/orders/..."
+    )
+    
+    wake_tasks = SnowflakeOperator(
+        task_id="wake_tasks",
+        sql="ALTER TASK t_merge_orders RESUME;"
+    )
+
+    extract_postgres >> copy_to_snowflake >> wake_tasks
+```
+
+**3) JSON processing → VARIANT with proper normalization**
+
+```python
+# BEFORE (complex Python JSON parsing)
+import json
+for doc in mongo_collection.find():
+    customer_id = str(doc['_id'])
+    # Complex nested parsing logic
+```
+
+```sql
+-- AFTER (Snowflake VARIANT processing)
+-- Raw JSON ingestion
+CREATE TABLE stg_mongo.customers_raw (payload VARIANT, load_id STRING, file_name STRING);
+
+-- Structured normalization
+CREATE TABLE stg_mongo.customers AS
+SELECT
+  payload:"_id":"$oid"::STRING AS customer_id,
+  payload:email::STRING AS email,
+  payload:name::STRING AS name,
+  TO_TIMESTAMP_NTZ(payload:updatedAt::STRING) AS updated_at,
+  METADATA$FILENAME AS file_name
+FROM stg_mongo.customers_raw;
+```
+
+---
+
+## Snippets (Illustrative)
+
+### 1) Snowflake infrastructure setup
+
+```sql
+-- File formats for different source types
+CREATE FILE FORMAT IF NOT EXISTS ff_parquet 
+  TYPE = PARQUET
+  COMPRESSION = SNAPPY;
+
+CREATE FILE FORMAT IF NOT EXISTS ff_json 
+  TYPE = JSON 
+  STRIP_OUTER_ARRAY = TRUE
+  DATE_FORMAT = 'YYYY-MM-DD';
+
+-- External stage pointing to ADLS Gen2
+CREATE STAGE IF NOT EXISTS ext_adls
+  URL='azure://datalakeaccount.dfs.core.windows.net/landing/'
+  CREDENTIALS=(AZURE_SAS_TOKEN='sp=r&st=2024-01-01...')
+  FILE_FORMAT = ff_parquet;
+
+-- Schema organization
+CREATE SCHEMA IF NOT EXISTS stg_postgres;  -- PostgreSQL staging
+CREATE SCHEMA IF NOT EXISTS stg_mongo;     -- MongoDB staging  
+CREATE SCHEMA IF NOT EXISTS stg_databricks; -- Databricks staging
+CREATE SCHEMA IF NOT EXISTS dm_sales;      -- Sales data mart
+CREATE SCHEMA IF NOT EXISTS dm_finance;    -- Finance data mart
+```
+
+### 2) PostgreSQL incremental extraction (Airflow)
+
+```python
+def extract_postgres_incremental(**context):
+    """Extract changed PostgreSQL records since last watermark"""
+    import pandas as pd
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from azure.storage.blob import BlobServiceClient
+    
+    # Get last watermark from XCom or metadata table
+    last_watermark = context['task_instance'].xcom_pull(
+        task_ids='get_watermark', key='postgres_orders_watermark'
+    ) or '1900-01-01'
+    
+    # Query incremental data
+    query = f"""
+    SELECT order_id, customer_id, amount, status, updated_at
+    FROM orders 
+    WHERE updated_at > '{last_watermark}'
+    ORDER BY updated_at
+    """
+    
+    df = pd.read_sql(query, connection_string)
+    
+    if not df.empty:
+        # Write to ADLS as Parquet
+        table = pa.Table.from_pandas(df)
+        load_date = context['ds']
+        blob_path = f"postgres/orders/load_date={load_date}/orders_{context['ts_nodash']}.parquet"
+        
+        # Upload to ADLS
+        blob_client = BlobServiceClient.from_connection_string(adls_conn_str)
+        with io.BytesIO() as buffer:
+            pq.write_table(table, buffer)
+            buffer.seek(0)
+            blob_client.get_blob_client(
+                container="landing", blob=blob_path
+            ).upload_blob(buffer, overwrite=True)
+        
+        # Update watermark
+        new_watermark = df['updated_at'].max()
+        context['task_instance'].xcom_push(
+            key='new_watermark', value=str(new_watermark)
+        )
+    
+    return f"Extracted {len(df)} records"
+```
+
+### 3) MongoDB to JSON extraction
+
+```python
+def extract_mongodb_incremental(**context):
+    """Extract MongoDB changes using change streams or watermark"""
+    from pymongo import MongoClient
+    import json
+    from datetime import datetime
+    
+    client = MongoClient(mongo_connection_string)
+    db = client.get_database("ecommerce")
+    collection = db.get_collection("customers")
+    
+    # Get watermark
+    last_watermark = context['task_instance'].xcom_pull(
+        task_ids='get_watermark', key='mongo_customers_watermark'
+    )
+    
+    if last_watermark:
+        last_update = datetime.fromisoformat(last_watermark)
+        query = {"updatedAt": {"$gt": last_update}}
+    else:
+        query = {}
+    
+    # Extract documents
+    documents = list(collection.find(query).sort("updatedAt", 1))
+    
+    if documents:
+        # Convert ObjectId to string for JSON serialization
+        for doc in documents:
+            doc['_id'] = str(doc['_id'])
+            if 'updatedAt' in doc:
+                doc['updatedAt'] = doc['updatedAt'].isoformat()
+        
+        # Write to ADLS as JSON
+        load_date = context['ds']
+        blob_path = f"mongo/customers/load_date={load_date}/customers_{context['ts_nodash']}.json"
+        
+        blob_client = BlobServiceClient.from_connection_string(adls_conn_str)
+        json_data = json.dumps(documents, indent=2)
+        blob_client.get_blob_client(
+            container="landing", blob=blob_path
+        ).upload_blob(json_data, overwrite=True)
+        
+        # Update watermark
+        new_watermark = documents[-1]['updatedAt']
+        context['task_instance'].xcom_push(
+            key='new_watermark', value=new_watermark
+        )
+    
+    return f"Extracted {len(documents)} documents"
+```
+
+### 4) Databricks Delta export
+
+```python
+# Databricks notebook cell - export curated Delta to ADLS for Snowflake
+from datetime import datetime, timedelta
+from pyspark.sql.functions import *
+
+# Calculate incremental window
+yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+load_date = datetime.now().strftime('%Y-%m-%d')
+
+# Read incremental data from Delta table
+incremental_df = (
+    spark.read.table("sales_gold.orders")
+    .filter(col("updated_date") >= yesterday)
+    .select(
+        "order_id", "customer_id", "product_id", 
+        "quantity", "unit_price", "total_amount",
+        "order_status", "created_date", "updated_date"
+    )
+)
+
+# Write to ADLS landing zone as Parquet for Snowflake ingestion
+output_path = f"abfss://landing@datalakeaccount.dfs.core.windows.net/databricks/orders/load_date={load_date}/"
+
+(incremental_df
+ .coalesce(4)  # Optimize file count
+ .write
+ .mode("overwrite")
+ .option("compression", "snappy")
+ .parquet(output_path))
+
+print(f"Exported {incremental_df.count()} records to {output_path}")
+```
+
+### 5) Snowflake COPY INTO operations
+
+```sql
+-- Copy PostgreSQL Parquet files
+COPY INTO stg_postgres.orders (
+    order_id, customer_id, amount, status, updated_at, load_id, file_name
+)
+FROM (
+    SELECT 
+        $1:order_id::NUMBER,
+        $1:customer_id::NUMBER,
+        $1:amount::NUMBER(18,2),
+        $1:status::STRING,
+        $1:updated_at::TIMESTAMP_NTZ,
+        '{{ ds }}' as load_id,
+        METADATA$FILENAME as file_name
+    FROM @ext_adls/postgres/orders/load_date={{ ds }}/
+)
+FILE_FORMAT = (FORMAT_NAME = ff_parquet)
+ON_ERROR = 'CONTINUE'
+PATTERN = '.*\.parquet';
+
+-- Copy MongoDB JSON files  
+COPY INTO stg_mongo.customers_raw (payload, load_id, file_name)
+FROM (
+    SELECT 
+        $1,
+        '{{ ds }}' as load_id,
+        METADATA$FILENAME as file_name
+    FROM @ext_adls/mongo/customers/load_date={{ ds }}/
+)
+FILE_FORMAT = (FORMAT_NAME = ff_json)
+ON_ERROR = 'CONTINUE'
+PATTERN = '.*\.json';
+```
+
+### 6) Advanced Streams and Tasks configuration
+
+```sql
+-- Create Streams with retention and change tracking
+CREATE OR REPLACE STREAM str_pg_orders ON TABLE stg_postgres.orders
+  APPEND_ONLY = FALSE
+  SHOW_INITIAL_ROWS = TRUE;
+
+CREATE OR REPLACE STREAM str_databricks_orders ON TABLE stg_databricks.orders
+  APPEND_ONLY = FALSE;
+
+-- Hierarchical task dependencies
+CREATE OR REPLACE TASK t_merge_orders
+  WAREHOUSE = ETL_WH
+  SCHEDULE = 'USING CRON 5,20,35,50 * * * * UTC'
+  WHEN SYSTEM$STREAM_HAS_DATA('str_pg_orders')
+AS
+MERGE INTO dm_sales.fact_orders t
+USING (
+  SELECT 
+    order_id, customer_id, amount, status, updated_at,
+    METADATA$ACTION as dml_action,
+    METADATA$ISUPDATE as is_update
+  FROM str_pg_orders
+) s
+ON t.order_id = s.order_id
+WHEN MATCHED AND s.dml_action = 'DELETE' THEN DELETE
+WHEN MATCHED AND s.dml_action IN ('INSERT', 'UPDATE') THEN 
+  UPDATE SET 
+    customer_id = s.customer_id,
+    amount = s.amount,
+    status = s.status,
+    updated_at = s.updated_at,
+    dw_updated_ts = CURRENT_TIMESTAMP()
+WHEN NOT MATCHED AND s.dml_action = 'INSERT' THEN
+  INSERT (order_id, customer_id, amount, status, updated_at, dw_created_ts, dw_updated_ts)
+  VALUES (s.order_id, s.customer_id, s.amount, s.status, s.updated_at, 
+          CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP());
+
+-- Child task for dimension processing
+CREATE OR REPLACE TASK t_merge_customers
+  WAREHOUSE = ETL_WH
+  AFTER t_merge_orders
+  WHEN SYSTEM$STREAM_HAS_DATA('str_mongo_customers')
+AS
+MERGE INTO dm_sales.dim_customer t
+USING (
+  SELECT customer_id, name, email, updated_at
+  FROM str_mongo_customers
+) s
+ON t.customer_id = s.customer_id
+WHEN MATCHED THEN 
+  UPDATE SET name = s.name, email = s.email, updated_at = s.updated_at
+WHEN NOT MATCHED THEN 
+  INSERT (customer_id, name, email, updated_at)
+  VALUES (s.customer_id, s.name, s.email, s.updated_at);
+
+-- Resume tasks
+ALTER TASK t_merge_customers RESUME;
+ALTER TASK t_merge_orders RESUME;
+```
+
+### 7) Data quality and monitoring
+
+```sql
+-- Load tracking and data quality checks
+CREATE OR REPLACE TABLE meta.load_history (
+    load_id STRING,
+    source_system STRING,
+    table_name STRING,
+    file_count NUMBER,
+    record_count NUMBER,
+    load_start_ts TIMESTAMP_NTZ,
+    load_end_ts TIMESTAMP_NTZ,
+    status STRING,
+    error_message STRING
+);
+
+-- Task history monitoring
+CREATE OR REPLACE VIEW meta.v_task_monitoring AS
+SELECT 
+    name as task_name,
+    database_name,
+    schema_name,
+    state,
+    scheduled_time,
+    completed_time,
+    return_value,
+    condition_text,
+    error_code,
+    error_message
+FROM table(information_schema.task_history())
+WHERE scheduled_time >= DATEADD('day', -7, CURRENT_TIMESTAMP())
+ORDER BY scheduled_time DESC;
+
+-- Stream monitoring
+CREATE OR REPLACE VIEW meta.v_stream_status AS
+SELECT 
+    table_name as stream_name,
+    table_schema as schema_name,
+    table_catalog as database_name,
+    created as stream_created,
+    stale as is_stale,
+    mode as stream_mode,
+    stale_after
+FROM information_schema.streams
+WHERE table_schema IN ('STG_POSTGRES', 'STG_MONGO', 'STG_DATABRICKS');
+```
+
+### 8) Semantic layer for BI consumption
+
+```sql
+-- Business-friendly views for Power BI
+CREATE OR REPLACE VIEW dm_sales.v_orders_fact AS
+SELECT 
+    f.order_id,
+    f.customer_id,
+    c.name as customer_name,
+    c.email as customer_email,
+    f.amount as order_amount,
+    f.status as order_status,
+    f.updated_at as last_updated,
+    DATEDIFF('day', f.created_at, CURRENT_DATE()) as days_since_order
+FROM dm_sales.fact_orders f
+JOIN dm_sales.dim_customer c ON f.customer_id = c.customer_id
+WHERE f.status != 'CANCELLED';
+
+-- Grant permissions for BI users
+GRANT USAGE ON SCHEMA dm_sales TO ROLE BI_READER;
+GRANT SELECT ON ALL VIEWS IN SCHEMA dm_sales TO ROLE BI_READER;
+GRANT SELECT ON FUTURE VIEWS IN SCHEMA dm_sales TO ROLE BI_READER;
+
+-- Row-level security example
+CREATE OR REPLACE ROW ACCESS POLICY sales_region_policy AS (region STRING) 
+RETURNS BOOLEAN ->
+  CASE 
+    WHEN IS_ROLE_IN_SESSION('SALES_MANAGER') THEN TRUE
+    WHEN IS_ROLE_IN_SESSION('SALES_REP_EAST') AND region = 'EAST' THEN TRUE
+    WHEN IS_ROLE_IN_SESSION('SALES_REP_WEST') AND region = 'WEST' THEN TRUE
+    ELSE FALSE
+  END;
+```
+
+---
+
+## Testing & Validation
+
+* **Row‑level parity** vs sources during dual‑run; late update detection
+* **Performance**: COPY throughput, task runtimes, warehouse sizing
+* **Idempotency**: re‑run of same window does not duplicate rows
+* **Observability**: load history, task history, Airflow DAG metrics; alert on failures
+
+---
+
+## Outcomes / Impact
+
+* **Freshness**: marts updated every 15 minutes with stable SLAs
+* **Simplicity**: Streams/Tasks reduce orchestration burden in Airflow
+* **Performance**: Parquet ingest + MERGE on keys improved cost and speed
+* **Clarity**: star schema and semantic views simplified BI
+* **Reliability**: automated retry logic and comprehensive monitoring
+
+---
+
+## Risks & Mitigations
+
+* **Schema drift** → use backward‑compatible Parquet; evolve DDL with defaults
+* **Skewed merges** → cluster by keys in large facts; periodic re‑cluster
+* **Airflow dependency sprawl** → keep DAGs thin; push CDC logic into Snowflake where possible
+* **Access control** → RBAC roles; restrict stages; audit COPY history
+* **Cost management** → auto-suspend warehouses, query optimization, and usage monitoring
+
+---

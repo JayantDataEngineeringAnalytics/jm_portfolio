@@ -18,8 +18,8 @@ export default function DemoPost({ post, thumbnail, direction }: DemoPostProps) 
       href={`/demos/${post.slug}`}
       transition="micro-medium"
       direction={direction}
-      border="transparent"
-      background="transparent"
+      border="neutral-alpha-weak"
+      background="neutral-alpha-weak"
       padding="4"
       radius="l-4"
       gap={direction === "column" ? undefined : "24"}

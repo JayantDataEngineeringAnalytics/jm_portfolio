@@ -1,0 +1,320 @@
+---
+title: "Hive → Unity Catalog Migration"
+publishedAt: "2025-03-15"
+summary: "Migrated Hive external tables to Unity Catalog managed tables (Delta)—consolidating storage under UC‑managed locations, standardizing governance (ABAC/RBAC), and enabling lineage & cross‑workspace sharing."
+skills: ["Databricks", "Unity Catalog", "Delta Lake", "Azure", "Data Governance", "PySpark", "SQL", "Power BI", "Data Architecture"]
+---
+
+# Hive → Unity Catalog Migration
+
+**One‑liner:** Migrated **Hive external tables** to **Unity Catalog *managed* tables (Delta)**—consolidating storage under UC‑managed locations, standardizing governance (ABAC/RBAC), and enabling lineage & cross‑workspace sharing. Performed **DEEP CLONE/CTAS copy** with a short write freeze for cutover.
+
+---
+
+## Context / Problem
+
+A growing lakehouse had multiple Databricks workspaces bound to a single external Hive Metastore. Governance drift, ad‑hoc ACLs, and inconsistent schemas slowed delivery and increased audit risk. The client needed:
+
+* Centralized governance across environments (dev/uat/prod)
+* Consistent naming conventions and schema controls
+* Column‑/row‑level security and tokenized PII handling
+* Auditable lineage for BI/AI workloads (Power BI, SQL endpoints)
+* Low‑risk migration with a repeatable playbook
+
+**Assumptions** (no client names):
+
+* Cloud: **Azure** (works similarly for AWS/GCP)
+* Storage: **ADLS Gen2 single storage account** (one blob) with **containers per schema/layer**: `raw`, `working`, `silver`, `gold` — migrated from earlier **per‑schema blob accounts**
+* Data format: **Delta Lake** (majority), some Parquet/CSV
+* Orchestration: ADF/Jobs; BI: Power BI Service
+
+---
+
+## My Role
+
+* **Data Architect & Delivery Lead** (4 engineers, 1 platform admin)
+* Defined governance model, migration plan, and back‑out strategy
+* Built automation notebooks & validation harness; led cutover
+
+---
+
+## Architecture (Target)
+
+* **Unity Catalog** as the control plane for identities, grants, lineage
+* **Managed Storage**: metastore‑level managed storage with **catalog‑level managed locations**; schemas inherit unless overridden
+* **Storage Topology**: **single ADLS Gen2 storage account** with **containers per schema/layer** (`raw`, `working`, `silver`, `gold`) — centralized IAM, firewall rules, and lifecycle
+* **Tables**: **managed Delta tables** in UC (no explicit LOCATION); lifecycle (DROP TABLE) manages data cleanup
+* **Minimal External**: external locations only for raw/landing or partner exchange
+* **Workspaces**: attached to a single UC metastore across dev/uat/prod
+* **Access**: service principals & SCIM; grants via groups
+* **Lineage**: UC lineage across notebooks/SQL/PBI
+
+**Flow:** Sources → Ingestion (Auto Loader/ADF) → Bronze/Silver/Gold **(managed in UC)** → Consumers (PBI, SQL Warehouses, ML)
+
+---
+
+## Key Decisions & Naming
+
+* **Storage Topology**: moved from **per‑schema blob accounts** to a **single storage account** with containers `raw/working/silver/gold` for simpler IAM and routing
+* **Catalogs** per domain (`finance`, `ops`, `shared`) + `sandbox`
+* **Schemas** mirror medallion layers where helpful: `sales_bronze`, `sales_silver`, `sales_gold`
+* **External Locations**: used sparsely for landing/partners; most tables **managed**
+* **Grants** via groups (not users): `grp_data_eng`, `grp_pbi_readers`, `grp_piisafe`
+* **Row/Column Security**: dynamic views with user attributes (ABAC)
+
+---
+
+## Migration Plan (Playbook)
+
+1. **Discovery & Inventory**
+   * Enumerate Hive dbs/tables, storage paths, owners, ACLs, object counts
+   * Classify tables by **Delta** vs non‑Delta; identify orphan paths
+
+2. **UC Readiness**
+   * Create UC metastore; attach target workspaces (dev→uat→prod)
+   * Configure **External Locations** & **Storage Credentials**
+   * SCIM sync for groups; map business roles to UC groups
+
+3. **Dry Run (Dev)**
+   * Migrate a representative slice; validate read/write, lineage, BI impacts
+
+4. **Schema & Naming Refactor**
+   * Define target catalogs/schemas; mapping from `hive_db.table → catalog.schema.table`
+
+5. **Automated Object Migration**
+   * **Delta external → UC managed**: use `DEEP CLONE` to copy into the catalog's managed storage
+   * **Non‑Delta external → UC managed**: create as Delta with **CTAS** (`USING DELTA AS SELECT ...`) or `CONVERT TO DELTA` then **DEEP CLONE**
+   * Preserve table properties/constraints; adopt three‑part names (`catalog.schema.table`)
+
+6. **Permissions & Policies**
+   * Apply grants from role matrix; add masking policies for PII columns
+
+7. **Validation & Dual‑Run**
+   * Row counts, checksums, sample queries; parallel BI models using both metastores to compare
+
+8. **Cutover (Short Write Freeze)**
+   * Freeze writes, run final validation, swap BI/SQL endpoints to **UC managed tables**, unfreeze; typical freeze ≤ 30 minutes
+
+9. **Back‑out Plan**
+   * Retain Hive Metastore snapshot, alias switch, revert endpoints if blocker found
+
+10. **Handover**
+    * Runbook, naming conventions, grant matrix, and monitoring checklist
+
+---
+
+## Code Refactoring & Compatibility Changes
+
+To support the move from Hive external tables to **Unity Catalog managed** tables and the new **single‑account / containers‑per‑layer** storage model, we refactored pipelines, notebooks, and BI connections.
+
+### Refactor Themes
+
+* **Three‑part naming everywhere**: switch from `db.table` to `catalog.schema.table` (e.g., `finance_silver.orders`).
+* **Managed storage semantics**: remove hard‑coded `LOCATION` and path‑based writes; let UC manage data placement.
+* **Path abstraction**: replace direct `abfss://...` strings with a small helper (e.g., `path("silver", "finance/orders")`) only where raw/external is still needed.
+* **Grant orchestration**: migrate ad‑hoc GRANTs to idempotent SQL scripts or Terraform; grant **groups**, not users.
+* **Config updates**: set `spark.sql.catalogImplementation` to `hive` (workspace default) + UC enabled workspace; set default catalog in Jobs/Clusters (e.g., `spark.conf.set("spark.sql.defaultCatalog", "finance")` when appropriate).
+* **Write patterns**: prefer `saveAsTable` with `tableName = "catalog.schema.table"` over path writes; enforce Delta.
+* **BI connectivity**: Power BI models repointed to **SQL Warehouse** in UC; adopted three‑level names in SQL/DAX.
+* **Secrets & identities**: consolidate service principals/MI; centralize secrets; adopt UC Connections where suitable (for external systems).
+* **Testing harness**: added cross‑metastore comparison queries (counts, checksums) and perf baselines.
+
+### Before → After Examples
+
+**1) Spark write (path → managed table)**
+
+```python
+# BEFORE (Hive external, path-based)
+(df
+  .write
+  .format("delta")
+  .mode("overwrite")
+  .option("path", "abfss://silver@<acct>.dfs.core.windows.net/finance/orders")
+  .saveAsTable("sales_silver.orders"))  # db.table
+```
+
+```python
+# AFTER (Unity Catalog managed)
+(df
+  .write
+  .format("delta")
+  .mode("overwrite")
+  .saveAsTable("finance_silver.orders"))  # catalog.schema.table; no path
+```
+
+**2) Table creation (LOCATION → managed)**
+
+```sql
+-- BEFORE
+CREATE TABLE sales_silver.orders
+USING DELTA
+LOCATION 'abfss://silver@<acct>.dfs.core.windows.net/finance/orders';
+```
+
+```sql
+-- AFTER
+CREATE TABLE finance_silver.orders
+USING DELTA AS
+SELECT * FROM tmp_orders_curated;  -- data lands in schema's managed location
+```
+
+**3) Reads/writes with default catalog**
+
+```sql
+-- AFTER (optional convenience)
+SET spark.sql.defaultCatalog = finance;  -- in job/cluster config or session
+CREATE SCHEMA IF NOT EXISTS finance_silver;
+CREATE TABLE IF NOT EXISTS finance_silver.dim_date (...);
+```
+
+**4) Power BI connection**
+
+* BEFORE: direct workspace endpoint / cluster + two‑part names.
+* AFTER: **SQL Warehouse (UC)**, **three‑part names**, and role‑based access; refreshed connection strings in PBIX.
+
+**5) Grants as code (idempotent)**
+
+```sql
+GRANT SELECT ON SCHEMA finance_silver TO `grp_pbi_readers`;
+GRANT SELECT ON TABLE finance_silver.orders TO `grp_pbi_readers`;
+REVOKE ALL PRIVILEGES ON SCHEMA finance_silver FROM `individual_user`; -- eliminate user-level drift
+```
+
+**6) Minimal external access helper (raw/landing only)**
+
+```python
+# Centralized helper for the rare external path use
+BASE = {
+    "raw":     "abfss://raw@<acct>.dfs.core.windows.net/",
+    "working": "abfss://working@<acct>.dfs.core.windows.net/",
+    "silver":  "abfss://silver@<acct>.dfs.core.windows.net/",
+    "gold":    "abfss://gold@<acct>.dfs.core.windows.net/",
+}
+
+def path(layer: str, *parts: str) -> str:
+    return BASE[layer] + "/".join(parts)
+```
+
+---
+
+## Snippets (Illustrative)
+
+### 1) Create catalog & schema with **managed location** (SQL)
+
+```sql
+-- Managed storage is configured at metastore; you can also set per‑catalog managed locations
+CREATE CATALOG finance
+  MANAGED LOCATION 'abfss://uc-managed@datalake.dfs.core.windows.net/finance';
+
+CREATE SCHEMA finance_silver
+  MANAGED LOCATION 'abfss://uc-managed@datalake.dfs.core.windows.net/finance/silver';
+```
+
+```sql
+-- Storage credential (managed identity or service principal)
+CREATE STORAGE CREDENTIAL cred_dl AS AZURE_MANAGED_IDENTITY
+WITH MANAGED_IDENTITY_ID = '.../managedIdentity/<id>';
+
+-- External location for Bronze
+CREATE EXTERNAL LOCATION loc_bronze
+URL 'abfss://bronze@datalake.dfs.core.windows.net/'
+WITH (STORAGE CREDENTIAL cred_dl);
+```
+
+### 2) **Delta external → UC managed** with DEEP CLONE (SQL)
+
+```sql
+-- Source: hive external delta table hive_db.orders
+CREATE TABLE finance_silver.orders
+DEEP CLONE hive_db.orders;  -- copies data into the schema's managed location
+```
+
+```sql
+-- Assume data exists at this path from Hive era
+CREATE TABLE finance.silver.orders
+LOCATION 'abfss://silver@datalake.dfs.core.windows.net/finance/orders';
+-- Unity Catalog now governs this table
+```
+
+### 3) **Non‑Delta external → UC managed** with CTAS (SQL)
+
+```sql
+-- Example: parquet external table hive_db.customers_ext
+CREATE TABLE finance_silver.customers USING DELTA AS
+SELECT * FROM hive_db.customers_ext;
+```
+
+### 4) Masking policy & application (SQL)
+
+```sql
+CREATE MASKING POLICY mask_email
+  AS (email STRING) -> CASE
+    WHEN is_account_group_member('grp_piisafe') THEN email
+    ELSE regexp_replace(email, '(^.).*(@.*$)', '$1***$2')
+  END;
+
+ALTER TABLE finance_silver.customers
+  ALTER COLUMN email
+  SET MASKING POLICY mask_email;
+```
+
+### 5) Row‑level security via dynamic view (SQL)
+
+```sql
+CREATE OR REPLACE VIEW finance_gold.orders_rls AS
+SELECT * FROM finance_gold.orders o
+WHERE (
+  is_account_group_member('grp_region_apac') AND o.region = 'APAC'
+) OR (
+  is_account_group_member('grp_region_emea') AND o.region = 'EMEA'
+) OR (
+  is_account_group_member('grp_admin')
+);
+```
+
+### 6) Python helper to inventory Hive → UC mapping (PySpark)
+
+```python
+from pyspark.sql import SparkSession
+spark = SparkSession.builder.getOrCreate()
+
+hive_dbs = [r.databaseName for r in spark.sql('SHOW DATABASES').collect()]
+for db in hive_dbs:
+    tables = spark.sql(f'SHOW TABLES IN {db}').toPandas()
+    for _, t in tables.iterrows():
+        full = f"{db}.{t['tableName']}"
+        df = spark.sql(f'DESCRIBE EXTENDED {full}')
+        # parse location, provider (delta/parquet), owner, etc.
+        # write to audit table for mapping decisions
+```
+
+---
+
+## Testing & Validation
+
+* **Structural**: object counts, schema parity, constraints, partitioning
+* **Data**: row counts, min/max per partition, sample checksums
+* **Performance**: representative queries vs baseline
+* **Security**: grant tests, policy enforcement, impersonation flows
+* **BI**: PBIX refresh tests via SQL Warehouse; DAX measures parity
+
+---
+
+## Outcomes / Impact
+
+* **Unified Governance**: managed Delta tables controlled by UC; consistent grants & lineage
+* **Simplified Ops**: dropping a table cleans up data; fewer path‑based ACL issues
+* **Security**: masking + RLS without semantic model duplication
+* **Performance & Reliability**: standardized Delta tables; less drift across envs
+* **Low‑Risk Cutover**: controlled clone/copy with brief write freeze
+
+---
+
+## Risks & Mitigations
+
+* **Hard‑coded paths** in legacy jobs → build an abstraction layer & path aliases
+* **Orphan tables** → inventory & archive policy before registration
+* **BI breakage** → dual‑run and semantic model validation
+* **Permissions drift** → source‑of‑truth grant scripts in repo + scheduled audit
+
+---

@@ -1,0 +1,506 @@
+---
+title: "Incremental MongoDB → Azure Functions → ADF → Synapse Analytics (SQL) (Power BI Ready)"
+publishedAt: "2024-11-20"
+summary: "Built an incremental ingestion pipeline that reads MongoDB changes via Azure Functions (bookmark/CDC), orchestrated by scheduled Azure Data Factory pipelines, and refactored JSON documents into SQL tables (star schema) for Power BI consumption."
+skills: ["MongoDB", "Azure Functions", "Azure Data Factory", "Azure Synapse Analytics", "PySpark", "SQL", "Power BI", "Python", "Data Architecture", "ETL/ELT"]
+---
+
+# Incremental MongoDB → Azure Functions → ADF → Synapse Analytics (SQL) (Power BI Ready)
+
+**One‑liner:** Built an incremental ingestion pipeline that reads **MongoDB** changes via **Azure Functions** (bookmark/CDC), orchestrated by **scheduled Azure Data Factory** pipelines, and **refactored JSON documents into SQL tables** (star schema) for **Power BI** consumption.
+
+---
+
+## Context / Problem
+
+Source data lived in MongoDB with nested documents, arrays, and high daily change volume. Prior batch exports caused heavy loads and duplicate processing. The goals were:
+
+* **Incremental loads** without full dumps
+* **Idempotent upserts** with reliable resume after failures
+* **JSON→Relational refactor** (clean star schema) for BI
+* Separation of concerns: lightweight extraction, robust transform & load
+
+**Assumptions** (no client names):
+
+* MongoDB: Atlas or self‑hosted, with `updatedAt` and/or **change streams** available
+* Azure: Function App (Python), ADF, Azure Synapse Analytics (SQL dedicated pool), ADLS Gen2 (staging), Key Vault
+* Power BI: connects to Azure SQL via gateway or SQL endpoint
+
+---
+
+## My Role
+
+* **Data Architect & Builder** (3 engineers)
+* Designed bookmark strategy (resume token/watermark), built Function, ADF orchestration, SQL refactor layer, and BI model contract
+
+---
+
+## Architecture (Target)
+
+* **Extract**: Azure Function (HTTP or Timer trigger) queries MongoDB for docs **changed since last bookmark**; outputs paged JSON to ADLS *or* returns chunk to ADF Copy
+* **Orchestrate**: ADF pipeline on schedule; manages **state** (bookmark) in Key Vault/Blob; retries with back‑off
+* **Stage**: Raw JSON stored in ADLS (landing/staging) with date partitioning
+* **Transform**: Flatten & conform in **Synapse Analytics** using **Synapse Spark** (PySpark) or **Mapping Data Flows**; load into **Synapse SQL dedicated pool** (staging tables + ELT procs)
+* **Serve**: **Star schema** (facts/dimensions) in **Synapse SQL** for **Power BI**
+
+**Flow:** MongoDB → Azure Function (incremental) → ADF (schedule + Copy) → ADLS (staging) → **Synapse (Spark/Data Flows → SQL dedicated: staging → dim/fact)** → Power BI
+
+---
+
+## Key Decisions & Patterns
+
+* **Bookmarking**: prefer **change streams `resumeToken`**; fallback to `updatedAt > :last_watermark`
+* **Page size & throttling**: tune `limit` & concurrency to avoid primary pressure
+* **Idempotency**: write to **staging tables** then `MERGE` into dims/facts
+* **Schema mapping**: JSON path map → SQL columns; array expansions to child tables
+* **Types**: explicit coercion (dates, decimals, ObjectId→VARCHAR(24))
+* **PII**: optional hashing/masking during ELT
+* **Observability**: run logs, rows in/out, lag vs source, error queue
+
+---
+
+## Migration Plan
+
+1. **Inventory** source collections, fields, volumes, keys
+2. **Choose bookmark**: change streams vs `updatedAt`
+3. **Implement Function**: parameterized by `since`, `limit`, `collection`
+4. **ADF pipeline**: schedule, set `since` (from state), loop pages until empty
+5. **Landing**: write raw JSON to ADLS partitioned by `load_date/collection`
+6. **SQL staging**: `OPENJSON`/`JSON_VALUE` to shred documents
+7. **ELT procedures**: `MERGE` into dims/facts; handle late updates & deletes
+8. **Model contract**: publish SQL views for Power BI; define refresh cadence
+9. **Cutover**: parallel run with legacy export → validate → switch PBI
+
+---
+
+## Code Refactoring & Implementation
+
+To migrate from batch MongoDB exports to incremental processing, we refactored the entire data flow—from document extraction through JSON transformation to relational modeling. The key was building resumable, idempotent processes that handle MongoDB's flexible schema.
+
+### Refactor Themes
+
+* **Extraction patterns**: move from full collection dumps to incremental bookmark-based reads
+* **State management**: centralize watermarks/resume tokens in Azure Key Vault for fault tolerance
+* **Schema handling**: explicit JSON-to-SQL mapping with type coercion and nested document flattening
+* **Orchestration**: ADF pipelines with retry logic and error handling for robust scheduling
+* **Transform architecture**: Synapse Spark for complex JSON normalization, SQL for final ELT
+* **BI integration**: star schema design optimized for Power BI consumption patterns
+
+### Before → After Examples
+
+**1) Data extraction (full dump → incremental)**
+
+```python
+# BEFORE (full collection export)
+def export_collection(collection_name):
+    collection = db[collection_name]
+    docs = list(collection.find({}))  # Full scan
+    return docs
+```
+
+```python
+# AFTER (incremental with bookmark)
+import os, json, datetime
+from pymongo import MongoClient
+from azure.storage.blob import BlobServiceClient
+
+MONGO_URI = os.environ['MONGO_URI']
+client = MongoClient(MONGO_URI)
+
+def main(req):
+    coll = req.params.get('collection')
+    since = req.params.get('since')  # ISO string
+    limit = int(req.params.get('limit', '5000'))
+    db = client.get_database(os.environ['MONGO_DB'])
+    c = db.get_collection(coll)
+
+    q = {'updatedAt': {'$gt': datetime.datetime.fromisoformat(since)}}
+    cur = c.find(q).sort('updatedAt', 1).limit(limit)
+
+    docs = list(cur)
+    # compute new watermark
+    new_since = docs[-1]['updatedAt'].isoformat() if docs else since
+
+    return {
+        'status': 200,
+        'body': json.dumps({'data': docs, 'next_since': new_since})
+    }
+```
+
+**2) Schema transformation (manual → systematic)**
+
+```python
+# BEFORE (ad-hoc JSON parsing)
+def parse_order(doc):
+    return {
+        'id': str(doc['_id']),
+        'amount': doc.get('amount', 0),
+        'customer': doc.get('customer', {}).get('name', '')
+    }
+```
+
+```python
+# AFTER (structured Synapse Spark transformation)
+from pyspark.sql.types import *
+from pyspark.sql.functions import *
+
+# Define explicit schema for MongoDB documents
+orders_schema = StructType([
+    StructField("_id", StructType([StructField("$oid", StringType())])),
+    StructField("customerId", StructType([StructField("$oid", StringType())])),
+    StructField("amount", DoubleType()),
+    StructField("updatedAt", StringType()),
+    StructField("items", ArrayType(StructType([
+        StructField("sku", StringType()),
+        StructField("qty", IntegerType()),
+        StructField("price", DoubleType()),
+    ]))),
+])
+
+raw = spark.read.json("abfss://staging@<acct>.dfs.core.windows.net/mongo/orders/*.json", schema=orders_schema)
+
+# Normalize ObjectIds and dates
+orders_flat = (raw
+  .withColumn("order_id", col("_id.$oid"))
+  .withColumn("customer_id", col("customerId.$oid"))
+  .withColumn("updated_at", to_timestamp(col("updatedAt")))
+  .drop("_id", "customerId", "updatedAt"))
+```
+
+**3) Data loading (overwrite → upsert)**
+
+```sql
+-- BEFORE (truncate and reload)
+TRUNCATE TABLE orders;
+INSERT INTO orders SELECT * FROM staging_orders;
+```
+
+```sql
+-- AFTER (idempotent MERGE operations)
+MERGE dbo.fact_orders AS tgt
+USING stage.orders AS src
+ON tgt.order_id = src.order_id
+WHEN MATCHED THEN UPDATE SET 
+  amount = src.amount, 
+  updated_at = src.updated_at
+WHEN NOT MATCHED THEN INSERT (order_id, customer_id, amount, updated_at)
+VALUES (src.order_id, src.customer_id, src.amount, src.updated_at);
+```
+
+---
+
+## Snippets (Illustrative)
+
+### 1) Azure Function (Python) — incremental fetch with watermark
+
+```python
+import os, json, datetime
+from pymongo import MongoClient
+from azure.keyvault.secrets import SecretClient
+from azure.identity import DefaultAzureCredential
+
+def main(req):
+    # Get parameters
+    coll = req.params.get('collection')
+    since = req.params.get('since')
+    limit = int(req.params.get('limit', '5000'))
+    
+    # Connect to MongoDB
+    client = MongoClient(os.environ['MONGO_URI'])
+    db = client.get_database(os.environ['MONGO_DB'])
+    collection = db.get_collection(coll)
+    
+    # Query for changes since bookmark
+    query = {'updatedAt': {'$gt': datetime.datetime.fromisoformat(since)}}
+    cursor = collection.find(query).sort('updatedAt', 1).limit(limit)
+    
+    docs = []
+    for doc in cursor:
+        # Convert ObjectId to string for JSON serialization
+        doc['_id'] = str(doc['_id'])
+        if 'customerId' in doc:
+            doc['customerId'] = str(doc['customerId'])
+        docs.append(doc)
+    
+    # Calculate new watermark
+    new_since = docs[-1]['updatedAt'].isoformat() if docs else since
+    
+    return {
+        'statusCode': 200,
+        'body': json.dumps({
+            'data': docs,
+            'next_since': new_since,
+            'count': len(docs)
+        })
+    }
+```
+
+### 2) ADF Pipeline orchestration with state management
+
+```json
+{
+  "name": "IncrementalMongoIngestion",
+  "activities": [
+    {
+      "name": "GetLastWatermark",
+      "type": "Lookup",
+      "typeProperties": {
+        "source": {
+          "type": "AzureBlobStorageSource",
+          "recursive": false
+        },
+        "dataset": {
+          "referenceName": "WatermarkDataset",
+          "parameters": {
+            "collection": "@pipeline().parameters.collection"
+          }
+        }
+      }
+    },
+    {
+      "name": "IncrementalLoop",
+      "type": "Until",
+      "typeProperties": {
+        "expression": {
+          "@equals(variables('hasMore'), false)"
+        },
+        "activities": [
+          {
+            "name": "CallFunction",
+            "type": "WebActivity",
+            "typeProperties": {
+              "url": "@concat('https://funcapp.azurewebsites.net/api/mongo-extract?collection=', pipeline().parameters.collection, '&since=', variables('currentWatermark'), '&limit=5000')",
+              "method": "GET"
+            }
+          },
+          {
+            "name": "CopyToADLS",
+            "type": "Copy",
+            "inputs": [
+              {
+                "referenceName": "FunctionResponse"
+              }
+            ],
+            "outputs": [
+              {
+                "referenceName": "ADLSStaging",
+                "parameters": {
+                  "collection": "@pipeline().parameters.collection",
+                  "date": "@formatDateTime(utcnow(), 'yyyy-MM-dd')"
+                }
+              }
+            ]
+          },
+          {
+            "name": "UpdateWatermark",
+            "type": "SetVariable",
+            "typeProperties": {
+              "variableName": "currentWatermark",
+              "value": "@activity('CallFunction').output.next_since"
+            }
+          },
+          {
+            "name": "CheckHasMore",
+            "type": "IfCondition",
+            "typeProperties": {
+              "expression": {
+                "@equals(activity('CallFunction').output.count, 0)"
+              },
+              "ifTrueActivities": [
+                {
+                  "name": "SetHasMoreFalse",
+                  "type": "SetVariable",
+                  "typeProperties": {
+                    "variableName": "hasMore",
+                    "value": false
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+### 3) Synapse Spark — Complex JSON normalization
+
+```python
+from pyspark.sql.types import *
+from pyspark.sql.functions import *
+
+# Read raw JSON with explicit schema
+orders_schema = StructType([
+    StructField("_id", StringType()),  # Already converted to string in Function
+    StructField("customerId", StringType()),
+    StructField("amount", DoubleType()),
+    StructField("updatedAt", StringType()),
+    StructField("items", ArrayType(StructType([
+        StructField("sku", StringType()),
+        StructField("qty", IntegerType()),
+        StructField("price", DoubleType()),
+    ]))),
+    StructField("attrs", MapType(StringType(), StringType())),
+])
+
+raw = spark.read.json("abfss://staging@<acct>.dfs.core.windows.net/mongo/orders/*.json", schema=orders_schema)
+
+# Main orders table
+orders_flat = (raw
+    .withColumn("order_id", col("_id"))
+    .withColumn("customer_id", col("customerId"))
+    .withColumn("updated_at", to_timestamp(col("updatedAt")))
+    .select("order_id", "customer_id", "amount", "updated_at"))
+
+# Explode items array to separate table
+items = (raw
+    .select("_id", posexplode_outer("items").alias("pos", "item"))
+    .select(
+        col("_id").alias("order_id"),
+        col("pos").alias("line_no"),
+        col("item.sku").alias("sku"),
+        col("item.qty").alias("qty"),
+        col("item.price").alias("price")
+    ))
+
+# Explode attributes map to key-value table
+attrs = (raw
+    .select("_id", explode_outer(map_entries(col("attrs"))).alias("kv"))
+    .select(
+        col("_id").alias("order_id"),
+        col("kv.key").alias("attr_key"),
+        col("kv.value").alias("attr_val")
+    ))
+
+# Write to curated layer for SQL consumption
+orders_flat.write.mode("overwrite").parquet("abfss://curated@<acct>.dfs.core.windows.net/sales/orders/")
+items.write.mode("overwrite").parquet("abfss://curated@<acct>.dfs.core.windows.net/sales/order_items/")
+attrs.write.mode("overwrite").parquet("abfss://curated@<acct>.dfs.core.windows.net/sales/order_attrs/")
+```
+
+### 4) Synapse SQL — Staging and star schema loading
+
+```sql
+-- Create staging tables in Synapse SQL dedicated pool
+CREATE SCHEMA stage;
+CREATE SCHEMA dbo;
+
+CREATE TABLE stage.orders (
+    order_id VARCHAR(24) NOT NULL,
+    customer_id VARCHAR(24) NOT NULL,
+    amount DECIMAL(18,2) NULL,
+    updated_at DATETIME2 NULL,
+    load_id BIGINT NOT NULL
+) WITH (DISTRIBUTION = HASH(order_id), CLUSTERED COLUMNSTORE INDEX);
+
+-- Load from Parquet files created by Spark
+COPY INTO stage.orders
+FROM 'https://<acct>.dfs.core.windows.net/curated/sales/orders/'
+WITH (FILE_TYPE = 'PARQUET');
+
+-- Upsert to fact table
+MERGE dbo.fact_orders AS tgt
+USING (
+    SELECT DISTINCT order_id, customer_id, amount, updated_at
+    FROM stage.orders 
+    WHERE load_id = @current_load_id
+) AS src
+ON tgt.order_id = src.order_id
+WHEN MATCHED THEN UPDATE SET
+    amount = src.amount,
+    updated_at = src.updated_at,
+    modified_date = GETDATE()
+WHEN NOT MATCHED THEN INSERT (order_id, customer_id, amount, updated_at, created_date)
+VALUES (src.order_id, src.customer_id, src.amount, src.updated_at, GETDATE());
+```
+
+### 5) Alternative: Direct OPENJSON approach
+
+```sql
+-- Read JSON directly from ADLS using OPENROWSET
+WITH orders_json AS (
+    SELECT 
+        JSON_VALUE(jsonContent, '$._id') AS order_id,
+        JSON_VALUE(jsonContent, '$.customerId') AS customer_id,
+        TRY_CONVERT(DECIMAL(18,2), JSON_VALUE(jsonContent, '$.amount')) AS amount,
+        TRY_CONVERT(DATETIME2, JSON_VALUE(jsonContent, '$.updatedAt')) AS updated_at
+    FROM OPENROWSET(
+        BULK 'https://<acct>.dfs.core.windows.net/staging/mongo/orders/*.json',
+        FORMAT = 'CSV',
+        FIELDTERMINATOR = '0x0b',
+        FIELDQUOTE = '0x0b'
+    ) WITH (jsonContent NVARCHAR(MAX)) AS raw
+)
+INSERT INTO stage.orders (order_id, customer_id, amount, updated_at, load_id)
+SELECT order_id, customer_id, amount, updated_at, @load_id
+FROM orders_json
+WHERE order_id IS NOT NULL;
+```
+
+### 6) Power BI model contract (SQL views)
+
+```sql
+-- Create semantic views for Power BI
+CREATE VIEW model.v_orders AS
+SELECT 
+    f.order_id,
+    f.amount,
+    f.updated_at,
+    f.created_date,
+    d.customer_name,
+    d.customer_segment,
+    d.customer_region
+FROM dbo.fact_orders f
+JOIN dbo.dim_customers d ON d.customer_id = f.customer_id
+WHERE f.is_active = 1;
+
+CREATE VIEW model.v_order_items AS
+SELECT 
+    oi.order_id,
+    oi.line_no,
+    oi.sku,
+    oi.qty,
+    oi.price,
+    oi.qty * oi.price AS line_total,
+    p.product_name,
+    p.category
+FROM dbo.fact_order_items oi
+JOIN dbo.dim_products p ON p.sku = oi.sku;
+
+-- Grant permissions for Power BI service account
+GRANT SELECT ON SCHEMA::model TO [pbi_service_account];
+```
+
+---
+
+## Testing & Validation
+
+* **Correctness**: row counts and samples vs MongoDB; late updates reflected
+* **Idempotency**: rerun same load_id ⇒ no duplicate facts
+* **Performance**: end‑to‑end latency & Function cold‑start impact
+* **Resilience**: resume from bookmark after failure; back‑pressure behavior
+* **BI parity**: PBI visuals match legacy export during dual‑run
+
+---
+
+## Outcomes / Impact
+
+* **Freshness**: hours → minutes for most collections
+* **Stability**: reliable resumes; no more full‑export failures
+* **Clarity**: clean star schema improved PBI performance & DAX simplicity
+* **Cost**: reduced compute by avoiding daily full dumps
+* **Scalability**: incremental approach handles growing data volumes gracefully
+
+---
+
+## Risks & Mitigations
+
+* **Hot collections** → throttle & windowed reads; consider change streams
+* **Nested/array explosion** → pre‑flatten in Databricks for heavy cases
+* **Clock skew** with watermarks → use source `updatedAt` exclusively; add overlap window
+* **PII handling** → mask/hash at ELT; enforce RBAC for PBI readers
+* **Function cold starts** → consider premium plan or warm-up strategies for latency-sensitive loads
+
+---
