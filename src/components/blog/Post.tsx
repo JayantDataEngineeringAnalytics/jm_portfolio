@@ -18,8 +18,8 @@ export default function Post({ post, thumbnail, direction }: PostProps) {
       href={`/projects/${post.slug}`}
       transition="micro-medium"
       direction={direction}
-      border="transparent"
-      background="transparent"
+      border="neutral-alpha-weak"
+      background="neutral-alpha-weak"
       padding="4"
       radius="l-4"
       gap={direction === "column" ? undefined : "24"}
@@ -59,13 +59,13 @@ export default function Post({ post, thumbnail, direction }: PostProps) {
           {/* Render technical skill tags with icons if available */}
           {post.metadata.skills && post.metadata.skills.length > 0 && (
             <Row gap="8" marginTop="12" wrap>
-              {post.metadata.skills.slice(0, 4).map((skill: { name: string; icon: string }, idx: number) => (
-                <Tag key={idx} size="l" prefixIcon={skill.icon}>
+              {post.metadata.skills.slice(0, 4).map((skill: { name: string; icon: string }) => (
+                <Tag key={skill.name} size="l" prefixIcon={skill.icon}>
                   {skill.name}
                 </Tag>
               ))}
               {post.metadata.skills.length > 4 && (
-                <Tag size="l">
+                <Tag key="more-skills" size="l">
                   +{post.metadata.skills.length - 4} more
                 </Tag>
               )}

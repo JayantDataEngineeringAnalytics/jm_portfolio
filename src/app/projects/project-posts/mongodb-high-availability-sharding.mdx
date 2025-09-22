@@ -1,0 +1,424 @@
+---
+title: "MongoDB High Availability & Scale: Replication + Sharding"
+publishedAt: "2024-06-30"
+summary: "Designed and implemented replica sets for HA and cluster sharding for horizontal scale—covering key selection, balancer strategy, resilience controls, and operational automation."
+skills: ["MongoDB", "Database Architecture", "High Availability", "Sharding", "Azure", "Replica Sets", "Performance Optimization", "DevOps", "Database Administration", "Monitoring"]
+---
+
+# MongoDB High Availability & Scale: Replication + Sharding
+
+**One‑liner:** Designed and implemented **replica sets** for HA and **cluster sharding** for horizontal scale—covering key selection, balancer strategy, resilience controls, and operational automation.
+
+---
+
+## Context / Problem
+
+Rapid growth in read/write volume and dataset size pushed a single MongoDB node past safe limits. We needed:
+
+* **High availability** with automatic failover (RPO≈0, low RTO)
+* **Horizontal scale** for writes and storage
+* Predictable performance under skewed workloads
+* Secure, auditable operations with minimal downtime during maintenance
+
+**Assumptions** (no client names):
+
+* Deployment: self‑managed on **Azure VMs** (Linux), MongoDB **6.x/7.x**
+* Storage: premium SSD, filesystem XFS, journaling enabled
+* Security: TLS, SCRAM‑SHA‑256, **keyFile** for cluster auth, RBAC
+* Backups: VM snapshots + logical backups (mongodump/point‑in‑time via oplog)
+* Monitoring: Prometheus/Grafana / or Cloud Manager equivalent
+
+---
+
+## My Role
+
+* **Database Architect & Implementation Lead** (2 engineers, 1 platform admin)
+* Planned topology, performed rollout (dev→stage→prod), and authored runbooks for ops
+
+---
+
+## Architecture (Target)
+
+* **Replica Sets (per shard + config servers):**
+  * Primary + 2 secondaries (odd member count), hidden delayed secondary (optional)
+  * Arbiter avoided (prefer full secondaries)
+  * Elections tuned via priorities/`votes`
+
+* **Sharded Cluster:**
+  * 3× **config server** replica set (CSRS)
+  * 2–N **shards**, each a replica set
+  * ≥2 **mongos** routers behind an internal load balancer
+
+* **Networking & Security:** VNet peering, NSGs, TLS everywhere, keyFile, RBAC
+* **Operations:** online scaling, rolling upgrades, balancer windows, zone/tag‑aware routing
+
+**Data flow:** Clients ↔ **mongos** ↔ shards (replica sets) with metadata from CSRS.
+
+---
+
+## Key Decisions & Patterns
+
+* **Shard‑key strategy:** prefer **compound keys** reflecting query patterns; use **hashed** keys for write distribution, **ranged** keys for range scans
+* **Zones (tag‑aware sharding):** pin tenant/region data for data‑sovereignty or latency
+* **Chunk size:** default 128MB; evaluate based on hotspot behavior
+* **Balancer control:** scheduled windows; throttle during peak; pre‑split for bulk loads
+* **Write/Read concerns:** `majority` with journaling; read with `nearest` for global read scale where acceptable
+* **Hidden/Delayed secondary:** protection against operator error or bad writes
+
+---
+
+## Implementation Plan
+
+1. **Replica Set Enablement** (migrate standalone → RS)
+   * Convert existing mongod to a 3‑member RS; size **oplog**; verify failover
+
+2. **Config Server RS & mongos layer**
+   * Deploy CSRS (3 members), configure **mongos** routers
+
+3. **Shard Creation & Pre‑split**
+   * Create shards (each RS), choose shard key, pre‑split & distribute chunks
+
+4. **Enable Sharding** for DBs/collections
+
+5. **Zones/Tags** (if required) and balancer windows
+
+6. **Cutover & Dual‑Run** for critical workloads, then remove legacy paths
+
+7. **Runbooks** for failover, scaling, backups, disaster simulation
+
+---
+
+## Code Implementation & Configuration
+
+To implement MongoDB high availability and sharding, we needed to architect the topology, configure replica sets, set up sharded clusters, and establish operational procedures. The key was balancing performance, availability, and operational simplicity.
+
+### Implementation Themes
+
+* **Replica set configuration:** establish primary-secondary relationships with proper failover mechanics
+* **Sharding architecture:** design shard key strategies that optimize both write distribution and query performance
+* **Security hardening:** implement TLS encryption, authentication, and role-based access control
+* **Operational automation:** create runbooks and scripts for common maintenance tasks
+* **Monitoring integration:** instrument cluster health, performance metrics, and alerting
+* **Backup strategies:** implement both logical and physical backup approaches with point-in-time recovery
+
+### Before → After Examples
+
+**1) Single node → Replica Set**
+
+```javascript
+// BEFORE (single mongod instance)
+mongod --dbpath /data/db --port 27017
+```
+
+```javascript
+// AFTER (replica set configuration)
+// Primary node configuration
+rs.initiate({
+  _id: "rs0",
+  members: [
+    { _id: 0, host: "db1:27017", priority: 2 },
+    { _id: 1, host: "db2:27017", priority: 1 },
+    { _id: 2, host: "db3:27017", priority: 0.5 }
+  ]
+});
+
+// Add hidden delayed secondary for point-in-time recovery
+rs.add({ 
+  _id: 3, 
+  host: "db4:27017", 
+  hidden: true, 
+  priority: 0, 
+  votes: 0, 
+  slaveDelay: 3600 
+});
+```
+
+**2) Single collection → Sharded collection**
+
+```javascript
+// BEFORE (single collection on one server)
+db.orders.find({customerId: "12345"})
+```
+
+```javascript
+// AFTER (sharded collection with proper shard key)
+// Enable sharding on database
+sh.enableSharding("ecommerce");
+
+// Choose appropriate shard key based on query patterns
+sh.shardCollection("ecommerce.orders", { customerId: 1, orderDate: 1 });
+
+// Pre-split to avoid initial hotspots
+sh.splitAt("ecommerce.orders", { customerId: "50000", orderDate: ISODate("2024-01-01") });
+sh.splitAt("ecommerce.orders", { customerId: "100000", orderDate: ISODate("2024-01-01") });
+```
+
+**3) Manual operations → Automated balancer management**
+
+```javascript
+// BEFORE (manual chunk distribution)
+// Manual intervention required for data distribution
+```
+
+```javascript
+// AFTER (automated balancer with controlled windows)
+// Set balancer to run only during off-peak hours
+sh.setBalancerState(true);
+sh.setBalancerWindow("23:00", "05:00");
+
+// Monitor balancer activity
+sh.getBalancerState();
+sh.isBalancerRunning();
+```
+
+---
+
+## Snippets (Illustrative)
+
+### 1) Replica set initiation and configuration
+
+```javascript
+// Initialize replica set
+rs.initiate({
+  _id: "rs0",
+  members: [
+    { _id: 0, host: "db1.internal:27017", priority: 2 },
+    { _id: 1, host: "db2.internal:27017", priority: 1 },
+    { _id: 2, host: "db3.internal:27017", priority: 0.5 }
+  ]
+});
+
+// Verify replica set status
+rs.status();
+rs.conf();
+
+// Add delayed secondary for backup/recovery
+rs.add({ 
+  _id: 3, 
+  host: "db4.internal:27017", 
+  hidden: true, 
+  priority: 0, 
+  votes: 0, 
+  slaveDelay: 3600  // 1 hour delay
+});
+```
+
+### 2) Sharded cluster setup
+
+```javascript
+// Add shards to cluster
+sh.addShard("rs0/db1.internal:27017,db2.internal:27017,db3.internal:27017");
+sh.addShard("rs1/db4.internal:27017,db5.internal:27017,db6.internal:27017");
+
+// Enable sharding on database
+sh.enableSharding("ecommerce");
+
+// Shard collections with different strategies
+// Hashed sharding for even write distribution
+sh.shardCollection("ecommerce.events", { eventId: "hashed" });
+
+// Range-based sharding for co-location of related data
+sh.shardCollection("ecommerce.orders", { tenantId: 1, orderDate: 1 });
+```
+
+### 3) Pre-splitting and chunk management
+
+```javascript
+// Pre-split collections to avoid initial hotspots
+function preSplitCollection(ns, shardKey, splitPoints) {
+  splitPoints.forEach(point => {
+    try {
+      sh.splitAt(ns, point);
+      print(`Split created at: ${JSON.stringify(point)}`);
+    } catch (e) {
+      print(`Split failed: ${e.message}`);
+    }
+  });
+}
+
+// Example usage for orders collection
+preSplitCollection("ecommerce.orders", { tenantId: 1, orderDate: 1 }, [
+  { tenantId: 1000, orderDate: ISODate("2024-01-01") },
+  { tenantId: 2000, orderDate: ISODate("2024-01-01") },
+  { tenantId: 3000, orderDate: ISODate("2024-01-01") }
+]);
+
+// Manually distribute initial chunks
+sh.moveChunk("ecommerce.orders", { tenantId: 0, orderDate: MinKey }, "rs0");
+sh.moveChunk("ecommerce.orders", { tenantId: 2000, orderDate: MinKey }, "rs1");
+```
+
+### 4) Zone-aware sharding for data locality
+
+```javascript
+// Configure zones for geographic data placement
+sh.addShardTag("rs0", "US_EAST");
+sh.addShardTag("rs1", "EU_WEST");
+sh.addShardTag("rs2", "APAC");
+
+// Define tag ranges for tenant data locality
+sh.addTagRange(
+  "ecommerce.orders",
+  { tenantId: "US001", orderDate: MinKey },
+  { tenantId: "US999", orderDate: MaxKey },
+  "US_EAST"
+);
+
+sh.addTagRange(
+  "ecommerce.orders",
+  { tenantId: "EU001", orderDate: MinKey },
+  { tenantId: "EU999", orderDate: MaxKey },
+  "EU_WEST"
+);
+```
+
+### 5) Security configuration
+
+```javascript
+// Create admin user
+use admin
+db.createUser({
+  user: "admin",
+  pwd: "securePassword123",
+  roles: ["root"]
+});
+
+// Create application-specific users with limited privileges
+use ecommerce
+db.createUser({
+  user: "app_reader",
+  pwd: "readerPassword123",
+  roles: [{ role: "read", db: "ecommerce" }]
+});
+
+db.createUser({
+  user: "app_writer",
+  pwd: "writerPassword123",
+  roles: [{ role: "readWrite", db: "ecommerce" }]
+});
+```
+
+### 6) Monitoring and health checks
+
+```javascript
+// Replica set health monitoring
+function checkReplicaSetHealth() {
+  const status = rs.status();
+  const members = status.members;
+  
+  members.forEach(member => {
+    print(`Host: ${member.name}, State: ${member.stateStr}, Health: ${member.health}`);
+    if (member.stateStr === "PRIMARY") {
+      print(`Primary optime: ${member.optimeDate}`);
+    }
+  });
+  
+  return status;
+}
+
+// Sharding cluster health
+function checkClusterHealth() {
+  const shardStatus = sh.status();
+  print("=== Cluster Status ===");
+  
+  // Check balancer state
+  print(`Balancer state: ${sh.getBalancerState()}`);
+  print(`Balancer running: ${sh.isBalancerRunning()}`);
+  
+  // Check shard distribution
+  const stats = db.stats();
+  print(`Total collections: ${stats.collections}`);
+  print(`Total data size: ${stats.dataSize / (1024*1024*1024)} GB`);
+  
+  return shardStatus;
+}
+```
+
+### 7) Backup and restore procedures
+
+```bash
+#!/bin/bash
+# Automated backup script
+
+BACKUP_DIR="/backups/mongodb/$(date +%Y%m%d_%H%M%S)"
+MONGO_HOST="replica-set-host:27017"
+DATABASE="ecommerce"
+
+# Create backup directory
+mkdir -p $BACKUP_DIR
+
+# Perform logical backup with oplog
+mongodump \
+  --host $MONGO_HOST \
+  --db $DATABASE \
+  --oplog \
+  --gzip \
+  --out $BACKUP_DIR
+
+# Verify backup integrity
+if [ $? -eq 0 ]; then
+  echo "Backup completed successfully: $BACKUP_DIR"
+  # Upload to object storage or backup system
+  aws s3 sync $BACKUP_DIR s3://mongodb-backups/$(basename $BACKUP_DIR)
+else
+  echo "Backup failed!"
+  exit 1
+fi
+```
+
+### 8) Application connection configuration
+
+```javascript
+// Node.js connection with proper settings
+const { MongoClient } = require('mongodb');
+
+const client = new MongoClient('mongodb://app_writer:writerPassword123@mongos1:27017,mongos2:27017/ecommerce', {
+  // Connection options
+  readPreference: 'secondaryPreferred',
+  readConcern: { level: 'majority' },
+  writeConcern: { 
+    w: 'majority', 
+    j: true,
+    wtimeout: 5000 
+  },
+  // Connection pooling
+  maxPoolSize: 50,
+  minPoolSize: 5,
+  maxIdleTimeMS: 30000,
+  // Retry logic
+  retryWrites: true,
+  retryReads: true
+});
+```
+
+---
+
+## Testing & Validation
+
+* **Failover drills**: stepDown primary; verify RTO/RPO; client retry behavior
+* **Throughput tests**: write fan‑out with hashed keys; range queries under ranged keys
+* **Rebalance tests**: bulk load with pre‑split vs without
+* **Backup/restore**: consistent snapshots and PIT restores
+* **Security**: TLS, keyFile, RBAC least privilege
+
+---
+
+## Outcomes / Impact
+
+* **Availability**: zero‑data‑loss under node failure (journaled majority)
+* **Scale**: linear write scaling with additional shards; balanced storage growth
+* **Performance**: reduced hotspotting; stable latency during peaks
+* **Operational maturity**: documented runbooks, rehearsed failover, predictable maintenance windows
+* **Security**: comprehensive authentication and encryption in transit/at rest
+
+---
+
+## Risks & Mitigations
+
+* **Bad shard key** → analyze query patterns & cardinality; can require collection rebuild to change
+* **Chunk migration overhead** → schedule windows; pre‑split for bulk backfills
+* **Skewed tenants** → compound/ranged keys, zones for isolation
+* **Operational drift** → IaC for config, regular audits, and alerts on balancer activity
+* **Split-brain scenarios** → ensure proper network partitioning handling with majority writes
+
+---

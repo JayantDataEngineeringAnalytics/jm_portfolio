@@ -1,17 +1,16 @@
 import { notFound } from "next/navigation";
-import { CustomMDX, ScrollToHash } from "@/components";
+import { CustomMDX, ScrollToHash, TopLevelHeadingNav } from "@/components";
 import {
   Meta,
   Schema,
   Column,
   Heading,
-  HeadingNav,
-  Icon,
   Row,
   Text,
   SmartLink,
   Avatar,
   Tag,
+  Icon,
 } from "@once-ui-system/core";
 import { baseURL, about, projects, person } from "@/resources";
 import { formatDate } from "@/utils/formatDate";
@@ -142,7 +141,7 @@ export default async function ProjectPost({ params }: { params: Promise<{ slug: 
           <Icon name="document" size="xs" />
           On this page
         </Row>
-        <HeadingNav fitHeight />
+        <TopLevelHeadingNav />
       </Column>
     </Row>
   );

@@ -1,0 +1,487 @@
+---
+title: "Kafka Ingestion Platform — MySQL CDC, REST APIs, Azure Blob → Kafka"
+publishedAt: "2024-08-15"
+summary: "Built a Kafka-based ingestion layer using Kafka Connect to stream from MySQL (CDC), REST APIs (polling), and Azure Blob Storage into well‑governed Kafka topics with schema enforcement, DLQs, and observability—ready for downstream stream processing and batch sinks."
+skills: ["Apache Kafka", "Kafka Connect", "Debezium", "MySQL", "Azure Blob Storage", "Schema Registry", "ksqlDB", "Stream Processing", "Real-time Data", "Data Architecture"]
+---
+
+# Kafka Ingestion Platform — MySQL CDC, REST APIs, Azure Blob → Kafka
+
+**One‑liner:** Built a **Kafka-based ingestion layer** using **Kafka Connect** to stream from **MySQL (CDC)**, **REST APIs** (polling), and **Azure Blob Storage** into well‑governed Kafka topics with schema enforcement, DLQs, and observability—ready for downstream stream processing and batch sinks.
+
+---
+
+## Context / Problem
+
+Multiple operational systems needed near‑real‑time ingestion into a unified bus. Ad‑hoc scripts produced drift, retries, and inconsistent schemas. We standardized on Kafka with Connect to achieve:
+
+* **Reliable, scalable ingestion** from databases, HTTP sources, and cloud object storage
+* **Schema consistency** (Schema Registry), **exactly‑once delivery** where viable, **DLQs** for bad records
+* **Security & governance** via ACLs, TLS/SASL, topic conventions
+
+**Assumptions** (no client names):
+
+* Platform: Apache Kafka (or Confluent) on Azure VMs / AKS; **Kafka Connect** distributed mode
+* Storage: Azure Blob for bulk files; ADLS for data lake sinks (optional)
+* Registry/Serdes: Confluent Schema Registry (Avro or JSON‑Schema)
+* Processing: ksqlDB / Kafka Streams / Spark Structured Streaming (optional)
+
+---
+
+## My Role
+
+* **Streaming Platform Engineer** (4 engineers, 1 platform admin)
+* Designed topic/partition strategy, security, and connector configs; implemented CI/CD for connectors; authored runbooks and monitoring dashboards
+
+---
+
+## Architecture (Target)
+
+* **Sources → Kafka Connect**:
+  * **MySQL** via **Debezium** Source (binlog CDC)
+  * **REST APIs** via HTTP Source Connector (polling + pagination)
+  * **Azure Blob** via Blob Storage Source Connector (file tail/ingest)
+
+* **Core**: Kafka brokers (TLS/SASL), Schema Registry, Connect cluster (2–3 workers)
+* **Quality**: SMTs for enrichment, field masking, and keying; **DLQ topics** per connector
+* **Consumption**: ksqlDB/Streams for real‑time transforms; optional sinks to Delta/Synapse/Elasticsearch
+* **Observability**: Connect REST metrics, JMX (Prometheus/Grafana), lag exporters, alerting
+
+**Flow:** MySQL binlog / API polling / Blob files → **Connect** → Kafka topics (raw → curated) → stream processors → sinks (warehouse/lake/search)
+
+---
+
+## Key Decisions & Patterns
+
+* **Topic naming**: `<domain>.<entity>.<layer>` (e.g., `sales.orders.raw`, `sales.orders.curated`)
+* **Partitions**: hash on business key (e.g., `order_id` / `tenant_id`) to balance load and enable key‑based semantics
+* **Delivery semantics**: at‑least‑once end‑to‑end; **EOS** (`exactly_once_v2`) for curated processors where supported
+* **Schema evolution**: **backward** compatibility; Avro/JSON‑Schema with defaults
+* **Security**: TLS on brokers/registry/connect; SASL/SCRAM users; ACLs per connector service account
+* **DLQ**: `${topic}-dlq` with headers including error.class, error.message, original.offset
+
+---
+
+## Implementation Plan
+
+1. **Provision core**: Kafka brokers (3+), ZooKeeper/KRaft as applicable, Schema Registry, Connect cluster
+2. **Networking & security**: TLS certificates, SASL/SCRAM users, ACLs for connectors and consumers
+3. **Connector CI/CD**: Git repo with JSON configs; REST deploy via pipelines; config versioning & secrets via Key Vault
+4. **MySQL CDC**: enable binlog, set GTID, create Debezium source; topic routing SMTs
+5. **REST source**: polling connector with pagination & ETag/If‑Modified‑Since headers
+6. **Blob source**: ingest CSV/JSON/Parquet; include filename/etag/lastModified as headers
+7. **DLQ/Retry**: standardize DLQ per source; optional retry processor
+8. **Observability**: lag exporters, dashboards; alert on connector/task failures and DLQ volume
+
+---
+
+## Code Implementation & Platform Configuration
+
+To build a robust Kafka ingestion platform, we implemented comprehensive source connectors, schema management, and operational monitoring. The key was creating reusable patterns for diverse data sources while maintaining consistency and reliability.
+
+### Implementation Themes
+
+* **Connector standardization**: create reusable configuration templates for different source types
+* **Schema governance**: implement backward-compatible schema evolution with Schema Registry
+* **Error handling**: comprehensive DLQ strategies with detailed error context and retry mechanisms
+* **Security hardening**: end-to-end TLS encryption with SASL authentication and fine-grained ACLs
+* **Operational excellence**: monitoring, alerting, and automated deployment pipelines
+* **Performance optimization**: proper partitioning strategies and connector tuning for throughput
+
+### Before → After Examples
+
+**1) Ad-hoc polling scripts → Kafka Connect REST Source**
+
+```python
+# BEFORE (custom polling script)
+import requests, time, json
+while True:
+    response = requests.get("https://api.example.com/orders")
+    for order in response.json():
+        # Manual processing, no schema validation, no error handling
+        process_order(order)
+    time.sleep(60)
+```
+
+```json
+# AFTER (Kafka Connect REST Source with pagination and error handling)
+{
+  "name": "rest-orders-source",
+  "config": {
+    "connector.class": "io.confluent.connect.http.HttpSourceConnector",
+    "kafka.topic": "sales.orders.raw",
+    "http.api.url": "https://api.example.com/orders",
+    "http.headers": "Authorization: Bearer ${secrets:api_token}",
+    "poll.interval.ms": "60000",
+    "http.response.pagination": "LINK_HEADER",
+    "http.offset.mode": "TIMESTAMP",
+    "http.timestamp.path": "$.updated_at",
+    "value.converter": "io.confluent.connect.avro.AvroConverter",
+    "value.converter.schema.registry.url": "https://schema-registry:8081",
+    "errors.tolerance": "all",
+    "errors.deadletterqueue.topic.name": "sales.orders.raw-dlq",
+    "errors.deadletterqueue.context.headers.enable": "true"
+  }
+}
+```
+
+**2) Manual database exports → CDC with Debezium**
+
+```bash
+# BEFORE (scheduled mysqldump exports)
+mysqldump --single-transaction sales orders > /tmp/orders_export.sql
+# Manual processing and inconsistent timing
+```
+
+```json
+# AFTER (Real-time CDC with Debezium)
+{
+  "name": "mysql-orders-cdc",
+  "config": {
+    "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+    "database.hostname": "mysql.internal",
+    "database.port": "3306",
+    "database.user": "debezium",
+    "database.password": "${secrets:mysql_pwd}",
+    "database.server.id": "184054",
+    "database.server.name": "mysql_prod",
+    "database.include.list": "sales",
+    "table.include.list": "sales.orders,sales.customers",
+    "snapshot.mode": "initial",
+    "transforms": "unwrap,route,key",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+    "transforms.route.type": "org.apache.kafka.connect.transforms.RegexRouter",
+    "transforms.route.regex": "mysql_prod\\.sales\\.(.*)",
+    "transforms.route.replacement": "sales.$1.raw",
+    "transforms.key.type": "org.apache.kafka.connect.transforms.ValueToKey",
+    "transforms.key.fields": "order_id"
+  }
+}
+```
+
+**3) File processing scripts → Azure Blob Source Connector**
+
+```python
+# BEFORE (manual file processing)
+import os, glob
+for file in glob.glob("/mnt/landing/orders_*.json"):
+    with open(file) as f:
+        data = json.load(f)
+        # Manual processing, no tracking of processed files
+```
+
+```json
+# AFTER (Automated Blob Storage ingestion)
+{
+  "name": "blob-orders-source",
+  "config": {
+    "connector.class": "io.confluent.connect.azure.blob.AzureBlobStorageSourceConnector",
+    "azblob.account.name": "<account>",
+    "azblob.account.key": "${secrets:blob_key}",
+    "azblob.container.name": "landing",
+    "format.class": "io.confluent.connect.azure.blob.storage.format.json.JsonFormat",
+    "tasks.max": "3",
+    "topic": "sales.blob.orders.raw",
+    "errors.tolerance": "all",
+    "errors.deadletterqueue.topic.name": "sales.blob.orders.raw-dlq"
+  }
+}
+```
+
+---
+
+## Snippets (Illustrative)
+
+### 1) Debezium MySQL Source (CDC) with comprehensive configuration
+
+```json
+{
+  "name": "mysql-sales-cdc",
+  "config": {
+    "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+    "database.hostname": "mysql-primary.internal",
+    "database.port": "3306",
+    "database.user": "debezium_user",
+    "database.password": "${secrets:mysql_debezium_pwd}",
+    "database.server.id": "184054",
+    "database.server.name": "mysql_prod_sales",
+    "database.include.list": "sales,inventory",
+    "table.include.list": "sales.orders,sales.customers,inventory.products",
+    "include.schema.changes": "false",
+    "snapshot.mode": "initial",
+    "snapshot.locking.mode": "minimal",
+    "tombstones.on.delete": "false",
+    "transforms": "unwrap,route,key,mask",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+    "transforms.unwrap.drop.tombstones": "true",
+    "transforms.route.type": "org.apache.kafka.connect.transforms.RegexRouter",
+    "transforms.route.regex": "mysql_prod_sales\\.(.*?)\\.(.*)",
+    "transforms.route.replacement": "$1.$2.raw",
+    "transforms.key.type": "org.apache.kafka.connect.transforms.ValueToKey",
+    "transforms.key.fields": "id",
+    "transforms.mask.type": "org.apache.kafka.connect.transforms.MaskField$Value",
+    "transforms.mask.fields": "email,phone",
+    "value.converter": "io.confluent.connect.avro.AvroConverter",
+    "value.converter.schema.registry.url": "https://schema-registry:8081",
+    "key.converter": "io.confluent.connect.avro.AvroConverter",
+    "key.converter.schema.registry.url": "https://schema-registry:8081",
+    "errors.tolerance": "all",
+    "errors.deadletterqueue.topic.name": "sales-cdc-dlq",
+    "errors.deadletterqueue.context.headers.enable": "true",
+    "database.history.kafka.bootstrap.servers": "kafka:9092",
+    "database.history.kafka.topic": "mysql_prod_sales.history"
+  }
+}
+```
+
+### 2) HTTP REST Source with authentication and pagination
+
+```json
+{
+  "name": "rest-catalog-products",
+  "config": {
+    "connector.class": "io.confluent.connect.http.HttpSourceConnector",
+    "kafka.topic": "catalog.products.raw",
+    "http.api.url": "https://api.catalog.com/v2/products",
+    "http.headers": "Authorization: Bearer ${secrets:catalog_api_token},Content-Type: application/json",
+    "poll.interval.ms": "30000",
+    "http.response.pagination": "LINK_HEADER",
+    "http.offset.mode": "TIMESTAMP",
+    "http.timestamp.path": "$.last_modified",
+    "http.request.method": "GET",
+    "http.response.list.pointer": "$.data",
+    "tasks.max": "2",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+    "transforms": "addTimestamp,extractKey",
+    "transforms.addTimestamp.type": "org.apache.kafka.connect.transforms.InsertField$Value",
+    "transforms.addTimestamp.timestamp.field": "ingested_at",
+    "transforms.extractKey.type": "org.apache.kafka.connect.transforms.ValueToKey",
+    "transforms.extractKey.fields": "product_id",
+    "errors.tolerance": "all",
+    "errors.deadletterqueue.topic.name": "catalog.products.raw-dlq",
+    "errors.deadletterqueue.context.headers.enable": "true"
+  }
+}
+```
+
+### 3) Azure Blob Storage Source for bulk file ingestion
+
+```json
+{
+  "name": "blob-transaction-logs",
+  "config": {
+    "connector.class": "io.confluent.connect.azure.blob.AzureBlobStorageSourceConnector",
+    "azblob.account.name": "datalakeaccount",
+    "azblob.account.key": "${secrets:blob_storage_key}",
+    "azblob.container.name": "transaction-logs",
+    "azblob.path.glob": "*/year=*/month=*/day=*/*.json",
+    "format.class": "io.confluent.connect.azure.blob.storage.format.json.JsonFormat",
+    "confluent.topic.bootstrap.servers": "kafka:9092",
+    "confluent.topic.replication.factor": "3",
+    "tasks.max": "4",
+    "topic": "transactions.logs.raw",
+    "transforms": "addMetadata",
+    "transforms.addMetadata.type": "org.apache.kafka.connect.transforms.InsertHeader",
+    "transforms.addMetadata.header.name": "source.filename",
+    "transforms.addMetadata.value.literal": "${filename}",
+    "behavior.on.null.values": "IGNORE",
+    "errors.tolerance": "all",
+    "errors.deadletterqueue.topic.name": "transactions.logs.raw-dlq",
+    "errors.deadletterqueue.context.headers.enable": "true"
+  }
+}
+```
+
+### 4) Schema Registry configuration and evolution
+
+```bash
+#!/bin/bash
+# Register Avro schema for orders topic
+curl -X POST -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+  --data '{
+    "schema": "{
+      \"type\": \"record\",
+      \"name\": \"Order\",
+      \"namespace\": \"com.company.sales\",
+      \"fields\": [
+        {\"name\": \"order_id\", \"type\": \"string\"},
+        {\"name\": \"customer_id\", \"type\": \"string\"},
+        {\"name\": \"amount\", \"type\": \"double\"},
+        {\"name\": \"status\", \"type\": \"string\", \"default\": \"pending\"},
+        {\"name\": \"created_at\", \"type\": \"long\", \"logicalType\": \"timestamp-millis\"},
+        {\"name\": \"updated_at\", \"type\": [\"null\", \"long\"], \"default\": null, \"logicalType\": \"timestamp-millis\"}
+      ]
+    }"
+  }' \
+  http://schema-registry:8081/subjects/sales.orders.raw-value/versions
+```
+
+### 5) ksqlDB stream processing for data curation
+
+```sql
+-- Create base stream from raw orders topic
+CREATE STREAM orders_raw (
+  order_id VARCHAR KEY,
+  customer_id VARCHAR,
+  amount DOUBLE,
+  status VARCHAR,
+  created_at BIGINT,
+  updated_at BIGINT
+) WITH (
+  KAFKA_TOPIC='sales.orders.raw',
+  VALUE_FORMAT='AVRO'
+);
+
+-- Create curated stream with transformations
+CREATE STREAM orders_curated AS
+SELECT 
+  order_id,
+  customer_id,
+  amount,
+  UPPER(status) AS status,
+  FROM_UNIXTIME(created_at) AS created_timestamp,
+  CASE 
+    WHEN updated_at IS NULL THEN FROM_UNIXTIME(created_at)
+    ELSE FROM_UNIXTIME(updated_at)
+  END AS last_modified_timestamp,
+  'kafka-ingestion' AS source_system
+FROM orders_raw
+EMIT CHANGES;
+
+-- Create aggregate table for real-time metrics
+CREATE TABLE order_metrics AS
+SELECT 
+  status,
+  COUNT(*) AS order_count,
+  SUM(amount) AS total_amount,
+  AVG(amount) AS avg_amount
+FROM orders_curated
+GROUP BY status
+EMIT CHANGES;
+```
+
+### 6) Kafka Connect deployment via REST API
+
+```bash
+#!/bin/bash
+# Deploy connector configuration
+CONNECT_HOST="http://kafka-connect:8083"
+CONNECTOR_NAME="mysql-orders-cdc"
+
+# Deploy/update connector
+curl -X PUT "${CONNECT_HOST}/connectors/${CONNECTOR_NAME}/config" \
+  -H "Content-Type: application/json" \
+  -d @connectors/mysql-orders-cdc.json
+
+# Check connector status
+curl -X GET "${CONNECT_HOST}/connectors/${CONNECTOR_NAME}/status" | jq .
+
+# Check connector tasks
+curl -X GET "${CONNECT_HOST}/connectors/${CONNECTOR_NAME}/tasks" | jq .
+```
+
+### 7) Monitoring and alerting configuration
+
+```yaml
+# Prometheus scrape config for Kafka Connect
+- job_name: 'kafka-connect'
+  static_configs:
+    - targets: ['kafka-connect:8084']
+  metrics_path: '/metrics'
+  scrape_interval: 30s
+
+# Example Grafana dashboard queries
+# Connector status
+up{job="kafka-connect"}
+
+# Task failure rate
+rate(kafka_connect_connector_task_batch_size_max[5m])
+
+# Dead letter queue message rate
+rate(kafka_consumer_records_consumed_total{topic=~".*-dlq"}[5m])
+
+# Consumer lag
+kafka_consumer_lag_sum{topic=~"sales.*"}
+```
+
+### 8) Consumer configuration for exactly-once processing
+
+```java
+// Java consumer configuration for downstream processing
+Properties props = new Properties();
+props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092");
+props.put(ConsumerConfig.GROUP_ID_CONFIG, "orders-processor");
+props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, 
+    "io.confluent.kafka.serializers.KafkaAvroDeserializer");
+props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, 
+    "io.confluent.kafka.serializers.KafkaAvroDeserializer");
+props.put("schema.registry.url", "http://schema-registry:8081");
+props.put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed");
+props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
+KafkaConsumer<String, GenericRecord> consumer = new KafkaConsumer<>(props);
+```
+
+### 9) DLQ processing and retry mechanism
+
+```java
+// DLQ processor for handling failed messages
+@Component
+public class DLQProcessor {
+    
+    @KafkaListener(topics = "#{@dlqTopics}", groupId = "dlq-processor")
+    public void processDLQMessage(ConsumerRecord<String, String> record) {
+        // Extract error information from headers
+        String errorClass = getHeaderValue(record, "error.class");
+        String errorMessage = getHeaderValue(record, "error.message");
+        String originalTopic = getHeaderValue(record, "original.topic");
+        
+        // Implement retry logic based on error type
+        if (isRetryableError(errorClass)) {
+            retryMessage(record, originalTopic);
+        } else {
+            sendToManualReview(record, errorClass, errorMessage);
+        }
+    }
+    
+    private boolean isRetryableError(String errorClass) {
+        return errorClass != null && 
+               (errorClass.contains("ConnectException") || 
+                errorClass.contains("RetriableException"));
+    }
+}
+```
+
+---
+
+## Testing & Validation
+
+* **Connectivity & security**: TLS/SASL handshake, ACLs per connector
+* **Backfill & snapshot**: initial loads from MySQL snapshot and Blob history
+* **Throughput & lag**: measure poll rates, partitions, consumer lag; tune tasks.max/parallelism
+* **Failure handling**: DLQ rate, retry behaviors, poison pill isolation
+* **Schema evolution**: registry compat checks; producer/consumer rollouts
+
+---
+
+## Outcomes / Impact
+
+* **Freshness**: seconds to minutes from sources to bus
+* **Reliability**: standardized ingestion with DLQs and observability
+* **Governance**: consistent schemas and topic ACLs
+* **Extensibility**: plug‑in new sources with repeatable patterns
+* **Scalability**: horizontal scaling with Connect workers and topic partitions
+
+---
+
+## Risks & Mitigations
+
+* **API rate limits** → respect `Retry‑After`, ETag/If‑Modified‑Since; back‑off
+* **MySQL binlog retention** → monitor lag; scale Connect tasks; ensure binlog window
+* **Large files on Blob** → split/parallelize; increase Connect fetch size
+* **Schema drift** → enforce backward compat; use curated topics via ksqlDB/Streams
+* **Connector failures** → implement health checks, auto-restart, and alerting on task failures
+
+---
