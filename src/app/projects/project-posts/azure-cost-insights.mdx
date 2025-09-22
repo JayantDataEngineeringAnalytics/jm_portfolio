@@ -1,0 +1,321 @@
+---
+title: "Azure Cost Insights: Billing API + Advisor → Databricks → Power BI"
+publishedAt: "2024-03-15"
+summary: "Ingested Azure Billing/Cost Management and Azure Advisor Recommendations into Databricks, modeled cost & optimization signals, and published Power BI dashboards and alerts to reduce spend via rightsizing, idle cleanup, and commitment planning."
+skills: ["Azure", "Databricks", "Power BI", "Cost Management", "Azure Advisor", "Python", "SQL", "Delta Lake", "REST APIs", "Financial Analytics"]
+---
+
+# Azure Cost Insights: Billing API + Advisor → Databricks → Power BI
+
+**One‑liner:** Ingested **Azure Billing/Cost Management** and **Azure Advisor Recommendations** into **Databricks**, modeled cost & optimization signals, and published **Power BI** dashboards and alerts to reduce spend via **rightsizing, idle cleanup, and commitment planning**.
+
+---
+
+## Context / Problem
+
+Cloud costs were rising with limited visibility across subscriptions/resource groups. Teams needed actionable insights (who/what/where) and a prioritized plan to reduce cost without harming SLAs.
+
+**Goals**
+
+* Centralize costs from **Azure Cost Management/Billing API**
+* Pull **Advisor (recommendations)** for rightsizing/reservations/idle cleanup
+* Build a **cost model** with tags (env, owner, product), commitments (RI/Spots), and unit economics
+* Deliver **Power BI** dashboards with drill‑downs and an action tracker
+
+**Assumptions (dummy details)**
+
+* Azure: multiple subscriptions, consistent tagging policy (`env`, `app`, `owner`)
+* Databricks: UC‑enabled workspace, managed Delta tables; Jobs for scheduling
+* Power BI: SQL Warehouse connection to curated gold tables
+
+---
+
+## My Role
+
+* **Cost Analytics Lead**
+* Designed the ingestion/modeling, built Databricks jobs, authored the PBI model and prioritization playbook
+
+---
+
+## Architecture (Target)
+
+* **Ingest**
+
+  * **Billing/Cost**: Azure Cost Management **Query API** (usage & amortized cost) into **bronze**
+  * **Advisor**: Azure **Advisor Recommendations** API into **bronze**
+* **Curate**
+
+  * **silver**: normalized cost records, joined with tags, rate cards, RBAC map
+  * **gold**: fact tables (daily\_cost, monthly\_cost) and dims (subscription, resource, tag, recommendation)
+* **Serve**
+
+  * **SQL Warehouse** for PBI; semantic views and measures
+* **Governance**: Unity Catalog policies; PII not expected
+
+**Flow:** Azure APIs → Databricks Jobs (Py) → Delta bronze/silver/gold → SQL Warehouse → Power BI
+
+---
+
+## Key Decisions & Patterns
+
+* **Grain**: daily cost per resourceId + meter/category; monthly rollups for trend
+* **Attribution**: prefer **tags**; fallback to RG naming rules; owner map table
+* **Commitments**: compute **effective savings** vs PAYG; detect RI coverage & potential SPOT
+* **Actions**: tie Advisor recommendations to resources & expected monthly savings
+* **Controls**: cost thresholds with alerts; exclude shared/core subscriptions from some ratios
+
+---
+
+## Implementation Plan
+
+1. **Auth setup**: service principal with `Cost Management Reader` + `Advisor Reader`
+2. **Bronze ingestion**: Databricks notebook calls REST APIs; stores raw JSON/Parquet
+3. **Silver transform**: normalize schema, explode nested fields, map tags and owners
+4. **Gold model**: build `fact_daily_cost`, `fact_monthly_cost`, `dim_resource`, `dim_subscription`, `dim_recommendation`
+5. **Dashboards**: PBI model with measures (run‑rate, variance, savings) and drill‑through pages
+6. **Action tracker**: table/view to log recommendation status and realized savings
+
+---
+
+## Code Implementation & Platform Configuration
+
+To build a comprehensive Azure cost analytics solution, we implemented automated ingestion from multiple Azure APIs, created a robust data model with proper attribution, and delivered actionable insights through Power BI dashboards. The key was establishing reliable data pipelines while maintaining cost governance and accountability.
+
+### Implementation Themes
+
+* **API integration patterns**: robust authentication, rate limiting, and error handling for Azure REST APIs
+* **Data modeling**: bronze/silver/gold architecture with proper cost attribution and tagging
+* **Cost optimization**: actionable recommendations with tracking and accountability
+* **Automation**: scheduled jobs with monitoring, alerting, and data quality checks
+* **Visualization**: executive dashboards with drill-down capabilities and action tracking
+* **Governance**: cost controls, owner mapping, and realized savings validation
+
+### Before → After Examples
+
+**1) Manual cost reports → Automated API ingestion**
+
+```python
+# BEFORE (manual Excel exports)
+# Teams manually downloaded cost reports from Azure Portal
+# Time-consuming, error-prone, limited historical data
+# No automated recommendations or action tracking
+
+# AFTER (Automated API-driven pipeline)
+def get_azure_cost_data(subscription_id, start_date, end_date):
+    """Fetch cost data with comprehensive error handling and pagination"""
+    headers = {"Authorization": f"Bearer {get_access_token()}"}
+    
+    payload = {
+        "type": "ActualCost",
+        "timeframe": "Custom",
+        "timePeriod": {"from": start_date, "to": end_date},
+        "dataset": {
+            "granularity": "Daily",
+            "grouping": [
+                {"type": "Dimension", "name": "ResourceId"},
+                {"type": "Dimension", "name": "MeterCategory"},
+                {"type": "Dimension", "name": "ResourceGroupName"}
+            ],
+            "aggregation": {"totalCost": {"name": "PreTaxCost", "function": "Sum"}},
+            "include": ["Tags"]
+        }
+    }
+    
+    return paginated_api_call(cost_management_url, payload, headers)
+```
+
+**2) Disconnected cost data → Unified cost model with attribution**
+
+```sql
+-- BEFORE (siloed cost reporting)
+-- Cost data isolated by subscription
+-- No unified view across teams/applications
+-- Manual tag enforcement and owner mapping
+
+-- AFTER (Unified cost model with full attribution)
+CREATE OR REPLACE TABLE fin_gold.unified_cost_view AS
+SELECT 
+    c.usage_date,
+    c.subscription_name,
+    c.resource_group,
+    c.resource_id,
+    c.meter_category,
+    c.cost,
+    
+    -- Tag-based attribution with fallbacks
+    COALESCE(c.env_tag, rg.default_env, 'untagged') AS environment,
+    COALESCE(c.app_tag, rg.default_app, 'unknown') AS application,
+    COALESCE(c.owner_tag, rg.default_owner, om.fallback_owner) AS cost_owner,
+    
+    -- Cost categorization
+    CASE 
+        WHEN c.meter_category IN ('Virtual Machines', 'App Service') THEN 'Compute'
+        WHEN c.meter_category LIKE '%Storage%' THEN 'Storage'
+        WHEN c.meter_category LIKE '%Database%' THEN 'Database'
+        ELSE 'Other'
+    END AS cost_category,
+    
+    -- Optimization signals
+    a.recommendation_category,
+    a.impact_level,
+    a.estimated_monthly_savings,
+    
+    -- Commitment analysis
+    CASE 
+        WHEN c.pricing_model = 'Reservation' THEN c.cost * 0.3  -- ~70% savings
+        WHEN c.pricing_model = 'Spot' THEN c.cost * 0.2       -- ~80% savings
+        ELSE c.cost
+    END AS potential_optimized_cost
+
+FROM fin_silver.cost_daily c
+LEFT JOIN dim_resource_groups rg ON c.resource_group = rg.name
+LEFT JOIN dim_owner_mapping om ON c.subscription_id = om.subscription_id
+LEFT JOIN fin_silver.advisor_recommendations a ON c.resource_id = a.resource_id;
+```
+
+---
+
+## Snippets (Illustrative)
+
+### 1) Databricks — fetch Azure Cost Management (daily)
+
+```python
+import requests, json, datetime
+from pyspark.sql import functions as F
+from pyspark.sql.types import *
+
+TENANT = dbutils.secrets.get("kv","tenant_id")
+CLIENT = dbutils.secrets.get("kv","client_id")
+SECRET = dbutils.secrets.get("kv","client_secret")
+SUBSCRIPTION = dbutils.secrets.get("kv","subscription_id")
+
+# AAD token
+resp = requests.post(
+  f"https://login.microsoftonline.com/{TENANT}/oauth2/v2.0/token",
+  data={"client_id": CLIENT, "client_secret": SECRET, "grant_type":"client_credentials", "scope":"https://management.azure.com/.default"}
+)
+access = resp.json()["access_token"]
+
+headers = {"Authorization": f"Bearer {access}", "Content-Type": "application/json"}
+
+# Cost query payload: daily amortized cost with tags
+payload = {
+  "type": "Usage",
+  "timeframe": "MonthToDate",
+  "dataset": {
+    "granularity": "Daily",
+    "grouping": [ {"type":"Dimension","name":"ResourceId"}, {"type":"Dimension","name":"MeterCategory"} ],
+    "aggregation": {"totalCost": {"name": "PreTaxCost", "function": "Sum"}},
+    "include": ["Tags"],
+    "sorting": [{"direction":"descending","name":"PreTaxCost"}]
+  }
+}
+
+url = f"https://management.azure.com/subscriptions/{SUBSCRIPTION}/providers/Microsoft.CostManagement/query?api-version=2023-03-01"
+res = requests.post(url, headers=headers, data=json.dumps(payload))
+rows = res.json().get("properties",{}).get("rows",[])
+cols = [c['name'] for c in res.json().get("properties",{}).get("columns",[])]
+
+# Convert to Spark df
+df = spark.createDataFrame(rows, schema=StructType([StructField(c, StringType()) for c in cols]))
+(df
+  .withColumnRenamed("PreTaxCost","cost")
+  .withColumn("cost", F.col("cost").cast("double"))
+  .withColumn("UsageDate", F.to_date("UsageDate"))
+  .write.mode("append").saveAsTable("fin_bronze.azure_cost_daily"))
+```
+
+### 2) Databricks — fetch Azure Advisor Recommendations
+
+```python
+advis_url = f"https://management.azure.com/subscriptions/{SUBSCRIPTION}/providers/Microsoft.Advisor/recommendations?api-version=2022-10-01"
+adv = requests.get(advis_url, headers=headers).json().get("value", [])
+adv_df = spark.read.json(spark.sparkContext.parallelize([json.dumps(r) for r in adv]))
+adv_df.write.mode("overwrite").saveAsTable("fin_bronze.azure_advisor_raw")
+```
+
+### 3) Silver transforms (cost & advisor)
+
+```sql
+-- Normalize cost
+CREATE OR REPLACE TABLE fin_silver.cost_daily AS
+SELECT to_date(UsageDate) AS usage_date,
+       ResourceId AS resource_id,
+       MeterCategory AS meter_category,
+       TRY_TO_DECIMAL(cost) AS cost,
+       tags:env::string AS env,
+       tags:owner::string AS owner,
+       tags:app::string AS app
+FROM fin_bronze.azure_cost_daily;
+
+-- Normalize advisor
+CREATE OR REPLACE TABLE fin_silver.advisor AS
+SELECT id, properties.category AS category,
+       properties.impact AS impact,
+       properties.shortDescription.problem AS problem,
+       properties.extendedProperties["savingsAmount"]::double AS est_monthly_saving,
+       properties.resourceMetadata.resourceId AS resource_id
+FROM fin_bronze.azure_advisor_raw;
+```
+
+### 4) Gold model & savings logic
+
+```sql
+-- Daily cost with recommendation join
+CREATE OR REPLACE TABLE fin_gold.daily_cost AS
+SELECT c.*, a.category AS rec_category, a.impact AS rec_impact, a.est_monthly_saving
+FROM fin_silver.cost_daily c
+LEFT JOIN fin_silver.advisor a USING (resource_id);
+
+-- Monthly aggregation
+CREATE OR REPLACE TABLE fin_gold.monthly_cost AS
+SELECT date_trunc('month', usage_date) AS month,
+       env, app, owner,
+       SUM(cost) AS cost,
+       SUM(coalesce(est_monthly_saving,0)) AS potential_saving
+FROM fin_gold.daily_cost
+GROUP BY 1,2,3,4;
+
+-- Action tracker (manually/ETL updated)
+CREATE OR REPLACE TABLE fin_gold.actions (
+  resource_id STRING, action STRING, status STRING, opened_at TIMESTAMP, closed_at TIMESTAMP, realized_saving DOUBLE
+);
+```
+
+### 5) Power BI contract (view)
+
+```sql
+CREATE OR REPLACE VIEW fin_model.v_cost_overview AS
+SELECT m.month, m.env, m.app, m.owner,
+       m.cost,
+       m.potential_saving,
+       (m.potential_saving / NULLIF(m.cost,0)) AS saving_ratio
+FROM fin_gold.monthly_cost m;
+```
+
+---
+
+## Testing & Validation
+
+* **Freshness**: confirm daily loads; compare MTD vs Azure Portal totals
+* **Reconciliation**: sample invoice export vs API totals; variance < 1–2%
+* **Tag coverage**: % of cost with env/app/owner present; raise alerts on drops
+* **Advisor join rate**: % of resources with recommendations; track realized vs potential savings
+
+---
+
+## Outcomes / Impact
+
+* **Visibility**: single view of cost by env/app/owner with daily updates
+* **Savings**: identified idle/underutilized resources, right‑size opportunities, and reservation planning
+* **Accountability**: owner mapping + action tracker enabled follow‑through
+* **Scalability**: reusable patterns for new subscriptions/resources
+
+---
+
+## Risks & Mitigations
+
+* **Tag quality** → tag compliance checks, fallback rules, owner registry
+* **API throttling** → backoff & pagination; cache where possible
+* **Skewed savings estimates** → validate Advisor numbers; track realized vs predicted
+* **Access scope** → least‑privilege SPN; store secrets in Key Vault
