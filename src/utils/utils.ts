@@ -19,6 +19,7 @@ type Metadata = {
   team: Team[];
   link?: string;
   skills?: { name: string; icon: string }[];
+  powerbi_embed?: string;
 };
 
 import { notFound } from "next/navigation";
@@ -84,6 +85,7 @@ function readMDXFile(filePath: string) {
     team: data.team || [],
     link: data.link || "",
     skills: mapSkillsToIcons(data.skills || []),
+    powerbi_embed: data.powerbi_embed || "",
   };
 
   return { metadata, content };

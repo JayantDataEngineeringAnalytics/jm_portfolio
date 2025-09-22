@@ -32,12 +32,7 @@ export default function Demos() {
         {demos.title}
       </Heading>
       <Column fillWidth flex={1} gap="40">
-  <DemoPosts range={[1, 1]} thumbnail />
-  <DemoPosts range={[2, 3]} columns="2" thumbnail direction="column" />
-        <Heading as="h2" variant="heading-strong-xl" marginLeft="l">
-          Earlier demos
-        </Heading>
-  <DemoPosts range={[4]} columns="2" />
+        <DemoPosts columns="2" thumbnail direction="column" />
       </Column>
     </Column>
   );

@@ -5,22 +5,16 @@ import {
   Schema,
   Column,
   Heading,
-  HeadingNav,
-  Icon,
   Row,
   Text,
   SmartLink,
   Avatar,
-  Media,
-  Line,
 } from "@once-ui-system/core";
 import { baseURL, about, demos, person } from "@/resources";
 import { formatDate } from "@/utils/formatDate";
 import { getPosts } from "@/utils/utils";
 import { Metadata } from "next";
 import React from "react";
-import { DemoPosts } from "@/components/blog/DemoPosts";
-import { ShareSection } from "@/components/blog/ShareSection";
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
   const posts = getPosts(["src", "app", "demos", "demo-posts"]);
@@ -71,9 +65,7 @@ export default async function DemoPost({ params }: { params: Promise<{ slug: str
     })) || [];
 
   return (
-    <Row fillWidth>
-      <Row maxWidth={12} m={{ hide: true }} />
-      <Row fillWidth horizontal="center">
+    <Row fillWidth horizontal="center">
         <Column as="section" maxWidth="m" horizontal="center" gap="l" paddingTop="24">
           <Schema
             as="blogPosting"
@@ -110,59 +102,49 @@ export default async function DemoPost({ params }: { params: Promise<{ slug: str
               </Text>
             </Row>
           </Row>
-          {post.metadata.image && (
-            <Media
-              src={post.metadata.image}
-              alt={post.metadata.title}
-              aspectRatio="16/9"
-              priority
-              sizes="(min-width: 768px) 100vw, 768px"
-              border="neutral-alpha-weak"
-              radius="l"
-              marginTop="12"
-              marginBottom="8"
-            />
+          
+          {/* Power BI Embed Section - Moved to top */}
+          {post.metadata.powerbi_embed && (
+            <Column maxWidth="xl" horizontal="center" marginBottom="40">
+              <Column horizontal="center" marginBottom="24">
+                <Heading as="h2" variant="heading-strong-l">
+                  Interactive Dashboard
+                </Heading>
+              </Column>
+              <div 
+                style={{ 
+                  width: '100%',
+                  position: 'relative',
+                  paddingBottom: '56.25%', // 16:9 aspect ratio
+                  height: 0,
+                  overflow: 'hidden',
+                  borderRadius: '12px',
+                  border: '1px solid var(--neutral-alpha-weak)',
+                  backgroundColor: '#f8f9fa'
+                }}
+              >
+                <iframe
+                  title="retail_analytics_demo"
+                  src="https://app.powerbi.com/view?r=eyJrIjoiZGUwM2I0MWYtODQyYy00YTdjLWJlMjItNDg4MzRjODBhZmY2IiwidCI6IjI1Y2NiMGU5LTg0ODEtNDYyOC04ZTA3LTA3Zjg5MWNjOTRkZiJ9&pageName=ReportSection2e5116d592f50302d0cc"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    border: 'none'
+                  }}
+                  allowFullScreen={true}
+                />
+              </div>
+            </Column>
           )}
+          
           <Column as="article" maxWidth="s">
             <CustomMDX source={post.content} />
-          </Column>
-          
-          <ShareSection 
-            title={post.metadata.title} 
-            url={`${baseURL}${demos.path}/${post.slug}`} 
-          />
-
-          <Column fillWidth gap="40" horizontal="center" marginTop="40">
-            <Line maxWidth="40" />
-            <Heading as="h2" variant="heading-strong-xl" marginBottom="24">
-              Recent demos
-            </Heading>
-            <DemoPosts exclude={[post.slug]} range={[1, 2]} columns="2" thumbnail direction="column" />
           </Column>
           <ScrollToHash />
         </Column>
       </Row>
-      <Column
-        maxWidth={12}
-        paddingLeft="40"
-        fitHeight
-        position="sticky"
-        top="80"
-        gap="16"
-        m={{ hide: true }}
-      >
-        <Row
-          gap="12"
-          paddingLeft="2"
-          vertical="center"
-          onBackground="neutral-medium"
-          textVariant="label-default-s"
-        >
-          <Icon name="document" size="xs" />
-          On this page
-        </Row>
-        <HeadingNav fitHeight />
-      </Column>
-    </Row>
   );
 }
