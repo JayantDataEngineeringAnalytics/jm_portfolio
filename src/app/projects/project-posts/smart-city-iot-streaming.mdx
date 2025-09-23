@@ -1,0 +1,296 @@
+---
+title: "Smart City IoT Streaming: Sensors → Event Hub → Blob → Databricks → Power BI"
+publishedAt: "2024-09-23"
+summary: "Architected a real‑time analytics pipeline to ingest sensor/IoT telemetry into Azure Event Hubs, land CSV batches in Blob (Capture), process at scale in Databricks with Auto Loader, and deliver Power BI dashboards for operational insights and city planning."
+skills: ["Azure Event Hubs", "IoT", "Databricks", "Auto Loader", "Structured Streaming", "Power BI", "SQL Warehouse", "Data Architecture", "Real-time Analytics"]
+---
+
+# Smart City IoT Streaming: Sensors → Event Hub → Blob → Databricks → Power BI
+
+**One‑liner:** Architected a real‑time analytics pipeline to ingest **sensor/IoT** telemetry into **Azure Event Hubs**, land **CSV** batches in **Blob** (Capture), process at scale in **Databricks** with **Auto Loader**, and deliver **Power BI** dashboards for operational insights and city planning.
+
+---
+
+## Context / Problem
+
+A smart‑city pilot deployed heterogeneous sensors (traffic, air quality, waste, energy) producing high‑velocity telemetry. Teams needed near‑real‑time situational awareness and historical insights for planning, without over‑engineering device code or the serving layer.
+
+**Goals**
+
+* Unified ingestion for multiple device types
+* Durable landing in Blob with simple CSV payloads
+* Scalable transforms (cleansing, enrichment, feature engineering)
+* Streaming and batch analytics with low ops overhead
+* Clear, actionable insights and KPIs for non‑technical stakeholders
+
+**Assumptions (dummy details)**
+
+* Ingestion: Azure **Event Hubs** with **Capture to Blob** (CSV files, rolling every 5 minutes)
+* Storage: One storage account; containers per layer (`raw`, `bronze`, `silver`, `gold`)
+* Processing: **Databricks** (UC‑enabled) using **Auto Loader** / Structured Streaming
+* Serving: **SQL Warehouse** → **Power BI** dashboards
+
+---
+
+## My Role
+
+* **Solution Architect**
+* Designed end‑to‑end architecture, schemas, and SLAs; created Databricks pipelines; defined KPIs and authored the Power BI model contract
+
+---
+
+## Architecture (Target)
+
+* **Devices** → **Event Hubs** (partitioned by `device_id`/`site_id`) → **Capture** to Blob **CSV** in `raw/` (5‑min files)
+* **Bronze**: Auto Loader ingests CSV to managed Delta tables with schema inference & evolution
+* **Silver**: Standardized telemetry across domains (traffic, air, energy); time alignment; quality flags
+* **Gold**: Aggregates, anomaly signals, SLA KPIs and geo roll‑ups for PBI
+* **Governance**: Unity Catalog (catalog/schemas per domain), grants to reader groups
+
+**Flow:** Sensors → Event Hub → Blob (`raw`) → Databricks (Bronze→Silver→Gold) → SQL Warehouse → Power BI
+
+---
+
+## Device Integration with Azure Event Hubs
+
+To accommodate heterogeneous sensors, we used three ingress patterns—all landing in **Event Hubs** with consistent **JSON** payloads and **partition keys**:
+
+1. **Direct to Event Hubs (AMQP/MQTT over Kafka)**
+
+* Devices that can speak AMQP 1.0 (or Kafka protocol) publish directly to Event Hubs.
+* **Security**: per‑device **SAS** credentials (Shared Access Policy per device group), rotated via Key Vault.
+* **Partitioning**: `partition_key = device_id` for ordering per device.
+* **Schema**: envelope with `event_ts`, `device_id`, `site_id`, `metrics` map.
+
+2. **Edge Gateway (Protocol Adapter)**
+
+* For legacy protocols (Modbus, BLE, LoRaWAN HTTP callbacks), an **edge gateway** normalizes payloads to the common JSON and forwards to Event Hubs.
+* Gateway runs a lightweight forwarder container with retry/backoff and local buffering for intermittent links.
+
+3. **Polling/Webhook Bridges**
+
+* Some vendor sensors expose REST/webhooks. We used **Azure Functions**/**Container Apps** to poll or receive webhooks and forward events into Event Hubs.
+
+**Reliability & Ops**
+
+* **Batching** with `max_batch_size` and timeouts; **idempotency** via `event_id`.
+* **Backpressure**: Event Hubs quotas monitored; producers apply exponential backoff & jitter.
+* **Capture**: Event Hubs **Capture** writes Avro/CSV to Blob every **5 minutes**; Databricks consumes from Blob.
+
+### Sample Payload (normalized)
+
+```json
+{
+  "event_ts": "2025-09-19T10:05:30Z",
+  "device_id": "traffic_cam_023",
+  "site_id": "zone-7",
+  "lat": 12.9716,
+  "lon": 77.5946,
+  "metrics": {
+    "vehicle_count": 14,
+    "avg_speed_kph": 36.2,
+    "pm25": null,
+    "kw": null,
+    "fill_level_pct": null
+  }
+}
+```
+
+### Producer Examples
+
+**Python (AMQP) using `azure-eventhub`**
+
+```python
+from azure.eventhub import EventHubProducerClient, EventData
+import json, os
+
+producer = EventHubProducerClient.from_connection_string(
+    conn_str=os.environ["EH_CONN"], eventhub_name=os.environ["EH_NAME"])
+
+payload = {"event_ts": "2025-09-19T10:05:30Z", "device_id": "traffic_cam_023", "site_id": "zone-7", "metrics": {"vehicle_count": 14}}
+
+batch = producer.create_batch(partition_key=payload["device_id"])  # per-device ordering
+batch.add(EventData(json.dumps(payload)))
+producer.send_batch(batch)
+producer.close()
+```
+
+**Kafka protocol (Event Hubs Kafka endpoint)**
+
+```properties
+# Producer config
+bootstrap.servers=<namespace>.servicebus.windows.net:9093
+security.protocol=SASL_SSL
+sasl.mechanism=PLAIN
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required \
+  username="$ConnectionString" \
+  password="Endpoint=sb://<namespace>.servicebus.windows.net/;SharedAccessKeyName=<policy>;SharedAccessKey=<key>;EntityPath=<eventhub>";
+
+# Code (pseudo): send JSON with key=device_id to topic=<eventhub>
+```
+
+**Gateway forwarder (Python) sketch**
+
+```python
+# Normalize vendor payload → common JSON, add event_id for de-dup
+norm = {
+  "event_id": f"{vendor_id}-{seq}",
+  "event_ts": iso_ts,
+  "device_id": device,
+  "site_id": site,
+  "lat": lat,
+  "lon": lon,
+  "metrics": vendor_metrics
+}
+# send to Event Hubs as above
+```
+
+**Security**
+
+* SAS keys per device group; **RBAC** on namespace; secrets in **Key Vault** with periodic rotation.
+* TLS enforced; minimal network access (private endpoints where available).
+
+---
+
+## Data Contracts
+
+* **Common fields**: `event_ts`, `device_id`, `site_id`, `lat`, `lon`
+* **Traffic**: `vehicle_count`, `avg_speed_kph`
+* **Air**: `pm25`, `pm10`, `no2`, `co`, `temp_c`
+* **Energy**: `kw`, `voltage`, `current`
+* **Waste**: `fill_level_pct`
+
+---
+
+## Key Decisions & Patterns
+
+* **Capture cadence** at 5‑minute windows for predictable file sizes and near‑real‑time processing
+* **Auto Loader** for file discovery + schema evolution; **managed Delta** for curated layers
+* **Watermarking** to handle late/duplicate events; **idempotent** writes
+* **Geospatial bucketing** (site/zone) for roll‑ups; optional H3 index if needed
+* **Expectation rules** to quarantine bad telemetry (e.g., negative speeds, out‑of‑range sensors)
+
+---
+
+## Snippets (Illustrative)
+
+### 1) Auto Loader — Ingest Event Hubs Capture CSV (Bronze)
+
+```python
+from pyspark.sql.functions import *
+
+raw_path = "abfss://raw@<acct>.dfs.core.windows.net/eventhubs/capture/"
+bronze_tbl = "iot_bronze.telemetry"
+
+(spark.readStream
+  .format("cloudFiles")
+  .option("cloudFiles.format", "csv")
+  .option("cloudFiles.inferColumnTypes", "true")
+  .option("cloudFiles.schemaLocation", "/Volumes/platform/checkpoints/iot_schema")
+  .load(raw_path)
+  .withColumn("_load_ts", current_timestamp())
+  .writeStream
+  .option("checkpointLocation", "/Volumes/platform/checkpoints/iot_bronze")
+  .trigger(processingTime="5 minutes")
+  .toTable(bronze_tbl))
+```
+
+### 2) Silver standardization & quality flags
+
+```sql
+CREATE OR REPLACE TABLE iot_silver.telemetry AS
+SELECT
+  to_timestamp(event_ts) AS event_ts,
+  device_id,
+  site_id,
+  try_cast(vehicle_count AS INT) AS vehicle_count,
+  try_cast(avg_speed_kph AS DOUBLE) AS avg_speed_kph,
+  try_cast(pm25 AS DOUBLE) AS pm25,
+  try_cast(pm10 AS DOUBLE) AS pm10,
+  try_cast(no2 AS DOUBLE) AS no2,
+  try_cast(co AS DOUBLE) AS co,
+  try_cast(temp_c AS DOUBLE) AS temp_c,
+  try_cast(kw AS DOUBLE) AS kw,
+  try_cast(fill_level_pct AS DOUBLE) AS fill_level_pct,
+  CASE WHEN avg_speed_kph < 0 OR avg_speed_kph > 200 THEN true ELSE false END AS bad_speed,
+  CASE WHEN pm25 < 0 OR pm25 > 1000 THEN true ELSE false END AS bad_pm25
+FROM iot_bronze.telemetry;
+```
+
+### 3) Gold aggregates & anomaly signal (traffic example)
+
+```sql
+CREATE OR REPLACE TABLE iot_gold.traffic_5min AS
+SELECT site_id,
+       window.start AS window_start,
+       SUM(vehicle_count) AS vehicles,
+       AVG(avg_speed_kph) AS avg_speed_kph,
+       PERCENTILE(avg_speed_kph, 0.05) AS p05_speed,
+       PERCENTILE(avg_speed_kph, 0.95) AS p95_speed,
+       CASE WHEN AVG(avg_speed_kph) < 0.6 * PERCENTILE(avg_speed_kph, 0.95) THEN 1 ELSE 0 END AS congestion_flag
+FROM STREAM(iot_silver.telemetry)
+GROUP BY site_id, WINDOW(event_ts, '5 minutes');
+```
+
+### 4) Air quality daily roll‑ups
+
+```sql
+CREATE OR REPLACE TABLE iot_gold.air_daily AS
+SELECT site_id,
+       DATE(event_ts) AS day,
+       AVG(pm25) AS pm25_avg,
+       MAX(pm25) AS pm25_peak,
+       SUM(CASE WHEN pm25 > 100 THEN 1 ELSE 0 END) AS high_pm25_ticks
+FROM iot_silver.telemetry
+GROUP BY site_id, DATE(event_ts);
+```
+
+### 5) Power BI semantic view
+
+```sql
+CREATE OR REPLACE VIEW iot_model.v_city_ops AS
+SELECT t.site_id,
+       t.window_start,
+       t.vehicles,
+       t.avg_speed_kph,
+       a.pm25_avg,
+       a.pm25_peak
+FROM iot_gold.traffic_5min t
+LEFT JOIN iot_gold.air_daily a USING (site_id);
+```
+
+---
+
+## Insights (Illustrative)
+
+* **Traffic**: peak congestion windows by corridor; impact of signal timing; weekend vs weekday patterns
+* **Air Quality**: PM2.5 spikes correlated with traffic peaks and temperature inversions
+* **Waste Ops**: dynamic routing based on fill‑level thresholds reduced missed pickups
+* **Energy**: load shaping opportunities during evening peaks; outlier device detection
+
+---
+
+## Testing & Validation
+
+* **Continuity**: no gaps in 5‑min windows; watermarking validated
+* **Quality**: % rows flagged by expectations; device health alerts
+* **Performance**: streaming latency < 2 minutes from capture to gold
+* **BI parity**: dashboard counts match gold aggregates
+
+---
+
+## Outcomes / Impact
+
+* **Near‑real‑time dashboards** for traffic and air quality with 5‑minute SLAs
+* **Operational actions**: congestion flags and high‑PM alerts informed field responses
+* **Scalability**: additional sensor types onboarded with the same pattern
+* **Governance**: UC‑managed tables and views with clear lineage
+
+---
+
+## Risks & Mitigations
+
+* **Sensor drift / faulty devices** → health monitors; quarantine streams
+* **Late/duplicate data** → watermarks + dedup keys
+* **CSV schema drift** → Auto Loader schema evolution + alerting
+* **Geo accuracy** → standardize site metadata; snap to city zones
