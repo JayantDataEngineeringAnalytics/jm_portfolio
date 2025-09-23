@@ -1,0 +1,220 @@
+---
+title: "Real‑time Coupon Recommendations"
+publishedAt: "2024-07-18"
+summary: "Built an event‑driven pipeline that captures purchase events from PostgreSQL into Kafka, performs streaming ML inference in Databricks, and writes personalized coupon recommendations back to PostgreSQL for immediate delivery—achieving sub‑minute to few‑minutes end‑to‑end latency."
+skills: ["PostgreSQL", "Kafka", "Databricks", "Debezium", "Kafka Connect", "Structured Streaming", "Machine Learning", "Real-time Processing", "Event-driven Architecture"]
+---
+
+**Summary:** Built an event‑driven pipeline that captures **purchase events** from **PostgreSQL** into **Kafka**, performs **streaming ML inference** in **Databricks**, and writes **personalized coupon recommendations** back to **PostgreSQL** for immediate delivery—achieving **sub‑minute to few‑minutes** end‑to‑end latency.
+
+---
+
+## Context / Problem
+
+A retail checkout flow needed on‑the‑spot, next‑purchase offers triggered by a just‑completed order. Goals:
+
+* Near real‑time capture of orders/payments
+* Low‑latency recommendation generation
+* Idempotent write‑back to the transactional DB (no double‑issuing)
+* Clear measurement (A/B) to prove uplift
+
+**Assumptions (dummy details; no client names):**
+
+* PostgreSQL 13+ (rowstore for transactions)
+* Kafka (or Confluent) with Schema Registry; Kafka **Connect** for CDC/sinks
+* Databricks with UC; model supplied as a library or Model Serving endpoint
+* Delivery channel handled by app after Postgres insert (push/SMS/in‑app)
+
+---
+
+## My Role
+
+* **Streaming & ML Integration Architect**
+* Designed event topics, CDC, streaming inference, idempotent upsert, and measurement plan; delivered runbooks and dashboards
+
+---
+
+## Architecture (Target)
+
+* **Capture (CDC)**: **Debezium** reads Postgres WAL and publishes `sales.orders` / `sales.payments` topics
+* **Feature join + inference**: Databricks Structured Streaming consumes topics, joins with recent features (loyalty, recency/frequency), calls ML scorer (library/UDF or model serving)
+* **Serve**: write **coupon recommendations** back to **Postgres** (UPSERT) for the app to retrieve and present
+* **Governance/Obs**: Schema Registry, ACLs, DLQs, lag/latency dashboards
+
+**Latency budget (typical):** Postgres→Kafka 1–5s · Kafka→Inference 15–90s · Write‑back 1–10s → **P95 < a few minutes**.
+
+---
+
+## Topic & Schema Design
+
+* `sales.orders` (key: `order_id`, fields: `order_id`, `customer_id`, `order_ts`, `items[]`, `amount`, etc.)
+* `sales.payments` (key: `payment_id`, fields: `payment_status`, `payment_ts`, `order_id`)
+* `reco.coupons` (optional curated stream with recommendation payloads)
+
+**Schema strategy:** Avro/JSON‑Schema with **backward** compatibility; include `model_version`, `reco_id`.
+
+---
+
+## Idempotency & Safety
+
+* Generate deterministic `reco_id = hash(customer_id, order_id, model_version)`
+* Postgres table has **UNIQUE (customer\_id, order\_id)** (or on `reco_id`) to prevent duplicates
+* App delivers at‑most‑once per order by selecting latest valid row
+
+---
+
+## Implementation Plan
+
+1. **Kafka Connect: Debezium Postgres** for WAL CDC
+2. **Databricks stream**: consume orders/payments, windowed join, feature lookup, score
+3. **Write‑back**: JDBC sink (or Connect JDBC Sink) UPSERT into `public.coupon_recommendations`
+4. **A/B test**: random 50/50 assignment; measure repeat purchase within N days
+5. **Dashboards**: lag, throughput, success rate, error/DLQ monitors
+
+---
+
+## Snippets (Illustrative)
+
+### 1) Debezium Postgres Source (Kafka Connect)
+
+```json
+{
+  "name": "pg-sales-cdc",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "postgres.internal",
+    "database.port": "5432",
+    "database.user": "debezium",
+    "database.password": "${secrets:pg_pwd}",
+    "database.dbname": "sales",
+    "plugin.name": "pgoutput",
+    "schema.include.list": "public",
+    "table.include.list": "public.orders,public.payments",
+    "tombstones.on.delete": "false",
+    "slot.name": "debezium_slot",
+    "publication.autocreate.mode": "filtered",
+    "include.schema.changes": "false",
+    "transforms": "unwrap,route",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+    "transforms.route.type": "org.apache.kafka.connect.transforms.RegexRouter",
+    "transforms.route.regex": "(.*)public\\.(.*)",
+    "transforms.route.replacement": "sales.$2",
+    "key.converter": "io.confluent.connect.avro.AvroConverter",
+    "key.converter.schema.registry.url": "https://schema-registry:8081",
+    "value.converter": "io.confluent.connect.avro.AvroConverter",
+    "value.converter.schema.registry.url": "https://schema-registry:8081",
+    "errors.tolerance": "all",
+    "errors.deadletterqueue.topic.name": "dlq.debezium.pg",
+    "errors.deadletterqueue.context.headers.enable": "true"
+  }
+}
+```
+
+### 2) Databricks Streaming Inference (PySpark)
+
+```python
+from pyspark.sql.functions import col, from_json, to_json, struct, current_timestamp, sha2, concat_ws
+from pyspark.sql.types import *
+from nextbest_lib import scorer  # vendor/model lib
+
+ORDERS = "sales.orders"  # Kafka topic name via autoloader/connector
+PAYMENTS = "sales.payments"
+
+orders = (spark.readStream.format("kafka")
+  .option("kafka.bootstrap.servers", "kafka:9092")
+  .option("subscribe", ORDERS)
+  .option("startingOffsets", "latest").load())
+
+payments = (spark.readStream.format("kafka")
+  .option("kafka.bootstrap.servers", "kafka:9092")
+  .option("subscribe", PAYMENTS)
+  .option("startingOffsets", "latest").load())
+
+# Parse Avro/JSON as needed (schema omitted for brevity)
+orders_df = parse_orders(orders)       # -> order_id, customer_id, order_ts, amount, items[]
+payments_df = parse_payments(payments) # -> payment_status, order_id, payment_ts
+
+paid_orders = (orders_df.join(payments_df, "order_id", "inner")
+               .where(col("payment_status") == "CAPTURED"))
+
+# Feature lookup (could be Delta tables or a feature store)
+features = spark.table("feat.customer")  # recency, frequency, monetary, affinities
+ready = paid_orders.join(features, "customer_id", "left")
+
+# Score with external lib (batch micro-batch)
+scored = scorer.score(ready)  # returns columns: customer_id, order_id, coupon_code, score, model_version
+
+reco = (scored
+  .withColumn("reco_id", sha2(concat_ws("|", col("customer_id"), col("order_id"), col("model_version")), 256))
+  .withColumn("created_at", current_timestamp()))
+```
+
+### 3) Write‑back to PostgreSQL (JDBC Upsert)
+
+```python
+(reco.writeStream
+  .foreachBatch(lambda df, epoch: (
+      df.createOrReplaceTempView("batch_reco"),
+      spark.sql("""
+        MERGE INTO ops_gold.pg_coupon_reco t
+        USING batch_reco s
+        ON t.reco_id = s.reco_id
+        WHEN NOT MATCHED THEN INSERT *
+        WHEN MATCHED THEN UPDATE SET coupon_code = s.coupon_code, score = s.score, created_at = s.created_at
+      """)
+  ))
+  .outputMode("update")
+  .start())
+
+# Alternative: Kafka Connect JDBC Sink with upsert
+# pk.mode=record_key, insert.mode=upsert, pk.fields=reco_id
+```
+
+### 4) PostgreSQL Table (target) & Uniqueness
+
+```sql
+CREATE TABLE public.coupon_recommendations (
+  reco_id TEXT PRIMARY KEY,
+  customer_id TEXT NOT NULL,
+  order_id TEXT NOT NULL,
+  coupon_code TEXT NOT NULL,
+  score DOUBLE PRECISION,
+  model_version TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE UNIQUE INDEX uq_customer_order ON public.coupon_recommendations(customer_id, order_id);
+```
+
+---
+
+## Measurement & Success Criteria
+
+* **Experiment design:** A/B (50/50) or geo/time holdout; **success** = repeat purchase within **X days** after receiving a coupon
+* **Primary metric:** **Uplift** = (treatment repeat‑purchase rate − control rate); report with **N** and confidence intervals
+* **Operational metrics:** P95 end‑to‑end latency, topic lag, write‑back error rate, duplicate rate (should be \~0)
+
+---
+
+## Outcomes / Impact
+
+* **Conversion uplift:** >15% relative improvement in repeat purchase vs control (dummy figure; replace with tested result)
+* **Latency:** P95 under a few minutes from payment capture to coupon availability
+* **Reliability:** Idempotent write‑back eliminates double issuance; DLQs isolate bad events
+
+---
+
+## Risks & Mitigations
+
+* **Duplicate events / retries** → idempotent keys, unique constraints, and exactly‑once sinks where supported
+* **Model drift** → nightly backfills for features; periodic model re‑evaluation; versioned outputs
+* **PII in streams** → use opaque IDs; restrict ACLs; encrypt at rest/in flight
+* **Checkout race conditions** → publish to a push channel immediately after insert; cache in app session
+
+---
+
+## Runbooks & Ops (Abbrev.)
+
+* **Lag/latency dashboards** (Connect/consumer lag, Databricks micro‑batch time)
+* **Connector CI/CD** for Debezium/JDBC sinks with config versioning
+* **Backfill strategy** for missed windows (replay from Kafka offsets)
+* **Disaster drills**: Postgres failover, Kafka broker loss, Databricks job rollback
