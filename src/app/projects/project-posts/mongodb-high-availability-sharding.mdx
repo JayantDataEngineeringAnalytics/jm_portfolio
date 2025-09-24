@@ -5,7 +5,7 @@ summary: "Designed and implemented replica sets for HA and cluster sharding for 
 skills: ["MongoDB", "Database Architecture", "High Availability", "Sharding", "Azure", "Replica Sets", "Performance Optimization", "DevOps", "Database Administration", "Monitoring"]
 ---
 
-**Summary:** Designed and implemented **replica sets** for HA and **cluster sharding** for horizontal scale—covering key selection, balancer strategy, resilience controls, and operational automation.
+Designed and implemented replica sets for HA and cluster sharding for horizontal scale—covering key selection, balancer strategy, resilience controls, and operational automation.
 
 ---
 
@@ -13,16 +13,16 @@ skills: ["MongoDB", "Database Architecture", "High Availability", "Sharding", "A
 
 Rapid growth in read/write volume and dataset size pushed a single MongoDB node past safe limits. We needed:
 
-* **High availability** with automatic failover (RPO≈0, low RTO)
-* **Horizontal scale** for writes and storage
+* High availability with automatic failover (RPO≈0, low RTO)
+* Horizontal scale for writes and storage
 * Predictable performance under skewed workloads
 * Secure, auditable operations with minimal downtime during maintenance
 
-**Assumptions** (no client names):
+Assumptions (no client names):
 
-* Deployment: self‑managed on **Azure VMs** (Linux), MongoDB **6.x/7.x**
+* Deployment: self‑managed on Azure VMs (Linux), MongoDB 6.x/7.x
 * Storage: premium SSD, filesystem XFS, journaling enabled
-* Security: TLS, SCRAM‑SHA‑256, **keyFile** for cluster auth, RBAC
+* Security: TLS, SCRAM‑SHA‑256, keyFile for cluster auth, RBAC
 * Backups: VM snapshots + logical backups (mongodump/point‑in‑time via oplog)
 * Monitoring: Prometheus/Grafana / or Cloud Manager equivalent
 
@@ -30,59 +30,59 @@ Rapid growth in read/write volume and dataset size pushed a single MongoDB node 
 
 ## My Role
 
-* **Database Architect & Implementation Lead** (2 engineers, 1 platform admin)
+* Database Architect & Implementation Lead (2 engineers, 1 platform admin)
 * Planned topology, performed rollout (dev→stage→prod), and authored runbooks for ops
 
 ---
 
 ## Architecture (Target)
 
-* **Replica Sets (per shard + config servers):**
+* Replica Sets (per shard + config servers):
   * Primary + 2 secondaries (odd member count), hidden delayed secondary (optional)
   * Arbiter avoided (prefer full secondaries)
   * Elections tuned via priorities/`votes`
 
-* **Sharded Cluster:**
-  * 3× **config server** replica set (CSRS)
-  * 2–N **shards**, each a replica set
-  * ≥2 **mongos** routers behind an internal load balancer
+* Sharded Cluster:
+  * 3× config server replica set (CSRS)
+  * 2–N shards, each a replica set
+  * ≥2 mongos routers behind an internal load balancer
 
-* **Networking & Security:** VNet peering, NSGs, TLS everywhere, keyFile, RBAC
-* **Operations:** online scaling, rolling upgrades, balancer windows, zone/tag‑aware routing
+* Networking & Security: VNet peering, NSGs, TLS everywhere, keyFile, RBAC
+* Operations: online scaling, rolling upgrades, balancer windows, zone/tag‑aware routing
 
-**Data flow:** Clients ↔ **mongos** ↔ shards (replica sets) with metadata from CSRS.
+Data flow: Clients ↔ mongos ↔ shards (replica sets) with metadata from CSRS.
 
 ---
 
 ## Key Decisions & Patterns
 
-* **Shard‑key strategy:** prefer **compound keys** reflecting query patterns; use **hashed** keys for write distribution, **ranged** keys for range scans
-* **Zones (tag‑aware sharding):** pin tenant/region data for data‑sovereignty or latency
-* **Chunk size:** default 128MB; evaluate based on hotspot behavior
-* **Balancer control:** scheduled windows; throttle during peak; pre‑split for bulk loads
-* **Write/Read concerns:** `majority` with journaling; read with `nearest` for global read scale where acceptable
-* **Hidden/Delayed secondary:** protection against operator error or bad writes
+* Shard‑key strategy: prefer compound keys reflecting query patterns; use hashed keys for write distribution, ranged keys for range scans
+* Zones (tag‑aware sharding): pin tenant/region data for data‑sovereignty or latency
+* Chunk size: default 128MB; evaluate based on hotspot behavior
+* Balancer control: scheduled windows; throttle during peak; pre‑split for bulk loads
+* Write/Read concerns: `majority` with journaling; read with `nearest` for global read scale where acceptable
+* Hidden/Delayed secondary: protection against operator error or bad writes
 
 ---
 
 ## Implementation Plan
 
-1. **Replica Set Enablement** (migrate standalone → RS)
-   * Convert existing mongod to a 3‑member RS; size **oplog**; verify failover
+1. Replica Set Enablement (migrate standalone → RS)
+   * Convert existing mongod to a 3‑member RS; size oplog; verify failover
 
-2. **Config Server RS & mongos layer**
-   * Deploy CSRS (3 members), configure **mongos** routers
+2. Config Server RS & mongos layer
+   * Deploy CSRS (3 members), configure mongos routers
 
-3. **Shard Creation & Pre‑split**
+3. Shard Creation & Pre‑split
    * Create shards (each RS), choose shard key, pre‑split & distribute chunks
 
-4. **Enable Sharding** for DBs/collections
+4. Enable Sharding for DBs/collections
 
-5. **Zones/Tags** (if required) and balancer windows
+5. Zones/Tags (if required) and balancer windows
 
-6. **Cutover & Dual‑Run** for critical workloads, then remove legacy paths
+6. Cutover & Dual‑Run for critical workloads, then remove legacy paths
 
-7. **Runbooks** for failover, scaling, backups, disaster simulation
+7. Runbooks for failover, scaling, backups, disaster simulation
 
 ---
 
@@ -92,16 +92,16 @@ To implement MongoDB high availability and sharding, we needed to architect the 
 
 ### Implementation Themes
 
-* **Replica set configuration:** establish primary-secondary relationships with proper failover mechanics
-* **Sharding architecture:** design shard key strategies that optimize both write distribution and query performance
-* **Security hardening:** implement TLS encryption, authentication, and role-based access control
-* **Operational automation:** create runbooks and scripts for common maintenance tasks
-* **Monitoring integration:** instrument cluster health, performance metrics, and alerting
-* **Backup strategies:** implement both logical and physical backup approaches with point-in-time recovery
+* Replica set configuration: establish primary-secondary relationships with proper failover mechanics
+* Sharding architecture: design shard key strategies that optimize both write distribution and query performance
+* Security hardening: implement TLS encryption, authentication, and role-based access control
+* Operational automation: create runbooks and scripts for common maintenance tasks
+* Monitoring integration: instrument cluster health, performance metrics, and alerting
+* Backup strategies: implement both logical and physical backup approaches with point-in-time recovery
 
 ### Before → After Examples
 
-**1) Single node → Replica Set**
+1) Single node → Replica Set
 
 ```javascript
 // BEFORE (single mongod instance)
@@ -131,7 +131,7 @@ rs.add({
 });
 ```
 
-**2) Single collection → Sharded collection**
+2) Single collection → Sharded collection
 
 ```javascript
 // BEFORE (single collection on one server)
@@ -151,7 +151,7 @@ sh.splitAt("ecommerce.orders", { customerId: "50000", orderDate: ISODate("2024-0
 sh.splitAt("ecommerce.orders", { customerId: "100000", orderDate: ISODate("2024-01-01") });
 ```
 
-**3) Manual operations → Automated balancer management**
+3) Manual operations → Automated balancer management
 
 ```javascript
 // BEFORE (manual chunk distribution)
@@ -393,30 +393,30 @@ const client = new MongoClient('mongodb://app_writer:writerPassword123@mongos1:2
 
 ## Testing & Validation
 
-* **Failover drills**: stepDown primary; verify RTO/RPO; client retry behavior
-* **Throughput tests**: write fan‑out with hashed keys; range queries under ranged keys
-* **Rebalance tests**: bulk load with pre‑split vs without
-* **Backup/restore**: consistent snapshots and PIT restores
-* **Security**: TLS, keyFile, RBAC least privilege
+* Failover drills: stepDown primary; verify RTO/RPO; client retry behavior
+* Throughput tests: write fan‑out with hashed keys; range queries under ranged keys
+* Rebalance tests: bulk load with pre‑split vs without
+* Backup/restore: consistent snapshots and PIT restores
+* Security: TLS, keyFile, RBAC least privilege
 
 ---
 
 ## Outcomes / Impact
 
-* **Availability**: zero‑data‑loss under node failure (journaled majority)
-* **Scale**: linear write scaling with additional shards; balanced storage growth
-* **Performance**: reduced hotspotting; stable latency during peaks
-* **Operational maturity**: documented runbooks, rehearsed failover, predictable maintenance windows
-* **Security**: comprehensive authentication and encryption in transit/at rest
+* Availability: zero‑data‑loss under node failure (journaled majority)
+* Scale: linear write scaling with additional shards; balanced storage growth
+* Performance: reduced hotspotting; stable latency during peaks
+* Operational maturity: documented runbooks, rehearsed failover, predictable maintenance windows
+* Security: comprehensive authentication and encryption in transit/at rest
 
 ---
 
 ## Risks & Mitigations
 
-* **Bad shard key** → analyze query patterns & cardinality; can require collection rebuild to change
-* **Chunk migration overhead** → schedule windows; pre‑split for bulk backfills
-* **Skewed tenants** → compound/ranged keys, zones for isolation
-* **Operational drift** → IaC for config, regular audits, and alerts on balancer activity
-* **Split-brain scenarios** → ensure proper network partitioning handling with majority writes
+* Bad shard key → analyze query patterns & cardinality; can require collection rebuild to change
+* Chunk migration overhead → schedule windows; pre‑split for bulk backfills
+* Skewed tenants → compound/ranged keys, zones for isolation
+* Operational drift → IaC for config, regular audits, and alerts on balancer activity
+* Split-brain scenarios → ensure proper network partitioning handling with majority writes
 
 ---

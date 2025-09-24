@@ -5,7 +5,7 @@ summary: "Migrated Hive external tables to Unity Catalog managed tables (Delta)�
 skills: ["Databricks", "Unity Catalog", "Delta Lake", "Azure", "Data Governance", "PySpark", "SQL", "Power BI", "Data Architecture"]
 ---
 
-**Summary:** Migrated **Hive external tables** to **Unity Catalog *managed* tables (Delta)**—consolidating storage under UC‑managed locations, standardizing governance (ABAC/RBAC), and enabling lineage & cross‑workspace sharing. Performed **DEEP CLONE/CTAS copy** with a short write freeze for cutover.
+Migrated Hive external tables to Unity Catalog managed tables (Delta)—consolidating storage under UC‑managed locations, standardizing governance (ABAC/RBAC), and enabling lineage & cross‑workspace sharing. Performed DEEP CLONE/CTAS copy with a short write freeze for cutover.
 
 ---
 
@@ -19,18 +19,18 @@ A growing lakehouse had multiple Databricks workspaces bound to a single externa
 * Auditable lineage for BI/AI workloads (Power BI, SQL endpoints)
 * Low‑risk migration with a repeatable playbook
 
-**Assumptions** (no client names):
+Assumptions (no client names):
 
-* Cloud: **Azure** (works similarly for AWS/GCP)
-* Storage: **ADLS Gen2 single storage account** (one blob) with **containers per schema/layer**: `raw`, `working`, `silver`, `gold` — migrated from earlier **per‑schema blob accounts**
-* Data format: **Delta Lake** (majority), some Parquet/CSV
+* Cloud: Azure (works similarly for AWS/GCP)
+* Storage: ADLS Gen2 single storage account (one blob) with containers per schema/layer: `raw`, `working`, `silver`, `gold` — migrated from earlier per‑schema blob accounts
+* Data format: Delta Lake (majority), some Parquet/CSV
 * Orchestration: ADF/Jobs; BI: Power BI Service
 
 ---
 
 ## My Role
 
-* **Data Architect & Delivery Lead** (4 engineers, 1 platform admin)
+* Data Architect & Delivery Lead (4 engineers, 1 platform admin)
 * Defined governance model, migration plan, and back‑out strategy
 * Built automation notebooks & validation harness; led cutover
 
@@ -38,88 +38,88 @@ A growing lakehouse had multiple Databricks workspaces bound to a single externa
 
 ## Architecture (Target)
 
-* **Unity Catalog** as the control plane for identities, grants, lineage
-* **Managed Storage**: metastore‑level managed storage with **catalog‑level managed locations**; schemas inherit unless overridden
-* **Storage Topology**: **single ADLS Gen2 storage account** with **containers per schema/layer** (`raw`, `working`, `silver`, `gold`) — centralized IAM, firewall rules, and lifecycle
-* **Tables**: **managed Delta tables** in UC (no explicit LOCATION); lifecycle (DROP TABLE) manages data cleanup
-* **Minimal External**: external locations only for raw/landing or partner exchange
-* **Workspaces**: attached to a single UC metastore across dev/uat/prod
-* **Access**: service principals & SCIM; grants via groups
-* **Lineage**: UC lineage across notebooks/SQL/PBI
+* Unity Catalog as the control plane for identities, grants, lineage
+* Managed Storage: metastore‑level managed storage with catalog‑level managed locations; schemas inherit unless overridden
+* Storage Topology: single ADLS Gen2 storage account with containers per schema/layer (`raw`, `working`, `silver`, `gold`) — centralized IAM, firewall rules, and lifecycle
+* Tables: managed Delta tables in UC (no explicit LOCATION); lifecycle (DROP TABLE) manages data cleanup
+* Minimal External: external locations only for raw/landing or partner exchange
+* Workspaces: attached to a single UC metastore across dev/uat/prod
+* Access: service principals & SCIM; grants via groups
+* Lineage: UC lineage across notebooks/SQL/PBI
 
-**Flow:** Sources → Ingestion (Auto Loader/ADF) → Bronze/Silver/Gold **(managed in UC)** → Consumers (PBI, SQL Warehouses, ML)
+Flow: Sources → Ingestion (Auto Loader/ADF) → Bronze/Silver/Gold (managed in UC) → Consumers (PBI, SQL Warehouses, ML)
 
 ---
 
 ## Key Decisions & Naming
 
-* **Storage Topology**: moved from **per‑schema blob accounts** to a **single storage account** with containers `raw/working/silver/gold` for simpler IAM and routing
-* **Catalogs** per domain (`finance`, `ops`, `shared`) + `sandbox`
-* **Schemas** mirror medallion layers where helpful: `sales_bronze`, `sales_silver`, `sales_gold`
-* **External Locations**: used sparsely for landing/partners; most tables **managed**
-* **Grants** via groups (not users): `grp_data_eng`, `grp_pbi_readers`, `grp_piisafe`
-* **Row/Column Security**: dynamic views with user attributes (ABAC)
+* Storage Topology: moved from per‑schema blob accounts to a single storage account with containers `raw/working/silver/gold` for simpler IAM and routing
+* Catalogs per domain (`finance`, `ops`, `shared`) + `sandbox`
+* Schemas mirror medallion layers where helpful: `sales_bronze`, `sales_silver`, `sales_gold`
+* External Locations: used sparsely for landing/partners; most tables managed
+* Grants via groups (not users): `grp_data_eng`, `grp_pbi_readers`, `grp_piisafe`
+* Row/Column Security: dynamic views with user attributes (ABAC)
 
 ---
 
 ## Migration Plan (Playbook)
 
-1. **Discovery & Inventory**
+1. Discovery & Inventory
    * Enumerate Hive dbs/tables, storage paths, owners, ACLs, object counts
-   * Classify tables by **Delta** vs non‑Delta; identify orphan paths
+   * Classify tables by Delta vs non‑Delta; identify orphan paths
 
-2. **UC Readiness**
+2. UC Readiness
    * Create UC metastore; attach target workspaces (dev→uat→prod)
-   * Configure **External Locations** & **Storage Credentials**
+   * Configure External Locations & Storage Credentials
    * SCIM sync for groups; map business roles to UC groups
 
-3. **Dry Run (Dev)**
+3. Dry Run (Dev)
    * Migrate a representative slice; validate read/write, lineage, BI impacts
 
-4. **Schema & Naming Refactor**
+4. Schema & Naming Refactor
    * Define target catalogs/schemas; mapping from `hive_db.table → catalog.schema.table`
 
-5. **Automated Object Migration**
-   * **Delta external → UC managed**: use `DEEP CLONE` to copy into the catalog's managed storage
-   * **Non‑Delta external → UC managed**: create as Delta with **CTAS** (`USING DELTA AS SELECT ...`) or `CONVERT TO DELTA` then **DEEP CLONE**
+5. Automated Object Migration
+   * Delta external → UC managed: use `DEEP CLONE` to copy into the catalog's managed storage
+   * Non‑Delta external → UC managed: create as Delta with CTAS (`USING DELTA AS SELECT ...`) or `CONVERT TO DELTA` then DEEP CLONE
    * Preserve table properties/constraints; adopt three‑part names (`catalog.schema.table`)
 
-6. **Permissions & Policies**
+6. Permissions & Policies
    * Apply grants from role matrix; add masking policies for PII columns
 
-7. **Validation & Dual‑Run**
+7. Validation & Dual‑Run
    * Row counts, checksums, sample queries; parallel BI models using both metastores to compare
 
-8. **Cutover (Short Write Freeze)**
-   * Freeze writes, run final validation, swap BI/SQL endpoints to **UC managed tables**, unfreeze; typical freeze ≤ 30 minutes
+8. Cutover (Short Write Freeze)
+   * Freeze writes, run final validation, swap BI/SQL endpoints to UC managed tables, unfreeze; typical freeze ≤ 30 minutes
 
-9. **Back‑out Plan**
+9. Back‑out Plan
    * Retain Hive Metastore snapshot, alias switch, revert endpoints if blocker found
 
-10. **Handover**
+10. Handover
     * Runbook, naming conventions, grant matrix, and monitoring checklist
 
 ---
 
 ## Code Refactoring & Compatibility Changes
 
-To support the move from Hive external tables to **Unity Catalog managed** tables and the new **single‑account / containers‑per‑layer** storage model, we refactored pipelines, notebooks, and BI connections.
+To support the move from Hive external tables to Unity Catalog managed tables and the new single‑account / containers‑per‑layer storage model, we refactored pipelines, notebooks, and BI connections.
 
 ### Refactor Themes
 
-* **Three‑part naming everywhere**: switch from `db.table` to `catalog.schema.table` (e.g., `finance_silver.orders`).
-* **Managed storage semantics**: remove hard‑coded `LOCATION` and path‑based writes; let UC manage data placement.
-* **Path abstraction**: replace direct `abfss://...` strings with a small helper (e.g., `path("silver", "finance/orders")`) only where raw/external is still needed.
-* **Grant orchestration**: migrate ad‑hoc GRANTs to idempotent SQL scripts or Terraform; grant **groups**, not users.
-* **Config updates**: set `spark.sql.catalogImplementation` to `hive` (workspace default) + UC enabled workspace; set default catalog in Jobs/Clusters (e.g., `spark.conf.set("spark.sql.defaultCatalog", "finance")` when appropriate).
-* **Write patterns**: prefer `saveAsTable` with `tableName = "catalog.schema.table"` over path writes; enforce Delta.
-* **BI connectivity**: Power BI models repointed to **SQL Warehouse** in UC; adopted three‑level names in SQL/DAX.
-* **Secrets & identities**: consolidate service principals/MI; centralize secrets; adopt UC Connections where suitable (for external systems).
-* **Testing harness**: added cross‑metastore comparison queries (counts, checksums) and perf baselines.
+* Three‑part naming everywhere: switch from `db.table` to `catalog.schema.table` (e.g., `finance_silver.orders`).
+* Managed storage semantics: remove hard‑coded `LOCATION` and path‑based writes; let UC manage data placement.
+* Path abstraction: replace direct `abfss://...` strings with a small helper (e.g., `path("silver", "finance/orders")`) only where raw/external is still needed.
+* Grant orchestration: migrate ad‑hoc GRANTs to idempotent SQL scripts or Terraform; grant groups, not users.
+* Config updates: set `spark.sql.catalogImplementation` to `hive` (workspace default) + UC enabled workspace; set default catalog in Jobs/Clusters (e.g., `spark.conf.set("spark.sql.defaultCatalog", "finance")` when appropriate).
+* Write patterns: prefer `saveAsTable` with `tableName = "catalog.schema.table"` over path writes; enforce Delta.
+* BI connectivity: Power BI models repointed to SQL Warehouse in UC; adopted three‑level names in SQL/DAX.
+* Secrets & identities: consolidate service principals/MI; centralize secrets; adopt UC Connections where suitable (for external systems).
+* Testing harness: added cross‑metastore comparison queries (counts, checksums) and perf baselines.
 
 ### Before → After Examples
 
-**1) Spark write (path → managed table)**
+1) Spark write (path → managed table)
 
 ```python
 # BEFORE (Hive external, path-based)
@@ -140,7 +140,7 @@ To support the move from Hive external tables to **Unity Catalog managed** table
   .saveAsTable("finance_silver.orders"))  # catalog.schema.table; no path
 ```
 
-**2) Table creation (LOCATION → managed)**
+2) Table creation (LOCATION → managed)
 
 ```sql
 -- BEFORE
@@ -156,7 +156,7 @@ USING DELTA AS
 SELECT * FROM tmp_orders_curated;  -- data lands in schema's managed location
 ```
 
-**3) Reads/writes with default catalog**
+3) Reads/writes with default catalog
 
 ```sql
 -- AFTER (optional convenience)
@@ -165,12 +165,12 @@ CREATE SCHEMA IF NOT EXISTS finance_silver;
 CREATE TABLE IF NOT EXISTS finance_silver.dim_date (...);
 ```
 
-**4) Power BI connection**
+4) Power BI connection
 
 * BEFORE: direct workspace endpoint / cluster + two‑part names.
-* AFTER: **SQL Warehouse (UC)**, **three‑part names**, and role‑based access; refreshed connection strings in PBIX.
+* AFTER: SQL Warehouse (UC), three‑part names, and role‑based access; refreshed connection strings in PBIX.
 
-**5) Grants as code (idempotent)**
+5) Grants as code (idempotent)
 
 ```sql
 GRANT SELECT ON SCHEMA finance_silver TO `grp_pbi_readers`;
@@ -178,7 +178,7 @@ GRANT SELECT ON TABLE finance_silver.orders TO `grp_pbi_readers`;
 REVOKE ALL PRIVILEGES ON SCHEMA finance_silver FROM `individual_user`; -- eliminate user-level drift
 ```
 
-**6) Minimal external access helper (raw/landing only)**
+6) Minimal external access helper (raw/landing only)
 
 ```python
 # Centralized helper for the rare external path use
@@ -290,29 +290,29 @@ for db in hive_dbs:
 
 ## Testing & Validation
 
-* **Structural**: object counts, schema parity, constraints, partitioning
-* **Data**: row counts, min/max per partition, sample checksums
-* **Performance**: representative queries vs baseline
-* **Security**: grant tests, policy enforcement, impersonation flows
-* **BI**: PBIX refresh tests via SQL Warehouse; DAX measures parity
+* Structural: object counts, schema parity, constraints, partitioning
+* Data: row counts, min/max per partition, sample checksums
+* Performance: representative queries vs baseline
+* Security: grant tests, policy enforcement, impersonation flows
+* BI: PBIX refresh tests via SQL Warehouse; DAX measures parity
 
 ---
 
 ## Outcomes / Impact
 
-* **Unified Governance**: managed Delta tables controlled by UC; consistent grants & lineage
-* **Simplified Ops**: dropping a table cleans up data; fewer path‑based ACL issues
-* **Security**: masking + RLS without semantic model duplication
-* **Performance & Reliability**: standardized Delta tables; less drift across envs
-* **Low‑Risk Cutover**: controlled clone/copy with brief write freeze
+* Unified Governance: managed Delta tables controlled by UC; consistent grants & lineage
+* Simplified Ops: dropping a table cleans up data; fewer path‑based ACL issues
+* Security: masking + RLS without semantic model duplication
+* Performance & Reliability: standardized Delta tables; less drift across envs
+* Low‑Risk Cutover: controlled clone/copy with brief write freeze
 
 ---
 
 ## Risks & Mitigations
 
-* **Hard‑coded paths** in legacy jobs → build an abstraction layer & path aliases
-* **Orphan tables** → inventory & archive policy before registration
-* **BI breakage** → dual‑run and semantic model validation
-* **Permissions drift** → source‑of‑truth grant scripts in repo + scheduled audit
+* Hard‑coded paths in legacy jobs → build an abstraction layer & path aliases
+* Orphan tables → inventory & archive policy before registration
+* BI breakage → dual‑run and semantic model validation
+* Permissions drift → source‑of‑truth grant scripts in repo + scheduled audit
 
 ---

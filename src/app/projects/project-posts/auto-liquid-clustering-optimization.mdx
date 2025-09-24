@@ -5,65 +5,65 @@ summary: "Implemented Delta Lake Liquid Clustering with Auto Optimize to reduce 
 skills: ["Delta Lake", "Databricks", "Unity Catalog", "Liquid Clustering", "Azure", "Performance Optimization", "PySpark", "SQL", "Power BI", "Data Architecture"]
 ---
 
-**Summary:** Implemented **Delta Lake Liquid Clustering** with **Auto Optimize** to reduce small files, improve data skipping, and cut end‑to‑end job latency across batch and streaming workloads running under **Unity Catalog**.
+Implemented Delta Lake Liquid Clustering with Auto Optimize to reduce small files, improve data skipping, and cut end‑to‑end job latency across batch and streaming workloads running under Unity Catalog.
 
 ---
 
 ## Context / Problem
 
-As volumes grew, frequent upserts and micro‑batches produced **many small files** and **skewed partition layouts**. Legacy Z‑ORDER and manual OPTIMIZE runs were expensive, hard to schedule, and lagged behind ingestion. We needed:
+As volumes grew, frequent upserts and micro‑batches produced many small files and skewed partition layouts. Legacy Z‑ORDER and manual OPTIMIZE runs were expensive, hard to schedule, and lagged behind ingestion. We needed:
 
 * Continuous clustering behavior that adapts to incoming data
 * Fewer/smarter files to reduce shuffle and scan time
-* Better **data skipping** without heavy daily OPTIMIZE jobs
-* UC‑compliant configuration with **managed tables**
+* Better data skipping without heavy daily OPTIMIZE jobs
+* UC‑compliant configuration with managed tables
 
-**Assumptions** (no client names):
+Assumptions (no client names):
 
-* Cloud: **Azure**
-* Storage topology: **single ADLS Gen2 account**, containers per layer (`raw`, `working`, `silver`, `gold`)
-* Curation: **UC‑managed Delta tables**
-* Workloads: mix of **Auto Loader streaming** and scheduled batch jobs
+* Cloud: Azure
+* Storage topology: single ADLS Gen2 account, containers per layer (`raw`, `working`, `silver`, `gold`)
+* Curation: UC‑managed Delta tables
+* Workloads: mix of Auto Loader streaming and scheduled batch jobs
 * BI: SQL Warehouse (Power BI)
 
 ---
 
 ## My Role
 
-* **Data Architect & Performance Lead** (3 engineers)
+* Data Architect & Performance Lead (3 engineers)
 * Identified candidate tables, designed clustering strategy, instrumented metrics, and led rollout/cutover
 
 ---
 
 ## Architecture (Target)
 
-* **Bronze**: ingest with Auto Loader; minimal table services, occasional compaction only
-* **Silver/Gold**: **Liquid Clustering enabled** on high‑read/merge tables (facts + large dims)
-* **Auto Optimize**: `optimizeWrite` & `autoCompact` on curated tables to control file sizes during write
-* **Governance**: Unity Catalog managed storage, grants to groups, masking/RLS where needed
-* **Observability**: table health dashboard (file counts, avg file size, scan time, skipped bytes, job latency)
+* Bronze: ingest with Auto Loader; minimal table services, occasional compaction only
+* Silver/Gold: Liquid Clustering enabled on high‑read/merge tables (facts + large dims)
+* Auto Optimize: `optimizeWrite` & `autoCompact` on curated tables to control file sizes during write
+* Governance: Unity Catalog managed storage, grants to groups, masking/RLS where needed
+* Observability: table health dashboard (file counts, avg file size, scan time, skipped bytes, job latency)
 
 ---
 
 ## Key Decisions & Patterns
 
-* **Cluster by query predicates**: choose clustering keys that match common filters/joins (e.g., `org_id`, `event_date`, `region`) rather than historical partitions only
-* **Stream‑safe**: enable clustering on streaming sinks (bronze→silver) and batch upsert targets
-* **Right‑size files**: target 128–512MB logical file sizes; avoid tiny files from high parallelism writers
-* **Phased rollout**: canary a few large tables, validate, then expand
-* **No more daily OPTIMIZE** for selected tables—trust liquid maintenance + periodic housekeeping windows
+* Cluster by query predicates: choose clustering keys that match common filters/joins (e.g., `org_id`, `event_date`, `region`) rather than historical partitions only
+* Stream‑safe: enable clustering on streaming sinks (bronze→silver) and batch upsert targets
+* Right‑size files: target 128–512MB logical file sizes; avoid tiny files from high parallelism writers
+* Phased rollout: canary a few large tables, validate, then expand
+* No more daily OPTIMIZE for selected tables—trust liquid maintenance + periodic housekeeping windows
 
 ---
 
 ## Refactor Plan
 
-1. **Pick candidates** using telemetry: high scan time, many small files, frequent upserts
-2. **Define keys**: pick 1–3 clustering columns from top WHERE/JOIN predicates
-3. **Enable features** under UC and set defaults at catalog/schema where safe
-4. **Alter/Create tables** with `CLUSTER BY` and Auto Optimize props
-5. **Repoint writers** to `saveAsTable` (no direct LOCATION) and tune shuffle/parallelism
-6. **Dual‑run & measure**: latency, small‑file ratio, skipped bytes, cost
-7. **Rollout** to more tables; retire Z‑ORDER/OPTIMIZE where validated
+1. Pick candidates using telemetry: high scan time, many small files, frequent upserts
+2. Define keys: pick 1–3 clustering columns from top WHERE/JOIN predicates
+3. Enable features under UC and set defaults at catalog/schema where safe
+4. Alter/Create tables with `CLUSTER BY` and Auto Optimize props
+5. Repoint writers to `saveAsTable` (no direct LOCATION) and tune shuffle/parallelism
+6. Dual‑run & measure: latency, small‑file ratio, skipped bytes, cost
+7. Rollout to more tables; retire Z‑ORDER/OPTIMIZE where validated
 
 ---
 
@@ -73,16 +73,16 @@ To implement Liquid Clustering across our lakehouse, we needed to refactor exist
 
 ### Refactor Themes
 
-* **Table definitions**: migrate from partitioned tables to clustered tables using query‑driven keys
-* **Write optimization**: enable Auto Optimize properties to control file sizes at write time
-* **Streaming sinks**: configure clustering‑aware streaming writes with appropriate triggers
-* **Batch upserts**: tune MERGE operations for clustering‑optimized layouts
-* **Monitoring**: instrument table health metrics to validate clustering effectiveness
-* **Governance**: ensure all changes comply with Unity Catalog managed table semantics
+* Table definitions: migrate from partitioned tables to clustered tables using query‑driven keys
+* Write optimization: enable Auto Optimize properties to control file sizes at write time
+* Streaming sinks: configure clustering‑aware streaming writes with appropriate triggers
+* Batch upserts: tune MERGE operations for clustering‑optimized layouts
+* Monitoring: instrument table health metrics to validate clustering effectiveness
+* Governance: ensure all changes comply with Unity Catalog managed table semantics
 
 ### Before → After Examples
 
-**1) Table creation (partitioned → clustered)**
+1) Table creation (partitioned → clustered)
 
 ```sql
 -- BEFORE (traditional partitioning)
@@ -105,7 +105,7 @@ TBLPROPERTIES (
 );
 ```
 
-**2) Enable clustering on existing tables**
+2) Enable clustering on existing tables
 
 ```sql
 -- Migrate existing table to Liquid Clustering
@@ -116,7 +116,7 @@ ALTER TABLE sales_silver.orders
 CLUSTER BY (org_id, DATE(event_ts));
 ```
 
-**3) Streaming writes with clustering**
+3) Streaming writes with clustering
 
 ```python
 # BEFORE (basic streaming write)
@@ -140,7 +140,7 @@ from pyspark.sql.functions import *
   .toTable("sales_silver.orders"))  # UC managed table with clustering
 ```
 
-**4) Batch operations with Auto Optimize**
+4) Batch operations with Auto Optimize
 
 ```sql
 -- Enable write optimization for session
@@ -291,29 +291,29 @@ def analyze_clustering_candidates(catalog: str, schema: str):
 
 ## Testing & Validation
 
-* **Performance**: wall‑clock latency for streaming and batch SLAs
-* **Files**: small‑file ratio ↓, avg file size ↑ into target band
-* **Read**: scan time ↓, skipped bytes ↑, fewer shuffled bytes on joins
-* **Cost**: cluster hours ↓ for pipelines and BI queries
-* **Correctness**: row counts/checksums stable across dual‑run window
+* Performance: wall‑clock latency for streaming and batch SLAs
+* Files: small‑file ratio ↓, avg file size ↑ into target band
+* Read: scan time ↓, skipped bytes ↑, fewer shuffled bytes on joins
+* Cost: cluster hours ↓ for pipelines and BI queries
+* Correctness: row counts/checksums stable across dual‑run window
 
 ---
 
 ## Outcomes / Impact
 
-* **Latency**: end‑to‑end pipeline time reduced by **20–45%** on key tables
-* **Efficiency**: BI queries read less data due to improved clustering and skipping
-* **Ops Simplification**: removed daily heavy **OPTIMIZE** runs for selected tables
-* **Stability**: fewer retries/timeouts from small‑file amplification
-* **Governance‑friendly**: all changes applied to **UC‑managed** tables with grants as code
+* Latency: end‑to‑end pipeline time reduced by 20–45% on key tables
+* Efficiency: BI queries read less data due to improved clustering and skipping
+* Ops Simplification: removed daily heavy OPTIMIZE runs for selected tables
+* Stability: fewer retries/timeouts from small‑file amplification
+* Governance‑friendly: all changes applied to UC‑managed tables with grants as code
 
 ---
 
 ## Risks & Mitigations
 
-* **Wrong keys** → re‑evaluate predicates quarterly; adjust `CLUSTER BY`
-* **Streaming spikes** → tune triggers and autoscaling; monitor checkpoint lag
-* **Residual tiny files** → occasional housekeeping window (e.g., scheduled OPTIMIZE/REORG where allowed)
-* **Merge hotspots** → consider additional key or bucketing surrogate where justified
+* Wrong keys → re‑evaluate predicates quarterly; adjust `CLUSTER BY`
+* Streaming spikes → tune triggers and autoscaling; monitor checkpoint lag
+* Residual tiny files → occasional housekeeping window (e.g., scheduled OPTIMIZE/REORG where allowed)
+* Merge hotspots → consider additional key or bucketing surrogate where justified
 
 ---

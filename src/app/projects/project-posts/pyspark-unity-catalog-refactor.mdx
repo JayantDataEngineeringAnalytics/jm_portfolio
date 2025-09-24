@@ -5,7 +5,7 @@ summary: "Refactored legacy PySpark pipelines to leverage Unity Catalog features
 skills: ["PySpark", "Databricks", "Unity Catalog", "Delta Lake", "Auto Loader", "Azure", "Data Governance", "Streaming", "Power BI", "Data Architecture"]
 ---
 
-**Summary:** Refactored legacy PySpark pipelines to leverage **Unity Catalog** features end‑to‑end—**Auto Loader (cloudFiles)**, **Delta schema evolution/enforcement**, **managed tables**, **lineage**, and **policy‑based security**—across both **batch** and **streaming** jobs.
+Refactored legacy PySpark pipelines to leverage Unity Catalog features end‑to‑end—Auto Loader (cloudFiles), Delta schema evolution/enforcement, managed tables, lineage, and policy‑based security—across both batch and streaming jobs.
 
 ---
 
@@ -16,14 +16,14 @@ Existing ingestion used hand‑rolled directory scans, manual schema handling, a
 * Declarative ingestion with automatic file discovery & checkpoints
 * Centralized governance (grants, masking/RLS) under Unity Catalog
 * Managed storage semantics (no direct paths) for curated layers
-* A single pattern usable for **batch** and **streaming** use cases
+* A single pattern usable for batch and streaming use cases
 * Clear lineage from notebooks/SQL to downstream BI
 
-**Assumptions** (no client names):
+Assumptions (no client names):
 
-* Cloud: **Azure**
-* Storage topology: **one ADLS Gen2 account**; containers per layer (`raw`, `working`, `silver`, `gold`)
-* Curated data: **UC‑managed Delta tables**
+* Cloud: Azure
+* Storage topology: one ADLS Gen2 account; containers per layer (`raw`, `working`, `silver`, `gold`)
+* Curated data: UC‑managed Delta tables
 * Ingestion landing: `raw` container (external paths ok for landing)
 * Orchestration: Databricks Jobs (optional ADF triggers)
 * BI: Power BI via SQL Warehouse
@@ -32,7 +32,7 @@ Existing ingestion used hand‑rolled directory scans, manual schema handling, a
 
 ## My Role
 
-* **Data Architect & Lead Engineer** (4 engineers)
+* Data Architect & Lead Engineer (4 engineers)
 * Defined UC‑native patterns, built reference implementations, led rollout
 * Authored validation harness & runbooks; coached team on UC grants
 
@@ -40,40 +40,40 @@ Existing ingestion used hand‑rolled directory scans, manual schema handling, a
 
 ## Architecture (Target)
 
-* **Landing (raw)**: external paths ingested via **Auto Loader (cloudFiles)** into bronze managed tables
-* **Curation (silver/gold)**: UC **managed Delta tables** with constraints, expectations, and CDC merges
-* **Governance**: UC grants (group‑based), masking policies, optional dynamic views for RLS
-* **Lineage**: UC lineage across notebooks/SQL/PBI models
-* **Non‑tabular assets**: **UC Volumes** for checkpoints/artifacts where appropriate
-* **Access**: service principals + SCIM group sync
+* Landing (raw): external paths ingested via Auto Loader (cloudFiles) into bronze managed tables
+* Curation (silver/gold): UC managed Delta tables with constraints, expectations, and CDC merges
+* Governance: UC grants (group‑based), masking policies, optional dynamic views for RLS
+* Lineage: UC lineage across notebooks/SQL/PBI models
+* Non‑tabular assets: UC Volumes for checkpoints/artifacts where appropriate
+* Access: service principals + SCIM group sync
 
-**Flow:** Source files → **Auto Loader** → Bronze (managed) → Silver transforms → Gold marts → SQL Warehouse (PBI)
+Flow: Source files → Auto Loader → Bronze (managed) → Silver transforms → Gold marts → SQL Warehouse (PBI)
 
 ---
 
 ## Key Decisions & Patterns
 
-* **Three‑part names** everywhere: `catalog.schema.table`
-* **Auto Loader** for both streaming and "micro‑batch" (using `trigger(availableNow=True)` for catch‑up batch)
-* **Managed tables** for curated layers; **path writes only in landing**
-* **Schema evolution** via `cloudFiles.schemaEvolutionMode = addNewColumns` with explicit governance
-* **Idempotent merges** for UPSERT logic and late arrivals
-* **Grants as code** (idempotent SQL) bound to **groups**, never users
-* **Testing harness** for counts/checksums/SLAs vs legacy jobs
+* Three‑part names everywhere: `catalog.schema.table`
+* Auto Loader for both streaming and "micro‑batch" (using `trigger(availableNow=True)` for catch‑up batch)
+* Managed tables for curated layers; path writes only in landing
+* Schema evolution via `cloudFiles.schemaEvolutionMode = addNewColumns` with explicit governance
+* Idempotent merges for UPSERT logic and late arrivals
+* Grants as code (idempotent SQL) bound to groups, never users
+* Testing harness for counts/checksums/SLAs vs legacy jobs
 
 ---
 
 ## Refactor Plan
 
-1. **Inventory & Classify** existing jobs (batch vs streaming, sources, SLAs)
-2. **Enable UC** on workspaces; set default catalog; attach to UC metastore
-3. **Create managed locations** at catalog/schema; define bronze/silver/gold schemas
-4. **Replace directory scans** with **Auto Loader** (file notification or directory listing)
-5. **Standardize write semantics**: `saveAsTable` (no `LOCATION`) for curated tables
-6. **Add schema governance**: expectations, constraints, and evolution rules
-7. **Harden merge logic** for dimension/fact upserts; dedupe on business keys
-8. **Introduce grants & policies**: SELECT roles, masking on PII, RLS views where needed
-9. **Cutover**: dual‑run, validate, switch downstream to UC tables, retire legacy paths
+1. Inventory & Classify existing jobs (batch vs streaming, sources, SLAs)
+2. Enable UC on workspaces; set default catalog; attach to UC metastore
+3. Create managed locations at catalog/schema; define bronze/silver/gold schemas
+4. Replace directory scans with Auto Loader (file notification or directory listing)
+5. Standardize write semantics: `saveAsTable` (no `LOCATION`) for curated tables
+6. Add schema governance: expectations, constraints, and evolution rules
+7. Harden merge logic for dimension/fact upserts; dedupe on business keys
+8. Introduce grants & policies: SELECT roles, masking on PII, RLS views where needed
+9. Cutover: dual‑run, validate, switch downstream to UC tables, retire legacy paths
 
 ---
 
@@ -169,27 +169,27 @@ WHERE (
 
 ## Testing & Validation
 
-* **Structural**: object counts, schema parity, partitioning
-* **Data**: row counts, min/max per partition, checksums, dup checks
-* **Performance**: end‑to‑end latency (streaming), batch wall time, Auto Loader file backlog burn‑down
-* **Security**: grant enforcement, masking/RLS impersonation tests
-* **BI**: PBIX refresh parity via SQL Warehouse
+* Structural: object counts, schema parity, partitioning
+* Data: row counts, min/max per partition, checksums, dup checks
+* Performance: end‑to‑end latency (streaming), batch wall time, Auto Loader file backlog burn‑down
+* Security: grant enforcement, masking/RLS impersonation tests
+* BI: PBIX refresh parity via SQL Warehouse
 
 ---
 
 ## Outcomes / Impact
 
-* **Resilience**: Auto Loader eliminated missed files & fragile directory scans
-* **Velocity**: schema evolution reduced engineering effort on source changes
-* **Governance**: UC managed tables + policies simplified audits and access
-* **Performance**: lower end‑to‑end latency for streaming, faster batch catch‑ups
-* **Developer Experience**: standardized patterns, fewer bespoke scripts
+* Resilience: Auto Loader eliminated missed files & fragile directory scans
+* Velocity: schema evolution reduced engineering effort on source changes
+* Governance: UC managed tables + policies simplified audits and access
+* Performance: lower end‑to‑end latency for streaming, faster batch catch‑ups
+* Developer Experience: standardized patterns, fewer bespoke scripts
 
 ---
 
 ## Risks & Mitigations
 
-* **Schema drift abuse** → require approval for evolution to gold; monitor new columns via alerts
-* **Checkpoint hygiene** → relocate to **UC Volumes** and rotate on major schema changes
-* **Merge skew** → enforce partitioning & Z‑ORDER, selective columns in UPDATE
-* **Backfill load** → use `availableNow` with tuned `maxFilesPerTrigger` and autoscaling
+* Schema drift abuse → require approval for evolution to gold; monitor new columns via alerts
+* Checkpoint hygiene → relocate to UC Volumes and rotate on major schema changes
+* Merge skew → enforce partitioning & Z‑ORDER, selective columns in UPDATE
+* Backfill load → use `availableNow` with tuned `maxFilesPerTrigger` and autoscaling

@@ -5,7 +5,7 @@ summary: "Ingested Azure Billing/Cost Management and Azure Advisor Recommendatio
 skills: ["Azure", "Databricks", "Power BI", "Cost Management", "Azure Advisor", "Python", "SQL", "Delta Lake", "REST APIs", "Financial Analytics"]
 ---
 
-**Summary:** Ingested **Azure Billing/Cost Management** and **Azure Advisor Recommendations** into **Databricks**, modeled cost & optimization signals, and published **Power BI** dashboards and alerts to reduce spend via **rightsizing, idle cleanup, and commitment planning**.
+Ingested Azure Billing/Cost Management and Azure Advisor Recommendations into Databricks, modeled cost & optimization signals, and published Power BI dashboards and alerts to reduce spend via rightsizing, idle cleanup, and commitment planning.
 
 ---
 
@@ -15,10 +15,10 @@ Cloud costs were rising with limited visibility across subscriptions/resource gr
 
 **Goals**
 
-* Centralize costs from **Azure Cost Management/Billing API**
-* Pull **Advisor (recommendations)** for rightsizing/reservations/idle cleanup
-* Build a **cost model** with tags (env, owner, product), commitments (RI/Spots), and unit economics
-* Deliver **Power BI** dashboards with drill‑downs and an action tracker
+* Centralize costs from Azure Cost Management/Billing API
+* Pull Advisor (recommendations) for rightsizing/reservations/idle cleanup
+* Build a cost model with tags (env, owner, product), commitments (RI/Spots), and unit economics
+* Deliver Power BI dashboards with drill‑downs and an action tracker
 
 **Assumptions (dummy details)**
 
@@ -30,48 +30,48 @@ Cloud costs were rising with limited visibility across subscriptions/resource gr
 
 ## My Role
 
-* **Cost Analytics Lead**
+* Cost Analytics Lead
 * Designed the ingestion/modeling, built Databricks jobs, authored the PBI model and prioritization playbook
 
 ---
 
 ## Architecture (Target)
 
-* **Ingest**
+* Ingest
 
-  * **Billing/Cost**: Azure Cost Management **Query API** (usage & amortized cost) into **bronze**
-  * **Advisor**: Azure **Advisor Recommendations** API into **bronze**
-* **Curate**
+  * Billing/Cost: Azure Cost Management Query API (usage & amortized cost) into bronze
+  * Advisor: Azure Advisor Recommendations API into bronze
+* Curate
 
-  * **silver**: normalized cost records, joined with tags, rate cards, RBAC map
-  * **gold**: fact tables (daily\_cost, monthly\_cost) and dims (subscription, resource, tag, recommendation)
-* **Serve**
+  * silver: normalized cost records, joined with tags, rate cards, RBAC map
+  * gold: fact tables (daily\_cost, monthly\_cost) and dims (subscription, resource, tag, recommendation)
+* Serve
 
-  * **SQL Warehouse** for PBI; semantic views and measures
-* **Governance**: Unity Catalog policies; PII not expected
+  * SQL Warehouse for PBI; semantic views and measures
+* Governance: Unity Catalog policies; PII not expected
 
-**Flow:** Azure APIs → Databricks Jobs (Py) → Delta bronze/silver/gold → SQL Warehouse → Power BI
+Flow: Azure APIs → Databricks Jobs (Py) → Delta bronze/silver/gold → SQL Warehouse → Power BI
 
 ---
 
 ## Key Decisions & Patterns
 
-* **Grain**: daily cost per resourceId + meter/category; monthly rollups for trend
-* **Attribution**: prefer **tags**; fallback to RG naming rules; owner map table
-* **Commitments**: compute **effective savings** vs PAYG; detect RI coverage & potential SPOT
-* **Actions**: tie Advisor recommendations to resources & expected monthly savings
-* **Controls**: cost thresholds with alerts; exclude shared/core subscriptions from some ratios
+* Grain: daily cost per resourceId + meter/category; monthly rollups for trend
+* Attribution: prefer tags; fallback to RG naming rules; owner map table
+* Commitments: compute effective savings vs PAYG; detect RI coverage & potential SPOT
+* Actions: tie Advisor recommendations to resources & expected monthly savings
+* Controls: cost thresholds with alerts; exclude shared/core subscriptions from some ratios
 
 ---
 
 ## Implementation Plan
 
-1. **Auth setup**: service principal with `Cost Management Reader` + `Advisor Reader`
-2. **Bronze ingestion**: Databricks notebook calls REST APIs; stores raw JSON/Parquet
-3. **Silver transform**: normalize schema, explode nested fields, map tags and owners
-4. **Gold model**: build `fact_daily_cost`, `fact_monthly_cost`, `dim_resource`, `dim_subscription`, `dim_recommendation`
-5. **Dashboards**: PBI model with measures (run‑rate, variance, savings) and drill‑through pages
-6. **Action tracker**: table/view to log recommendation status and realized savings
+1. Auth setup: service principal with `Cost Management Reader` + `Advisor Reader`
+2. Bronze ingestion: Databricks notebook calls REST APIs; stores raw JSON/Parquet
+3. Silver transform: normalize schema, explode nested fields, map tags and owners
+4. Gold model: build `fact_daily_cost`, `fact_monthly_cost`, `dim_resource`, `dim_subscription`, `dim_recommendation`
+5. Dashboards: PBI model with measures (run‑rate, variance, savings) and drill‑through pages
+6. Action tracker: table/view to log recommendation status and realized savings
 
 ---
 
@@ -81,16 +81,16 @@ To build a comprehensive Azure cost analytics solution, we implemented automated
 
 ### Implementation Themes
 
-* **API integration patterns**: robust authentication, rate limiting, and error handling for Azure REST APIs
-* **Data modeling**: bronze/silver/gold architecture with proper cost attribution and tagging
-* **Cost optimization**: actionable recommendations with tracking and accountability
-* **Automation**: scheduled jobs with monitoring, alerting, and data quality checks
-* **Visualization**: executive dashboards with drill-down capabilities and action tracking
-* **Governance**: cost controls, owner mapping, and realized savings validation
+* API integration patterns: robust authentication, rate limiting, and error handling for Azure REST APIs
+* Data modeling: bronze/silver/gold architecture with proper cost attribution and tagging
+* Cost optimization: actionable recommendations with tracking and accountability
+* Automation: scheduled jobs with monitoring, alerting, and data quality checks
+* Visualization: executive dashboards with drill-down capabilities and action tracking
+* Governance: cost controls, owner mapping, and realized savings validation
 
 ### Before → After Examples
 
-**1) Manual cost reports → Automated API ingestion**
+1) Manual cost reports → Automated API ingestion
 
 ```python
 # BEFORE (manual Excel exports)
@@ -122,7 +122,7 @@ def get_azure_cost_data(subscription_id, start_date, end_date):
     return paginated_api_call(cost_management_url, payload, headers)
 ```
 
-**2) Disconnected cost data → Unified cost model with attribution**
+2) Disconnected cost data → Unified cost model with attribution
 
 ```sql
 -- BEFORE (siloed cost reporting)
@@ -295,25 +295,25 @@ FROM fin_gold.monthly_cost m;
 
 ## Testing & Validation
 
-* **Freshness**: confirm daily loads; compare MTD vs Azure Portal totals
-* **Reconciliation**: sample invoice export vs API totals; variance < 1–2%
-* **Tag coverage**: % of cost with env/app/owner present; raise alerts on drops
-* **Advisor join rate**: % of resources with recommendations; track realized vs potential savings
+* Freshness: confirm daily loads; compare MTD vs Azure Portal totals
+* Reconciliation: sample invoice export vs API totals; variance < 1–2%
+* Tag coverage: % of cost with env/app/owner present; raise alerts on drops
+* Advisor join rate: % of resources with recommendations; track realized vs potential savings
 
 ---
 
 ## Outcomes / Impact
 
-* **Visibility**: single view of cost by env/app/owner with daily updates
-* **Savings**: identified idle/underutilized resources, right‑size opportunities, and reservation planning
-* **Accountability**: owner mapping + action tracker enabled follow‑through
-* **Scalability**: reusable patterns for new subscriptions/resources
+* Visibility: single view of cost by env/app/owner with daily updates
+* Savings: identified idle/underutilized resources, right‑size opportunities, and reservation planning
+* Accountability: owner mapping + action tracker enabled follow‑through
+* Scalability: reusable patterns for new subscriptions/resources
 
 ---
 
 ## Risks & Mitigations
 
-* **Tag quality** → tag compliance checks, fallback rules, owner registry
-* **API throttling** → backoff & pagination; cache where possible
-* **Skewed savings estimates** → validate Advisor numbers; track realized vs predicted
-* **Access scope** → least‑privilege SPN; store secrets in Key Vault
+* Tag quality → tag compliance checks, fallback rules, owner registry
+* API throttling → backoff & pagination; cache where possible
+* Skewed savings estimates → validate Advisor numbers; track realized vs predicted
+* Access scope → least‑privilege SPN; store secrets in Key Vault

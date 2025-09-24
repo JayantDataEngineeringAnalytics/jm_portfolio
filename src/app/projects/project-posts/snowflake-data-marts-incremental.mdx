@@ -5,7 +5,7 @@ summary: "Designed and built Snowflake data marts with incremental ingestion fro
 skills: ["Snowflake", "Apache Airflow", "PostgreSQL", "MongoDB", "Databricks", "Azure", "Data Warehousing", "ETL/ELT", "CDC", "Data Architecture"]
 ---
 
-**Summary:** Designed and built **Snowflake data marts** with **incremental ingestion** from **PostgreSQL**, **MongoDB**, and **Databricks** (curated Delta exports), orchestrated end‑to‑end by **Apache Airflow**—using **external stages, COPY INTO, Streams/Tasks, and MERGE** for reliable CDC.
+Designed and built Snowflake data marts with incremental ingestion from PostgreSQL, MongoDB, and Databricks (curated Delta exports), orchestrated end‑to‑end by Apache Airflow—using external stages, COPY INTO, Streams/Tasks, and MERGE for reliable CDC.
 
 ---
 
@@ -13,15 +13,15 @@ skills: ["Snowflake", "Apache Airflow", "PostgreSQL", "MongoDB", "Databricks", "
 
 Multiple source systems delivered data at different cadences/formats (row‑store DBs, nested JSON, lakehouse). Prior batch loads caused heavy compute and stale dashboards. We needed:
 
-* **Incremental loads** from each source with idempotent upserts
-* **Separation of concerns**: extract, stage, conform, and model layers
-* **Reliable orchestration & observability** via Airflow
-* **Snowflake‑native** CDC (Streams/Tasks) to minimize orchestration complexity
+* Incremental loads from each source with idempotent upserts
+* Separation of concerns: extract, stage, conform, and model layers
+* Reliable orchestration & observability via Airflow
+* Snowflake‑native CDC (Streams/Tasks) to minimize orchestration complexity
 
-**Assumptions** (no client names):
+Assumptions (no client names):
 
 * Cloud: Azure
-* Storage staging: **ADLS Gen2** containers; Snowflake **external stage** (Azure) for file landing
+* Storage staging: ADLS Gen2 containers; Snowflake external stage (Azure) for file landing
 * Sources: PostgreSQL (updated\_at or WAL logical decoding), MongoDB (change streams / watermark), Databricks (Parquet exports from curated Delta tables)
 * Consumption: Power BI / downstream apps via Snowflake views
 
@@ -29,42 +29,42 @@ Multiple source systems delivered data at different cadences/formats (row‑stor
 
 ## My Role
 
-* **Data Architect & Snowflake Lead** (3 engineers)
+* Data Architect & Snowflake Lead (3 engineers)
 * Defined target modeling, CDC strategy, Airflow DAGs, and Snowflake Streams/Tasks framework
 
 ---
 
 ## Architecture (Target)
 
-* **Extract (Airflow)**: source‑specific operators/python tasks fetch **incremental** slices and write files to **ADLS** (`/landing/<src>/<table>/load_date=`)
-* **Stage (Snowflake)**: External Stage on ADLS + `COPY INTO` → **staging tables** (raw typed)
-* **CDC & Conform**: **Streams** on staging tables capture new/changed rows; **Tasks** run `MERGE` into **marts** (`dim_*`, `fact_*`)
-* **Governance**: RBAC roles for `INGESTOR`, `TRANSFORMER`, `REPORTER`; masking policies on PII
-* **Observability**: Airflow SLAs, task metrics; Snowflake load history & task history; audit tables
+* Extract (Airflow): source‑specific operators/python tasks fetch incremental slices and write files to ADLS (`/landing/<src>/<table>/load_date=`)
+* Stage (Snowflake): External Stage on ADLS + `COPY INTO` → staging tables (raw typed)
+* CDC & Conform: Streams on staging tables capture new/changed rows; Tasks run `MERGE` into marts (`dim_*`, `fact_*`)
+* Governance: RBAC roles for `INGESTOR`, `TRANSFORMER`, `REPORTER`; masking policies on PII
+* Observability: Airflow SLAs, task metrics; Snowflake load history & task history; audit tables
 
-**Flow:** PostgreSQL/MongoDB/Databricks → Airflow → ADLS → Snowflake External Stage → `COPY INTO` staging → **Stream** → **Task MERGE** → **Data Marts** (views)
+Flow: PostgreSQL/MongoDB/Databricks → Airflow → ADLS → Snowflake External Stage → `COPY INTO` staging → Stream → Task MERGE → Data Marts (views)
 
 ---
 
 ## Key Decisions & Patterns
 
-* **File formats**: Parquet preferred (types/size); JSON only when necessary
-* **Naming & schemas**: `stg_<src>_<entity>`, `ods_<domain>_*` (optional), `dm_<domain>_dim/fact`
-* **Idempotency**: `load_id` & `file_name` tracked; `COPY INTO` with `ON_ERROR='CONTINUE'` + **load metadata tables**
-* **Streams/Tasks** reduce Airflow complexity: Airflow triggers COPY; Snowflake handles downstream `MERGE`
-* **Mongo JSON**: flatten in Airflow/Databricks when heavily nested; otherwise use VARIANT then normalize
-* **Late‑arriving updates**: `MERGE` on business keys with `updated_at` conflict resolution
+* File formats: Parquet preferred (types/size); JSON only when necessary
+* Naming & schemas: `stg_<src>_<entity>`, `ods_<domain>_*` (optional), `dm_<domain>_dim/fact`
+* Idempotency: `load_id` & `file_name` tracked; `COPY INTO` with `ON_ERROR='CONTINUE'` + load metadata tables
+* Streams/Tasks reduce Airflow complexity: Airflow triggers COPY; Snowflake handles downstream `MERGE`
+* Mongo JSON: flatten in Airflow/Databricks when heavily nested; otherwise use VARIANT then normalize
+* Late‑arriving updates: `MERGE` on business keys with `updated_at` conflict resolution
 
 ---
 
 ## Implementation Plan
 
-1. **Source inventory & contracts** (entities, keys, update fields, volume)
-2. **Airflow DAGs** per source/table (extract to ADLS, checksum, manifest)
-3. **Snowflake stage & file formats**; create staging/mart schemas
-4. **`COPY INTO`** patterns per format; record load metadata
-5. **Streams** on staging; **Tasks** to `MERGE` into marts on schedule / after COPY
-6. **Dual‑run & validation**; publish semantic **views** for BI
+1. Source inventory & contracts (entities, keys, update fields, volume)
+2. Airflow DAGs per source/table (extract to ADLS, checksum, manifest)
+3. Snowflake stage & file formats; create staging/mart schemas
+4. `COPY INTO` patterns per format; record load metadata
+5. Streams on staging; Tasks to `MERGE` into marts on schedule / after COPY
+6. Dual‑run & validation; publish semantic views for BI
 
 ---
 
@@ -74,16 +74,16 @@ To build a robust multi-source data warehouse on Snowflake, we implemented incre
 
 ### Implementation Themes
 
-* **Multi-source ingestion**: standardized patterns for PostgreSQL, MongoDB, and Databricks data sources
-* **Snowflake-native CDC**: leverage Streams and Tasks to minimize external orchestration complexity
-* **File-based staging**: use ADLS Gen2 as intermediate storage with proper partitioning and formats
-* **Idempotent operations**: ensure reliable recovery and reprocessing capabilities
-* **Schema evolution**: handle source system changes gracefully with backward compatibility
-* **Performance optimization**: proper clustering, compression, and warehouse sizing strategies
+* Multi-source ingestion: standardized patterns for PostgreSQL, MongoDB, and Databricks data sources
+* Snowflake-native CDC: leverage Streams and Tasks to minimize external orchestration complexity
+* File-based staging: use ADLS Gen2 as intermediate storage with proper partitioning and formats
+* Idempotent operations: ensure reliable recovery and reprocessing capabilities
+* Schema evolution: handle source system changes gracefully with backward compatibility
+* Performance optimization: proper clustering, compression, and warehouse sizing strategies
 
 ### Before → After Examples
 
-**1) Batch full loads → Incremental CDC with Streams**
+1) Batch full loads → Incremental CDC with Streams
 
 ```sql
 -- BEFORE (full table refresh every night)
@@ -109,7 +109,7 @@ WHEN NOT MATCHED THEN INSERT (customer_id, name, email, updated_at)
 VALUES (s.customer_id, s.name, s.email, s.updated_at);
 ```
 
-**2) Manual orchestration → Airflow automation**
+2) Manual orchestration → Airflow automation
 
 ```python
 # BEFORE (manual scripts and cron jobs)
@@ -147,7 +147,7 @@ with DAG(
     extract_postgres >> copy_to_snowflake >> wake_tasks
 ```
 
-**3) JSON processing → VARIANT with proper normalization**
+3) JSON processing → VARIANT with proper normalization
 
 ```python
 # BEFORE (complex Python JSON parsing)
@@ -524,29 +524,29 @@ RETURNS BOOLEAN ->
 
 ## Testing & Validation
 
-* **Row‑level parity** vs sources during dual‑run; late update detection
-* **Performance**: COPY throughput, task runtimes, warehouse sizing
-* **Idempotency**: re‑run of same window does not duplicate rows
-* **Observability**: load history, task history, Airflow DAG metrics; alert on failures
+* Row‑level parity vs sources during dual‑run; late update detection
+* Performance: COPY throughput, task runtimes, warehouse sizing
+* Idempotency: re‑run of same window does not duplicate rows
+* Observability: load history, task history, Airflow DAG metrics; alert on failures
 
 ---
 
 ## Outcomes / Impact
 
-* **Freshness**: marts updated every 15 minutes with stable SLAs
-* **Simplicity**: Streams/Tasks reduce orchestration burden in Airflow
-* **Performance**: Parquet ingest + MERGE on keys improved cost and speed
-* **Clarity**: star schema and semantic views simplified BI
-* **Reliability**: automated retry logic and comprehensive monitoring
+* Freshness: marts updated every 15 minutes with stable SLAs
+* Simplicity: Streams/Tasks reduce orchestration burden in Airflow
+* Performance: Parquet ingest + MERGE on keys improved cost and speed
+* Clarity: star schema and semantic views simplified BI
+* Reliability: automated retry logic and comprehensive monitoring
 
 ---
 
 ## Risks & Mitigations
 
-* **Schema drift** → use backward‑compatible Parquet; evolve DDL with defaults
-* **Skewed merges** → cluster by keys in large facts; periodic re‑cluster
-* **Airflow dependency sprawl** → keep DAGs thin; push CDC logic into Snowflake where possible
-* **Access control** → RBAC roles; restrict stages; audit COPY history
-* **Cost management** → auto-suspend warehouses, query optimization, and usage monitoring
+* Schema drift → use backward‑compatible Parquet; evolve DDL with defaults
+* Skewed merges → cluster by keys in large facts; periodic re‑cluster
+* Airflow dependency sprawl → keep DAGs thin; push CDC logic into Snowflake where possible
+* Access control → RBAC roles; restrict stages; audit COPY history
+* Cost management → auto-suspend warehouses, query optimization, and usage monitoring
 
 ---
