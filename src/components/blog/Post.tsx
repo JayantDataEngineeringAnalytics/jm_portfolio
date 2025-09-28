@@ -49,9 +49,9 @@ export default function Post({ post, thumbnail, direction }: PostProps) {
           {/* Render technical skill tags */}
           {post.metadata.skills && post.metadata.skills.length > 0 && (
             <Row gap="8" marginTop="12" wrap>
-              {post.metadata.skills.slice(0, 4).map((skill: string) => (
-                <Tag key={skill} size="l">
-                  {skill}
+              {post.metadata.skills.slice(0, 4).map((skill: { name: string; icon: string }) => (
+                <Tag key={skill.name} size="l" prefixIcon={skill.icon}>
+                  {skill.name}
                 </Tag>
               ))}
               {post.metadata.skills.length > 4 && (
