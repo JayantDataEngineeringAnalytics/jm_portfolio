@@ -25,7 +25,9 @@ export function DemoPosts({
   }
 
   const sortedDemos = allDemos.sort((a, b) => {
-    return new Date(b.metadata.publishedAt).getTime() - new Date(a.metadata.publishedAt).getTime();
+    const indexA = a.metadata.index ?? 999;
+    const indexB = b.metadata.index ?? 999;
+    return indexA - indexB;
   });
 
   const displayedDemos = range

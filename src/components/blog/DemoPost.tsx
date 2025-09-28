@@ -44,9 +44,6 @@ export default function DemoPost({ post, thumbnail, direction }: DemoPostProps) 
               <Avatar src={person.avatar} size="s" />
               <Text variant="label-default-s">{person.name}</Text>
             </Row>
-            <Text variant="body-default-xs" onBackground="neutral-weak">
-              {formatDate(post.metadata.publishedAt, false)}
-            </Text>
           </Row>
           <Text variant="heading-strong-l" wrap="balance">
             {post.metadata.title}
