@@ -1,11 +1,11 @@
 ---
-title: "Incremental MongoDB → Azure Functions → ADF → Synapse Analytics (SQL) (Power BI Ready)"
-publishedAt: "2024-11-20"
+title: "MongoDB To SQL Using Azure Functions And Synapse Analytics"
+index: 7
 summary: "Built an incremental ingestion pipeline that reads MongoDB changes via Azure Functions (bookmark/CDC), orchestrated by scheduled Azure Data Factory pipelines, and refactored JSON documents into SQL tables (star schema) for Power BI consumption."
 skills: ["MongoDB", "Azure Functions", "Azure Data Factory", "Azure Synapse Analytics", "PySpark", "SQL", "Power BI", "Python", "Data Architecture", "ETL/ELT"]
 ---
 
-Built an incremental ingestion pipeline that reads MongoDB changes via Azure Functions (bookmark/CDC), orchestrated by scheduled Azure Data Factory pipelines, and refactored JSON documents into SQL tables (star schema) for Power BI consumption.
+Built an incremental ingestion pipeline that reads **MongoDB** changes via **Azure Functions** (bookmark/CDC), orchestrated by **scheduled Azure Data Factory** pipelines, and **refactored JSON documents into SQL tables** (star schema) for **Power BI** consumption.
 
 ---
 
@@ -13,14 +13,14 @@ Built an incremental ingestion pipeline that reads MongoDB changes via Azure Fun
 
 Source data lived in MongoDB with nested documents, arrays, and high daily change volume. Prior batch exports caused heavy loads and duplicate processing. The goals were:
 
-* Incremental loads without full dumps
-* Idempotent upserts with reliable resume after failures
-* JSON→Relational refactor (clean star schema) for BI
+* **Incremental loads** without full dumps
+* **Idempotent upserts** with reliable resume after failures
+* **JSON→Relational refactor** (clean star schema) for BI
 * Separation of concerns: lightweight extraction, robust transform & load
 
-Assumptions (no client names):
+**Assumptions** (no client names):
 
-* MongoDB: Atlas or self‑hosted, with `updatedAt` and/or change streams available
+* MongoDB: Atlas or self‑hosted, with `updatedAt` and/or **change streams** available
 * Azure: Function App (Python), ADF, Azure Synapse Analytics (SQL dedicated pool), ADLS Gen2 (staging), Key Vault
 * Power BI: connects to Azure SQL via gateway or SQL endpoint
 
@@ -28,46 +28,46 @@ Assumptions (no client names):
 
 ## My Role
 
-* Data Architect & Builder (3 engineers)
+* **Data Architect & Data Engineer** (3 engineers)
 * Designed bookmark strategy (resume token/watermark), built Function, ADF orchestration, SQL refactor layer, and BI model contract
 
 ---
 
 ## Architecture (Target)
 
-* Extract: Azure Function (HTTP or Timer trigger) queries MongoDB for docs changed since last bookmark; outputs paged JSON to ADLS *or* returns chunk to ADF Copy
-* Orchestrate: ADF pipeline on schedule; manages state (bookmark) in Key Vault/Blob; retries with back‑off
-* Stage: Raw JSON stored in ADLS (landing/staging) with date partitioning
-* Transform: Flatten & conform in Synapse Analytics using Synapse Spark (PySpark) or Mapping Data Flows; load into Synapse SQL dedicated pool (staging tables + ELT procs)
-* Serve: Star schema (facts/dimensions) in Synapse SQL for Power BI
+* **Extract**: Azure Function (HTTP or Timer trigger) queries MongoDB for docs **changed since last bookmark**; outputs paged JSON to ADLS *or* returns chunk to ADF Copy
+* **Orchestrate**: ADF pipeline on schedule; manages **state** (bookmark) in Key Vault/Blob; retries with back‑off
+* **Stage**: Raw JSON stored in ADLS (landing/staging) with date partitioning
+* **Transform**: Flatten & conform in **Synapse Analytics** using **Synapse Spark** (PySpark) or **Mapping Data Flows**; load into **Synapse SQL dedicated pool** (staging tables + ELT procs)
+* **Serve**: **Star schema** (facts/dimensions) in **Synapse SQL** for **Power BI**
 
-Flow: MongoDB → Azure Function (incremental) → ADF (schedule + Copy) → ADLS (staging) → Synapse (Spark/Data Flows → SQL dedicated: staging → dim/fact) → Power BI
+**Flow:** MongoDB → Azure Function (incremental) → ADF (schedule + Copy) → ADLS (staging) → **Synapse (Spark/Data Flows → SQL dedicated: staging → dim/fact)** → Power BI
 
 ---
 
 ## Key Decisions & Patterns
 
-* Bookmarking: prefer change streams `resumeToken`; fallback to `updatedAt > :last_watermark`
-* Page size & throttling: tune `limit` & concurrency to avoid primary pressure
-* Idempotency: write to staging tables then `MERGE` into dims/facts
-* Schema mapping: JSON path map → SQL columns; array expansions to child tables
-* Types: explicit coercion (dates, decimals, ObjectId→VARCHAR(24))
-* PII: optional hashing/masking during ELT
-* Observability: run logs, rows in/out, lag vs source, error queue
+* **Bookmarking**: prefer **change streams `resumeToken`**; fallback to `updatedAt > :last_watermark`
+* **Page size & throttling**: tune `limit` & concurrency to avoid primary pressure
+* **Idempotency**: write to **staging tables** then `MERGE` into dims/facts
+* **Schema mapping**: JSON path map → SQL columns; array expansions to child tables
+* **Types**: explicit coercion (dates, decimals, ObjectId→VARCHAR(24))
+* **PII**: optional hashing/masking during ELT
+* **Observability**: run logs, rows in/out, lag vs source, error queue
 
 ---
 
 ## Migration Plan
 
-1. Inventory source collections, fields, volumes, keys
-2. Choose bookmark: change streams vs `updatedAt`
-3. Implement Function: parameterized by `since`, `limit`, `collection`
-4. ADF pipeline: schedule, set `since` (from state), loop pages until empty
-5. Landing: write raw JSON to ADLS partitioned by `load_date/collection`
-6. SQL staging: `OPENJSON`/`JSON_VALUE` to shred documents
-7. ELT procedures: `MERGE` into dims/facts; handle late updates & deletes
-8. Model contract: publish SQL views for Power BI; define refresh cadence
-9. Cutover: parallel run with legacy export → validate → switch PBI
+1. **Inventory** source collections, fields, volumes, keys
+2. **Choose bookmark**: change streams vs `updatedAt`
+3. **Implement Function**: parameterized by `since`, `limit`, `collection`
+4. **ADF pipeline**: schedule, set `since` (from state), loop pages until empty
+5. **Landing**: write raw JSON to ADLS partitioned by `load_date/collection`
+6. **SQL staging**: `OPENJSON`/`JSON_VALUE` to shred documents
+7. **ELT procedures**: `MERGE` into dims/facts; handle late updates & deletes
+8. **Model contract**: publish SQL views for Power BI; define refresh cadence
+9. **Cutover**: parallel run with legacy export → validate → switch PBI
 
 ---
 
@@ -77,16 +77,16 @@ To migrate from batch MongoDB exports to incremental processing, we refactored t
 
 ### Refactor Themes
 
-* Extraction patterns: move from full collection dumps to incremental bookmark-based reads
-* State management: centralize watermarks/resume tokens in Azure Key Vault for fault tolerance
-* Schema handling: explicit JSON-to-SQL mapping with type coercion and nested document flattening
-* Orchestration: ADF pipelines with retry logic and error handling for robust scheduling
-* Transform architecture: Synapse Spark for complex JSON normalization, SQL for final ELT
-* BI integration: star schema design optimized for Power BI consumption patterns
+* **Extraction patterns**: move from full collection dumps to incremental bookmark-based reads
+* **State management**: centralize watermarks/resume tokens in Azure Key Vault for fault tolerance
+* **Schema handling**: explicit JSON-to-SQL mapping with type coercion and nested document flattening
+* **Orchestration**: ADF pipelines with retry logic and error handling for robust scheduling
+* **Transform architecture**: Synapse Spark for complex JSON normalization, SQL for final ELT
+* **BI integration**: star schema design optimized for Power BI consumption patterns
 
 ### Before → After Examples
 
-1) Data extraction (full dump → incremental)
+**1) Data extraction (full dump → incremental)**
 
 ```python
 # BEFORE (full collection export)
@@ -125,7 +125,7 @@ def main(req):
     }
 ```
 
-2) Schema transformation (manual → systematic)
+**2) Schema transformation (manual → systematic)**
 
 ```python
 # BEFORE (ad-hoc JSON parsing)
@@ -165,7 +165,7 @@ orders_flat = (raw
   .drop("_id", "customerId", "updatedAt"))
 ```
 
-3) Data loading (overwrite → upsert)
+**3) Data loading (overwrite → upsert)**
 
 ```sql
 -- BEFORE (truncate and reload)
@@ -475,30 +475,30 @@ GRANT SELECT ON SCHEMA::model TO [pbi_service_account];
 
 ## Testing & Validation
 
-* Correctness: row counts and samples vs MongoDB; late updates reflected
-* Idempotency: rerun same load_id ⇒ no duplicate facts
-* Performance: end‑to‑end latency & Function cold‑start impact
-* Resilience: resume from bookmark after failure; back‑pressure behavior
-* BI parity: PBI visuals match legacy export during dual‑run
+* **Correctness**: row counts and samples vs MongoDB; late updates reflected
+* **Idempotency**: rerun same load_id ⇒ no duplicate facts
+* **Performance**: end‑to‑end latency & Function cold‑start impact
+* **Resilience**: resume from bookmark after failure; back‑pressure behavior
+* **BI parity**: PBI visuals match legacy export during dual‑run
 
 ---
 
 ## Outcomes / Impact
 
-* Freshness: hours → minutes for most collections
-* Stability: reliable resumes; no more full‑export failures
-* Clarity: clean star schema improved PBI performance & DAX simplicity
-* Cost: reduced compute by avoiding daily full dumps
-* Scalability: incremental approach handles growing data volumes gracefully
+* **Freshness**: hours → minutes for most collections
+* **Stability**: reliable resumes; no more full‑export failures
+* **Clarity**: clean star schema improved PBI performance & DAX simplicity
+* **Cost**: reduced compute by avoiding daily full dumps
+* **Scalability**: incremental approach handles growing data volumes gracefully
 
 ---
 
 ## Risks & Mitigations
 
-* Hot collections → throttle & windowed reads; consider change streams
-* Nested/array explosion → pre‑flatten in Databricks for heavy cases
-* Clock skew with watermarks → use source `updatedAt` exclusively; add overlap window
-* PII handling → mask/hash at ELT; enforce RBAC for PBI readers
-* Function cold starts → consider premium plan or warm-up strategies for latency-sensitive loads
+* **Hot collections** → throttle & windowed reads; consider change streams
+* **Nested/array explosion** → pre‑flatten in Databricks for heavy cases
+* **Clock skew** with watermarks → use source `updatedAt` exclusively; add overlap window
+* **PII handling** → mask/hash at ELT; enforce RBAC for PBI readers
+* **Function cold starts** → consider premium plan or warm-up strategies for latency-sensitive loads
 
 ---

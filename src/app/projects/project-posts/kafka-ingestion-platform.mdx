@@ -1,11 +1,11 @@
 ---
-title: "Kafka Ingestion Platform — MySQL CDC, REST APIs, Azure Blob → Kafka"
-publishedAt: "2024-08-15"
+title: "Kafka Ingestion Platform"
+index: 3
 summary: "Built a Kafka-based ingestion layer using Kafka Connect to stream from MySQL (CDC), REST APIs (polling), and Azure Blob Storage into well‑governed Kafka topics with schema enforcement, DLQs, and observability—ready for downstream stream processing and batch sinks."
 skills: ["Apache Kafka", "Kafka Connect", "Debezium", "MySQL", "Azure Blob Storage", "Schema Registry", "ksqlDB", "Stream Processing", "Real-time Data", "Data Architecture"]
 ---
 
-Built a Kafka-based ingestion layer using Kafka Connect to stream from MySQL (CDC), REST APIs (polling), and Azure Blob Storage into well‑governed Kafka topics with schema enforcement, DLQs, and observability—ready for downstream stream processing and batch sinks.
+Built a **Kafka-based ingestion layer** using **Kafka Connect** to stream from **MySQL (CDC)**, **REST APIs** (polling), and **Azure Blob Storage** into well‑governed Kafka topics with schema enforcement, DLQs, and observability—ready for downstream stream processing and batch sinks.
 
 ---
 
@@ -13,13 +13,13 @@ Built a Kafka-based ingestion layer using Kafka Connect to stream from MySQL (CD
 
 Multiple operational systems needed near‑real‑time ingestion into a unified bus. Ad‑hoc scripts produced drift, retries, and inconsistent schemas. We standardized on Kafka with Connect to achieve:
 
-* Reliable, scalable ingestion from databases, HTTP sources, and cloud object storage
-* Schema consistency (Schema Registry), exactly‑once delivery where viable, DLQs for bad records
-* Security & governance via ACLs, TLS/SASL, topic conventions
+* **Reliable, scalable ingestion** from databases, HTTP sources, and cloud object storage
+* **Schema consistency** (Schema Registry), **exactly‑once delivery** where viable, **DLQs** for bad records
+* **Security & governance** via ACLs, TLS/SASL, topic conventions
 
-Assumptions (no client names):
+**Assumptions** (no client names):
 
-* Platform: Apache Kafka (or Confluent) on Azure VMs / AKS; Kafka Connect distributed mode
+* Platform: Apache Kafka (or Confluent) on Azure VMs / AKS; **Kafka Connect** distributed mode
 * Storage: Azure Blob for bulk files; ADLS for data lake sinks (optional)
 * Registry/Serdes: Confluent Schema Registry (Avro or JSON‑Schema)
 * Processing: ksqlDB / Kafka Streams / Spark Structured Streaming (optional)
@@ -28,48 +28,48 @@ Assumptions (no client names):
 
 ## My Role
 
-* Streaming Platform Engineer (4 engineers, 1 platform admin)
+* **Streaming Platform Engineer** (4 engineers, 1 platform admin)
 * Designed topic/partition strategy, security, and connector configs; implemented CI/CD for connectors; authored runbooks and monitoring dashboards
 
 ---
 
 ## Architecture (Target)
 
-* Sources → Kafka Connect:
-  * MySQL via Debezium Source (binlog CDC)
-  * REST APIs via HTTP Source Connector (polling + pagination)
-  * Azure Blob via Blob Storage Source Connector (file tail/ingest)
+* **Sources → Kafka Connect**:
+  * **MySQL** via **Debezium** Source (binlog CDC)
+  * **REST APIs** via HTTP Source Connector (polling + pagination)
+  * **Azure Blob** via Blob Storage Source Connector (file tail/ingest)
 
-* Core: Kafka brokers (TLS/SASL), Schema Registry, Connect cluster (2–3 workers)
-* Quality: SMTs for enrichment, field masking, and keying; DLQ topics per connector
-* Consumption: ksqlDB/Streams for real‑time transforms; optional sinks to Delta/Synapse/Elasticsearch
-* Observability: Connect REST metrics, JMX (Prometheus/Grafana), lag exporters, alerting
+* **Core**: Kafka brokers (TLS/SASL), Schema Registry, Connect cluster (2–3 workers)
+* **Quality**: SMTs for enrichment, field masking, and keying; **DLQ topics** per connector
+* **Consumption**: ksqlDB/Streams for real‑time transforms; optional sinks to Delta/Synapse/Elasticsearch
+* **Observability**: Connect REST metrics, JMX (Prometheus/Grafana), lag exporters, alerting
 
-Flow: MySQL binlog / API polling / Blob files → Connect → Kafka topics (raw → curated) → stream processors → sinks (warehouse/lake/search)
+**Flow:** MySQL binlog / API polling / Blob files → **Connect** → Kafka topics (raw → curated) → stream processors → sinks (warehouse/lake/search)
 
 ---
 
 ## Key Decisions & Patterns
 
-* Topic naming: `<domain>.<entity>.<layer>` (e.g., `sales.orders.raw`, `sales.orders.curated`)
-* Partitions: hash on business key (e.g., `order_id` / `tenant_id`) to balance load and enable key‑based semantics
-* Delivery semantics: at‑least‑once end‑to‑end; EOS (`exactly_once_v2`) for curated processors where supported
-* Schema evolution: backward compatibility; Avro/JSON‑Schema with defaults
-* Security: TLS on brokers/registry/connect; SASL/SCRAM users; ACLs per connector service account
-* DLQ: `${topic}-dlq` with headers including error.class, error.message, original.offset
+* **Topic naming**: `<domain>.<entity>.<layer>` (e.g., `sales.orders.raw`, `sales.orders.curated`)
+* **Partitions**: hash on business key (e.g., `order_id` / `tenant_id`) to balance load and enable key‑based semantics
+* **Delivery semantics**: at‑least‑once end‑to‑end; **EOS** (`exactly_once_v2`) for curated processors where supported
+* **Schema evolution**: **backward** compatibility; Avro/JSON‑Schema with defaults
+* **Security**: TLS on brokers/registry/connect; SASL/SCRAM users; ACLs per connector service account
+* **DLQ**: `${topic}-dlq` with headers including error.class, error.message, original.offset
 
 ---
 
 ## Implementation Plan
 
-1. Provision core: Kafka brokers (3+), ZooKeeper/KRaft as applicable, Schema Registry, Connect cluster
-2. Networking & security: TLS certificates, SASL/SCRAM users, ACLs for connectors and consumers
-3. Connector CI/CD: Git repo with JSON configs; REST deploy via pipelines; config versioning & secrets via Key Vault
-4. MySQL CDC: enable binlog, set GTID, create Debezium source; topic routing SMTs
-5. REST source: polling connector with pagination & ETag/If‑Modified‑Since headers
-6. Blob source: ingest CSV/JSON/Parquet; include filename/etag/lastModified as headers
-7. DLQ/Retry: standardize DLQ per source; optional retry processor
-8. Observability: lag exporters, dashboards; alert on connector/task failures and DLQ volume
+1. **Provision core**: Kafka brokers (3+), ZooKeeper/KRaft as applicable, Schema Registry, Connect cluster
+2. **Networking & security**: TLS certificates, SASL/SCRAM users, ACLs for connectors and consumers
+3. **Connector CI/CD**: Git repo with JSON configs; REST deploy via pipelines; config versioning & secrets via Key Vault
+4. **MySQL CDC**: enable binlog, set GTID, create Debezium source; topic routing SMTs
+5. **REST source**: polling connector with pagination & ETag/If‑Modified‑Since headers
+6. **Blob source**: ingest CSV/JSON/Parquet; include filename/etag/lastModified as headers
+7. **DLQ/Retry**: standardize DLQ per source; optional retry processor
+8. **Observability**: lag exporters, dashboards; alert on connector/task failures and DLQ volume
 
 ---
 
@@ -79,16 +79,16 @@ To build a robust Kafka ingestion platform, we implemented comprehensive source 
 
 ### Implementation Themes
 
-* Connector standardization: create reusable configuration templates for different source types
-* Schema governance: implement backward-compatible schema evolution with Schema Registry
-* Error handling: comprehensive DLQ strategies with detailed error context and retry mechanisms
-* Security hardening: end-to-end TLS encryption with SASL authentication and fine-grained ACLs
-* Operational excellence: monitoring, alerting, and automated deployment pipelines
-* Performance optimization: proper partitioning strategies and connector tuning for throughput
+* **Connector standardization**: create reusable configuration templates for different source types
+* **Schema governance**: implement backward-compatible schema evolution with Schema Registry
+* **Error handling**: comprehensive DLQ strategies with detailed error context and retry mechanisms
+* **Security hardening**: end-to-end TLS encryption with SASL authentication and fine-grained ACLs
+* **Operational excellence**: monitoring, alerting, and automated deployment pipelines
+* **Performance optimization**: proper partitioning strategies and connector tuning for throughput
 
 ### Before → After Examples
 
-1) Ad-hoc polling scripts → Kafka Connect REST Source
+**1) Ad-hoc polling scripts → Kafka Connect REST Source**
 
 ```python
 # BEFORE (custom polling script)
@@ -123,7 +123,7 @@ while True:
 }
 ```
 
-2) Manual database exports → CDC with Debezium
+**2) Manual database exports → CDC with Debezium**
 
 ```bash
 # BEFORE (scheduled mysqldump exports)
@@ -157,7 +157,7 @@ mysqldump --single-transaction sales orders > /tmp/orders_export.sql
 }
 ```
 
-3) File processing scripts → Azure Blob Source Connector
+**3) File processing scripts → Azure Blob Source Connector**
 
 ```python
 # BEFORE (manual file processing)
@@ -456,30 +456,30 @@ public class DLQProcessor {
 
 ## Testing & Validation
 
-* Connectivity & security: TLS/SASL handshake, ACLs per connector
-* Backfill & snapshot: initial loads from MySQL snapshot and Blob history
-* Throughput & lag: measure poll rates, partitions, consumer lag; tune tasks.max/parallelism
-* Failure handling: DLQ rate, retry behaviors, poison pill isolation
-* Schema evolution: registry compat checks; producer/consumer rollouts
+* **Connectivity & security**: TLS/SASL handshake, ACLs per connector
+* **Backfill & snapshot**: initial loads from MySQL snapshot and Blob history
+* **Throughput & lag**: measure poll rates, partitions, consumer lag; tune tasks.max/parallelism
+* **Failure handling**: DLQ rate, retry behaviors, poison pill isolation
+* **Schema evolution**: registry compat checks; producer/consumer rollouts
 
 ---
 
 ## Outcomes / Impact
 
-* Freshness: seconds to minutes from sources to bus
-* Reliability: standardized ingestion with DLQs and observability
-* Governance: consistent schemas and topic ACLs
-* Extensibility: plug‑in new sources with repeatable patterns
-* Scalability: horizontal scaling with Connect workers and topic partitions
+* **Freshness**: seconds to minutes from sources to bus
+* **Reliability**: standardized ingestion with DLQs and observability
+* **Governance**: consistent schemas and topic ACLs
+* **Extensibility**: plug‑in new sources with repeatable patterns
+* **Scalability**: horizontal scaling with Connect workers and topic partitions
 
 ---
 
 ## Risks & Mitigations
 
-* API rate limits → respect `Retry‑After`, ETag/If‑Modified‑Since; back‑off
-* MySQL binlog retention → monitor lag; scale Connect tasks; ensure binlog window
-* Large files on Blob → split/parallelize; increase Connect fetch size
-* Schema drift → enforce backward compat; use curated topics via ksqlDB/Streams
-* Connector failures → implement health checks, auto-restart, and alerting on task failures
+* **API rate limits** → respect `Retry‑After`, ETag/If‑Modified‑Since; back‑off
+* **MySQL binlog retention** → monitor lag; scale Connect tasks; ensure binlog window
+* **Large files on Blob** → split/parallelize; increase Connect fetch size
+* **Schema drift** → enforce backward compat; use curated topics via ksqlDB/Streams
+* **Connector failures** → implement health checks, auto-restart, and alerting on task failures
 
 ---

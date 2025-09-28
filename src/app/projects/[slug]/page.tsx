@@ -8,12 +8,10 @@ import {
   Row,
   Text,
   SmartLink,
-  Avatar,
   Tag,
   Icon,
 } from "@once-ui-system/core";
 import { baseURL, about, projects, person } from "@/resources";
-import { formatDate } from "@/utils/formatDate";
 import { getPosts } from "@/utils/utils";
 import { Metadata } from "next";
 import React from "react";
@@ -77,8 +75,8 @@ export default async function ProjectPost({ params }: { params: Promise<{ slug: 
             path={`${projects.path}/${post.slug}`}
             title={post.metadata.title}
             description={post.metadata.summary}
-            datePublished={post.metadata.publishedAt}
-            dateModified={post.metadata.publishedAt}
+            datePublished={undefined}
+            dateModified={undefined}
             image={
               post.metadata.image ||
               `/api/og/generate?title=${encodeURIComponent(post.metadata.title)}`
@@ -93,19 +91,10 @@ export default async function ProjectPost({ params }: { params: Promise<{ slug: 
             <SmartLink href="/projects">
               <Text variant="label-strong-m">Projects</Text>
             </SmartLink>
-            <Text variant="body-default-xs" onBackground="neutral-weak" marginBottom="12">
-              {post.metadata.publishedAt && formatDate(post.metadata.publishedAt)}
-            </Text>
+
             <Heading variant="display-strong-m">{post.metadata.title}</Heading>
           </Column>
-          <Row marginBottom="32" horizontal="center">
-            <Row gap="16" vertical="center">
-              <Avatar size="s" src={person.avatar} />
-              <Text variant="label-default-m" onBackground="brand-weak">
-                {person.name}
-              </Text>
-            </Row>
-          </Row>
+
           {/* Display technical skill tags if available */}
           {post.metadata.skills && post.metadata.skills.length > 0 && (
             <Row gap="8" marginBottom="32" horizontal="center" wrap>

@@ -1,17 +1,17 @@
 ---
-title: "Cloud Cost Reduction Program (Architecture & Execution Initiative)"
-publishedAt: "2024-04-20"
+title: "Cloud Infrastructure Cost Optimisation"
+index: 2
 summary: "Enterprise FinOps architecture & execution initiative converting cost and recommendation signals into governed policies, reservations, rightsizing, lifecycle automation, and tracked savings across Azure subscriptions."
 skills: ["FinOps", "Azure", "Cost Optimization", "Enterprise Architecture", "Program Management", "Governance", "Change Management", "Business Strategy"]
 ---
 
-Enterprise FinOps architecture & execution initiative converting cost and recommendation signals into governed policies, reservations, rightsizing, lifecycle automation, and tracked savings across Azure subscriptions.
+Enterprise **FinOps architecture & execution initiative** converting cost and recommendation signals into governed policies, reservations, rightsizing, lifecycle automation, and tracked savings across Azure subscriptions.
 
 ---
 
 ## Context / Problem
 
-With cost and Advisor signals available from the analytics platform, this initiative established the operating architecture and rollout plan to systematically reduce spend across subscriptions while preserving SLAs.
+With cost and Advisor signals available from the analytics platform, this initiative established the **operating architecture and rollout plan** to systematically reduce spend across subscriptions while preserving SLAs.
 
 **Assumptions (dummy details)**
 
@@ -23,7 +23,7 @@ With cost and Advisor signals available from the analytics platform, this initia
 
 ## My Role
 
-* Program Lead (FinOps)
+* **Program Lead (FinOps)**
 * Owned prioritization, stakeholder alignment, change control, and rollout
 * Drove weekly savings sprints and tracked realized vs potential savings
 
@@ -31,18 +31,18 @@ With cost and Advisor signals available from the analytics platform, this initia
 
 ## Operating Architecture & Model
 
-* FinOps Council: engineering + platform + finance; meets weekly
-* Owner of Record per app/resource group; accountable for actions
-* Action Tracker (existing table) used as single source of truth for status & realized savings
-* Change Windows aligned to release calendar to avoid SLA risk
+* **FinOps Council**: engineering + platform + finance; meets weekly
+* **Owner of Record** per app/resource group; accountable for actions
+* **Action Tracker** (existing table) used as single source of truth for status & realized savings
+* **Change Windows** aligned to release calendar to avoid SLA risk
 
 ---
 
 ## Key Decisions & Patterns
 
-* Impact (estimated monthly saving) × Confidence (data quality & feasibility) ÷ Effort (hours/risk)
-* Quick Wins first (idle/duplicate/oversized) → Commitments (RIs/Savings Plans) → Structural (architecture patterns)
-* Guardrails: exclude prod tier‑1 during peak seasons; pilot in dev/uat first
+* **Impact** (estimated monthly saving) × **Confidence** (data quality & feasibility) ÷ **Effort** (hours/risk)
+* **Quick Wins** first (idle/duplicate/oversized) → **Commitments** (RIs/Savings Plans) → **Structural** (architecture patterns)
+* Guardrails: exclude prod tier‑1 during peak seasons; pilot in **dev/uat** first
 
 ---
 
@@ -50,83 +50,83 @@ With cost and Advisor signals available from the analytics platform, this initia
 
 ### Wave 1 — Quick Wins (2–3 weeks)
 
-* Auto‑shutdown schedules for non‑prod VMs, Synapse DWUs, and Databricks clusters
-* Idle resource cleanup: unattached disks, stale public IPs/NICs, orphaned snapshots, unused load balancers
-* Databricks cluster policies: min/max nodes, auto‑termination, Photon default, spot %, pool usage
-* Storage lifecycle rules: Hot→Cool/Archive tiers; delete expired temp/stage containers; cap replication where not required
+* **Auto‑shutdown schedules** for non‑prod VMs, Synapse DWUs, and Databricks clusters
+* **Idle resource cleanup**: unattached disks, stale public IPs/NICs, orphaned snapshots, unused load balancers
+* **Databricks cluster policies**: min/max nodes, **auto‑termination**, Photon default, spot %, pool usage
+* **Storage lifecycle rules**: Hot→Cool/Archive tiers; delete expired temp/stage containers; cap replication where not required
 
 ### Wave 2 — Rightsizing (3–4 weeks)
 
-* VM SKU downgrades & scale set policies based on 95th percentile CPU/RAM
-* SQL DB / Synapse service‑level adjustments; paused DWUs in off hours
-* Databricks: right‑size node families; tune autoscale bounds; enforce `optimizeWrite/autoCompact`
-* AKS: node pool consolidation, spot for batch, HPA/VPA tuning
+* **VM SKU downgrades** & scale set policies based on 95th percentile CPU/RAM
+* **SQL DB / Synapse** service‑level adjustments; paused DWUs in off hours
+* **Databricks**: right‑size node families; tune autoscale bounds; enforce `optimizeWrite/autoCompact`
+* **AKS**: node pool consolidation, spot for batch, HPA/VPA tuning
 
 ### Wave 3 — Commitments & Purchasing (1–2 weeks)
 
-* Reserved Instances / Savings Plans for stable 12–36m baseload (compute, SQL)
-* Capacity recommendations converted to purchase orders; staged by environment
-* SLA checks and back‑out plans documented prior to commit
+* **Reserved Instances / Savings Plans** for stable 12–36m baseload (compute, SQL)
+* **Capacity recommendations** converted to purchase orders; staged by environment
+* **SLA checks** and back‑out plans documented prior to commit
 
 ### Wave 4 — Structural & Policy (ongoing)
 
-* Tag enforcement via Azure Policy; deny‑without‑tag with exception flow
-* Budget alerts per sub/RG/app; anomaly alerts
-* Golden patterns: serverless/event‑driven where feasible; ephemeral dev envs
-* Data lifecycle: shorten retention on bronze/intermediate; delete derived temp tables
+* **Tag enforcement** via Azure Policy; deny‑without‑tag with exception flow
+* **Budget alerts** per sub/RG/app; anomaly alerts
+* **Golden patterns**: serverless/event‑driven where feasible; ephemeral dev envs
+* **Data lifecycle**: shorten retention on bronze/intermediate; delete derived temp tables
 
 ---
 
 ## Controls & Governance
 
-* Exceptions registry (business‑critical/no‑scale systems)
-* CAB review for high‑impact changes (prod compute cuts, commitment buys)
-* SLO monitoring: ensure p95 latency/error budgets unaffected
-* Audit: change logs linked to realized savings rows
+* **Exceptions registry** (business‑critical/no‑scale systems)
+* **CAB** review for high‑impact changes (prod compute cuts, commitment buys)
+* **SLO monitoring**: ensure p95 latency/error budgets unaffected
+* **Audit**: change logs linked to realized savings rows
 
 ---
 
 ## RACI (Abbrev.)
 
-* FinOps Lead (Accountable): backlog, prioritization, reporting to finance
-* Platform Eng (Responsible): policies, reservations, cross‑cutting automations
-* App Teams (Responsible): service‑level rightsizing & schedules
-* Security/Compliance (Consulted): policy exceptions, data retention
-* Finance (Informed): purchasing approvals, savings realization
+* **FinOps Lead** (Accountable): backlog, prioritization, reporting to finance
+* **Platform Eng** (Responsible): policies, reservations, cross‑cutting automations
+* **App Teams** (Responsible): service‑level rightsizing & schedules
+* **Security/Compliance** (Consulted): policy exceptions, data retention
+* **Finance** (Informed): purchasing approvals, savings realization
 
 ---
 
 ## Testing & Validation
 
-* Pilot environments: test all changes in dev/uat before production rollout
-* SLO monitoring: continuous tracking of p95 latency and error budgets
-* Savings validation: monthly reconciliation of realized vs estimated savings
-* Rollback procedures: documented back‑out plans for all high‑impact changes
+* **Pilot environments**: test all changes in dev/uat before production rollout
+* **SLO monitoring**: continuous tracking of p95 latency and error budgets
+* **Savings validation**: monthly reconciliation of realized vs estimated savings
+* **Rollback procedures**: documented back‑out plans for all high‑impact changes
 
 ---
 
 ## Outcomes / Impact
 
-* Compute: −18–30% in non‑prod; −10–15% in prod baseline via rightsizing
-* Storage: −25% hot storage via lifecycle policies; archive cold data
-* Databricks: −20–35% DBU spend via cluster policies + spot + Photon
-* Commitments: 1–3 year plans covering 50–70% of steady load
-* Confidence: SLA/SLO unchanged post‑change windows
+* **Compute**: −18–30% in non‑prod; −10–15% in prod baseline via rightsizing
+* **Storage**: −25% hot storage via lifecycle policies; archive cold data
+* **Databricks**: −20–35% DBU spend via cluster policies + spot + Photon
+* **Commitments**: 1–3 year plans covering 50–70% of steady load
+* **Confidence**: SLA/SLO unchanged post‑change windows
 
 ---
 
 ## Risks & Mitigations
 
-* Over‑aggressive rightsizing → protect with p95 + buffer; canary first
-* Tag drift → enforce policy; nightly compliance report to owners
-* Commitment lock‑in → staged purchases, conservative coverage %, resale options
-* Change fatigue → batch changes per app; publish calendar and back‑out steps
+* **Over‑aggressive rightsizing** → protect with p95 + buffer; canary first
+* **Tag drift** → enforce policy; nightly compliance report to owners
+* **Commitment lock‑in** → staged purchases, conservative coverage %, resale options
+* **Change fatigue** → batch changes per app; publish calendar and back‑out steps
 
 ---
 
 ## Artifacts
 
-* Action Tracker (owner, resource\_id, change, est\_save, realized\_save, status, opened/closed)
-* Runbooks: VM/DB/Databricks rightsizing, storage lifecycle, schedule creation
-* Approvals: RI/Savings Plan justification sheets
-* Meeting cadence: weekly council notes and decision logs
+* **Action Tracker** (owner, resource\_id, change, est\_save, realized\_save, status, opened/closed)
+* **Runbooks**: VM/DB/Databricks rightsizing, storage lifecycle, schedule creation
+* **Approvals**: RI/Savings Plan justification sheets
+* **Meeting cadence**: weekly council notes and decision logs

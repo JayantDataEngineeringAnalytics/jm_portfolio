@@ -13,7 +13,8 @@ const person: Person = {
   location: "Asia/Kolkata", // India/Pune uses Asia/Kolkata IANA time zone
   languages: [
     "Databricks Certified Data Engineer Professional",
-    "Power Bi Certified Data Analyst",
+    "Microsoft Certified Power BI Data Analyst",
+    "Microsoft Certified Azure Administrator",
     "Salesforce Certified Administrator",
     "Salesforce Certified Advance Administrator",
     "Salesforce Certified Sales Cloud Consultant"
@@ -73,7 +74,7 @@ const home: Home = {
   },
   subline: (
     <>
-      I'm <b>Jayant</b>, a Certified Data And Solutions Architect. <br /> I design and build data
+      I'm <b>Jayant</b>, a Certified Data Engineer And Solutions Architect. <br /> I design and build data
       solutions that drive business growth and efficiency.
     </>
   ),
@@ -118,7 +119,7 @@ const about: About = {
         ],
       },
       {
-        title: "Power BI",
+        title: "Data Visualization",
         description: "DAX, Data Modeling, Executive Dashboards, Self-Service Analytics",
         tags: [
           { name: "Power BI", icon: "googleAnalytics" },

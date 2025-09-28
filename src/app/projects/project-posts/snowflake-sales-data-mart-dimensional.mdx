@@ -1,6 +1,6 @@
 ---
-title: "Snowflake Sales Data Mart (Dimensional Model)"
-publishedAt: "2024-11-15"
+title: "Snowflake Sales Data Mart"
+index: 13
 summary: "Designed a Sales dimensional model in Snowflake using dbt for all modeling—clean facts/dimensions, SCD handling via dbt snapshots, conformed dimensions, and BI‑ready views—fed by incremental pipelines."
 images:
   - "/images/projects/project-01/cover-01.jpg"
@@ -21,15 +21,15 @@ skills:
   - "CDC"
 ---
 
-Designed a Sales dimensional model in Snowflake using dbt for all modeling—clean facts/dimensions, SCD handling via dbt snapshots, conformed dimensions, and BI‑ready views—fed by incremental pipelines.
+Designed a **Sales** dimensional model in **Snowflake** using **dbt** for all modeling—clean **facts/dimensions**, SCD handling via **dbt snapshots**, conformed dimensions, and BI‑ready views—fed by incremental pipelines.
 
 ---
 
 ## Context / Problem
 
-Sales reporting spanned multiple systems (orders, customers, products, channels) with inconsistent schemas and slow ad‑hoc SQL. We needed a single, governed mart optimized for analytics (Power BI), supporting daily and intra‑day refresh with late‑arriving adjustments.
+Sales reporting spanned multiple systems (orders, customers, products, channels) with inconsistent schemas and slow ad‑hoc SQL. We needed a **single, governed mart** optimized for analytics (Power BI), supporting daily and intra‑day refresh with late‑arriving adjustments.
 
-Key Challenges:
+**Key Challenges:**
 - Data scattered across PostgreSQL, MongoDB, and Databricks exports
 - Inconsistent customer and product definitions across systems
 - Slow, unreliable ad-hoc reporting queries
@@ -39,14 +39,14 @@ Key Challenges:
 **Assumptions**
 
 * Sources land in `stg_*` schemas (from PostgreSQL, MongoDB, Databricks exports)
-* Snowflake Streams/Tasks manage CDC from staging → mart
-* BI consumers use semantic views in `model` schema
+* Snowflake **Streams/Tasks** manage CDC from staging → mart
+* BI consumers use **semantic views** in `model` schema
 
 ---
 
 ## My Role
 
-* Data Architect & Analytics Engineer
+* **Data Architect & Analytics Engineer**
 * Defined grain, conformance rules, SCD policies, and measures
 * Built complete ELT pipeline with dbt transformations
 * Implemented data quality framework and governance
@@ -56,7 +56,7 @@ Key Challenges:
 
 ## Target Architecture (Inside Snowflake + dbt)
 
-Data Flow:
+**Data Flow:**
 ```
 Source Systems → Staging Layer → Data Marts → Semantic Layer
      │               │              │            │
@@ -68,11 +68,11 @@ Databricks      stg_databricks  fact_order     BI views
                               customers_scd2
 ```
 
-Architecture Layers:
-* Layers (dbt): `stg_*` (staging models) → `int_*` (intermediate) → `dm_sales` (factual/dimensional) → `model` (BI views)
-* Orchestration: Airflow (or dbt Cloud) runs `dbt run + dbt test + dbt snapshot`
-* SCD2: implemented with dbt snapshots (e.g., `snapshots/customers.sql`)
-* Governance: RBAC in Snowflake; dbt exposures link marts to Power BI reports
+**Architecture Layers:**
+* **Layers (dbt)**: `stg_*` (staging models) → `int_*` (intermediate) → `dm_sales` (factual/dimensional) → `model` (BI views)
+* **Orchestration**: Airflow (or dbt Cloud) runs `dbt run + dbt test + dbt snapshot`
+* **SCD2**: implemented with **dbt snapshots** (e.g., `snapshots/customers.sql`)
+* **Governance**: RBAC in Snowflake; dbt **exposures** link marts to Power BI reports
 
 ---
 
@@ -80,26 +80,26 @@ Architecture Layers:
 
 ### Dimensions
 
-* `dm_sales.dim_customer` (SCD2): surrogate `customer_sk`, BK `customer_id`, attributes: name, email (masked), region, segment, status, valid\_from/valid\_to, is\_current
-* `dm_sales.dim_product` (SCD1): `product_sk`, BK `product_id`, attributes: name, brand, category, price\_band
-* `dm_sales.dim_date`: `date_sk` (YYYYMMDD), calendar attributes (month, qtr, fy)
-* `dm_sales.dim_channel`: `channel_sk` (web, store, marketplace), attributes: source, medium, campaign (if applicable)
-* `dm_sales.dim_region`: `region_sk`, attributes: country, state, city
+* **`dm_sales.dim_customer`** (SCD2): surrogate `customer_sk`, BK `customer_id`, attributes: name, email (masked), region, segment, status, valid\_from/valid\_to, is\_current
+* **`dm_sales.dim_product`** (SCD1): `product_sk`, BK `product_id`, attributes: name, brand, category, price\_band
+* **`dm_sales.dim_date`**: `date_sk` (YYYYMMDD), calendar attributes (month, qtr, fy)
+* **`dm_sales.dim_channel`**: `channel_sk` (web, store, marketplace), attributes: source, medium, campaign (if applicable)
+* **`dm_sales.dim_region`**: `region_sk`, attributes: country, state, city
 
 ### Facts (grains & keys)
 
-* `dm_sales.fact_order` — *one row per order line*
+* **`dm_sales.fact_order`** — *one row per order line*
 
   * Keys: `order_line_id` (degenerate), `customer_sk`, `product_sk`, `channel_sk`, `date_sk`, `region_sk`
   * Measures: `qty`, `gross_amount`, `discount_amount`, `tax_amount`, `net_amount`
   * Audit: `loaded_at`, `source_load_id`
 
-* `dm_sales.fact_payment` — *one row per payment event*
+* **`dm_sales.fact_payment`** — *one row per payment event*
 
   * Keys: `payment_id`, `order_line_id`, `date_sk`, `channel_sk`
   * Measures: `paid_amount`, `fee_amount`, `refund_amount`
 
-* `dm_sales.fact_return` — *one row per returned order line*
+* **`dm_sales.fact_return`** — *one row per returned order line*
 
   * Keys: `return_id`, `order_line_id`, `date_sk`
   * Measures: `return_qty`, `return_amount`
@@ -277,7 +277,7 @@ FROM {{ ref('customers_scd2') }}
 WHERE dbt_valid_to IS NULL  -- Current records only
 ```
 
-> Snapshot creates history rows; you can materialize a current view/model for convenience.
+> Snapshot creates history rows; you can materialize a **current** view/model for convenience.
 
 ---
 
@@ -458,13 +458,13 @@ FROM with_prior
 ORDER BY year, month
 ```
 
-Common KPIs Available:
+**Common KPIs Available:**
 
-* Net Sales = SUM(net\_amount)
-* AOV = SUM(net\_amount) / COUNT(DISTINCT order\_id)
-* Units per Order = SUM(qty) / COUNT(DISTINCT order\_id)
-* Discount % = SUM(discount\_amount) / NULLIF(SUM(gross\_amount),0)
-* Return Rate (if `fact_return` present) = SUM(return\_qty) / SUM(qty)
+* **Net Sales** = SUM(net\_amount)
+* **AOV** = SUM(net\_amount) / COUNT(DISTINCT order\_id)
+* **Units per Order** = SUM(qty) / COUNT(DISTINCT order\_id)
+* **Discount %** = SUM(discount\_amount) / NULLIF(SUM(gross\_amount),0)
+* **Return Rate** (if `fact_return` present) = SUM(return\_qty) / SUM(qty)
 
 ---
 
@@ -512,7 +512,7 @@ FROM quality_metrics
 
 ### Security Implementation
 
-PII Masking Policy:
+**PII Masking Policy:**
 ```sql
 -- Security policies
 CREATE OR REPLACE MASKING POLICY email_mask AS (val string) 
@@ -527,7 +527,7 @@ ALTER TABLE dm_sales.dim_customer_current
 MODIFY COLUMN email SET MASKING POLICY email_mask;
 ```
 
-Row-Level Security (Optional):
+**Row-Level Security (Optional):**
 ```sql
 -- RLS policy for regional access
 CREATE OR REPLACE ROW ACCESS POLICY regional_access AS (region_code varchar) 
@@ -540,12 +540,12 @@ RETURNS BOOLEAN ->
   END;
 ```
 
-Data Quality Checks:
-* Non-null BKs: Ensure all business keys are populated
-* Foreign-key coverage: Verify dimensional referential integrity
-* Numeric range checks: Validate amounts and quantities within expected ranges
-* Duplicate detection: Monitor for duplicate order_line_id entries
-* Freshness: Alert if data is more than 24 hours old
+**Data Quality Checks:**
+* **Non-null BKs**: Ensure all business keys are populated
+* **Foreign-key coverage**: Verify dimensional referential integrity
+* **Numeric range checks**: Validate amounts and quantities within expected ranges
+* **Duplicate detection**: Monitor for duplicate order_line_id entries
+* **Freshness**: Alert if data is more than 24 hours old
 
 ---
 
@@ -649,27 +649,27 @@ snapshots >> staging >> dimensions >> facts >> semantic >> tests
 ## Outcomes / Impact
 
 ### Business Impact
-* 40% faster query performance - Star schema optimization vs. previous normalized structure
-* Single source of truth - Eliminated data inconsistencies across 12 different reports
-* Real-time insights - Reduced reporting latency from hours to minutes with incremental loads
-* 95% reduction in ad-hoc SQL - Semantic layer provides pre-built measures and dimensions
+* **40% faster query performance** - Star schema optimization vs. previous normalized structure
+* **Single source of truth** - Eliminated data inconsistencies across 12 different reports
+* **Real-time insights** - Reduced reporting latency from hours to minutes with incremental loads
+* **95% reduction in ad-hoc SQL** - Semantic layer provides pre-built measures and dimensions
 
 ### Technical Achievements
-* Reliable CDC with Snowflake Streams/Tasks; handles late updates automatically
-* Comprehensive testing - 150+ dbt tests ensure data quality and referential integrity
-* Automated deployment - dbt Cloud integration with Git-based workflows
-* Scalable architecture - Supports 100M+ order lines with sub-second query performance
+* **Reliable CDC** with Snowflake Streams/Tasks; handles late updates automatically
+* **Comprehensive testing** - 150+ dbt tests ensure data quality and referential integrity
+* **Automated deployment** - dbt Cloud integration with Git-based workflows
+* **Scalable architecture** - Supports 100M+ order lines with sub-second query performance
 
 ### Analytics Enablement
-* Self-service BI - Business users can create reports without technical assistance
-* Consistent KPIs - Standardized metrics across all sales reporting
-* Historical tracking - SCD2 implementation preserves customer evolution over time
-* Governance - dbt exposures document lineage from data to dashboards
+* **Self-service BI** - Business users can create reports without technical assistance
+* **Consistent KPIs** - Standardized metrics across all sales reporting
+* **Historical tracking** - SCD2 implementation preserves customer evolution over time
+* **Governance** - dbt exposures document lineage from data to dashboards
 
 ### Key Metrics
-- Data freshness: < 30 minutes for critical sales data
-- Query performance: 95th percentile < 3 seconds for BI queries
-- Data quality: 99.9% accuracy maintained through automated testing
-- User adoption: 45+ business users actively using semantic views
+- **Data freshness**: < 30 minutes for critical sales data
+- **Query performance**: 95th percentile < 3 seconds for BI queries
+- **Data quality**: 99.9% accuracy maintained through automated testing
+- **User adoption**: 45+ business users actively using semantic views
 
 The implementation demonstrates enterprise-grade dimensional modeling practices while maintaining agility through modern ELT patterns and dbt's analytics engineering approach.

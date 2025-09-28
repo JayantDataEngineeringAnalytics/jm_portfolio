@@ -1,11 +1,11 @@
 ---
 title: "PySpark Refactor → Unity Catalog‑native Batch & Streaming"
-publishedAt: "2024-09-15"
+index: 9
 summary: "Refactored legacy PySpark pipelines to leverage Unity Catalog features end‑to‑end—Auto Loader (cloudFiles), Delta schema evolution/enforcement, managed tables, lineage, and policy‑based security—across both batch and streaming jobs."
 skills: ["PySpark", "Databricks", "Unity Catalog", "Delta Lake", "Auto Loader", "Azure", "Data Governance", "Streaming", "Power BI", "Data Architecture"]
 ---
 
-Refactored legacy PySpark pipelines to leverage Unity Catalog features end‑to‑end—Auto Loader (cloudFiles), Delta schema evolution/enforcement, managed tables, lineage, and policy‑based security—across both batch and streaming jobs.
+Refactored legacy PySpark pipelines to leverage **Unity Catalog** features end‑to‑end—**Auto Loader (cloudFiles)**, **Delta schema evolution/enforcement**, **managed tables**, **lineage**, and **policy‑based security**—across both **batch** and **streaming** jobs.
 
 ---
 
@@ -16,14 +16,14 @@ Existing ingestion used hand‑rolled directory scans, manual schema handling, a
 * Declarative ingestion with automatic file discovery & checkpoints
 * Centralized governance (grants, masking/RLS) under Unity Catalog
 * Managed storage semantics (no direct paths) for curated layers
-* A single pattern usable for batch and streaming use cases
+* A single pattern usable for **batch** and **streaming** use cases
 * Clear lineage from notebooks/SQL to downstream BI
 
-Assumptions (no client names):
+**Assumptions** (no client names):
 
-* Cloud: Azure
-* Storage topology: one ADLS Gen2 account; containers per layer (`raw`, `working`, `silver`, `gold`)
-* Curated data: UC‑managed Delta tables
+* Cloud: **Azure**
+* Storage topology: **one ADLS Gen2 account**; containers per layer (`raw`, `working`, `silver`, `gold`)
+* Curated data: **UC‑managed Delta tables**
 * Ingestion landing: `raw` container (external paths ok for landing)
 * Orchestration: Databricks Jobs (optional ADF triggers)
 * BI: Power BI via SQL Warehouse
@@ -32,7 +32,7 @@ Assumptions (no client names):
 
 ## My Role
 
-* Data Architect & Lead Engineer (4 engineers)
+* **Data Architect & Lead Engineer** (4 engineers)
 * Defined UC‑native patterns, built reference implementations, led rollout
 * Authored validation harness & runbooks; coached team on UC grants
 
@@ -40,40 +40,40 @@ Assumptions (no client names):
 
 ## Architecture (Target)
 
-* Landing (raw): external paths ingested via Auto Loader (cloudFiles) into bronze managed tables
-* Curation (silver/gold): UC managed Delta tables with constraints, expectations, and CDC merges
-* Governance: UC grants (group‑based), masking policies, optional dynamic views for RLS
-* Lineage: UC lineage across notebooks/SQL/PBI models
-* Non‑tabular assets: UC Volumes for checkpoints/artifacts where appropriate
-* Access: service principals + SCIM group sync
+* **Landing (raw)**: external paths ingested via **Auto Loader (cloudFiles)** into bronze managed tables
+* **Curation (silver/gold)**: UC **managed Delta tables** with constraints, expectations, and CDC merges
+* **Governance**: UC grants (group‑based), masking policies, optional dynamic views for RLS
+* **Lineage**: UC lineage across notebooks/SQL/PBI models
+* **Non‑tabular assets**: **UC Volumes** for checkpoints/artifacts where appropriate
+* **Access**: service principals + SCIM group sync
 
-Flow: Source files → Auto Loader → Bronze (managed) → Silver transforms → Gold marts → SQL Warehouse (PBI)
+**Flow:** Source files → **Auto Loader** → Bronze (managed) → Silver transforms → Gold marts → SQL Warehouse (PBI)
 
 ---
 
 ## Key Decisions & Patterns
 
-* Three‑part names everywhere: `catalog.schema.table`
-* Auto Loader for both streaming and "micro‑batch" (using `trigger(availableNow=True)` for catch‑up batch)
-* Managed tables for curated layers; path writes only in landing
-* Schema evolution via `cloudFiles.schemaEvolutionMode = addNewColumns` with explicit governance
-* Idempotent merges for UPSERT logic and late arrivals
-* Grants as code (idempotent SQL) bound to groups, never users
-* Testing harness for counts/checksums/SLAs vs legacy jobs
+* **Three‑part names** everywhere: `catalog.schema.table`
+* **Auto Loader** for both streaming and "micro‑batch" (using `trigger(availableNow=True)` for catch‑up batch)
+* **Managed tables** for curated layers; **path writes only in landing**
+* **Schema evolution** via `cloudFiles.schemaEvolutionMode = addNewColumns` with explicit governance
+* **Idempotent merges** for UPSERT logic and late arrivals
+* **Grants as code** (idempotent SQL) bound to **groups**, never users
+* **Testing harness** for counts/checksums/SLAs vs legacy jobs
 
 ---
 
 ## Refactor Plan
 
-1. Inventory & Classify existing jobs (batch vs streaming, sources, SLAs)
-2. Enable UC on workspaces; set default catalog; attach to UC metastore
-3. Create managed locations at catalog/schema; define bronze/silver/gold schemas
-4. Replace directory scans with Auto Loader (file notification or directory listing)
-5. Standardize write semantics: `saveAsTable` (no `LOCATION`) for curated tables
-6. Add schema governance: expectations, constraints, and evolution rules
-7. Harden merge logic for dimension/fact upserts; dedupe on business keys
-8. Introduce grants & policies: SELECT roles, masking on PII, RLS views where needed
-9. Cutover: dual‑run, validate, switch downstream to UC tables, retire legacy paths
+1. **Inventory & Classify** existing jobs (batch vs streaming, sources, SLAs)
+2. **Enable UC** on workspaces; set default catalog; attach to UC metastore
+3. **Create managed locations** at catalog/schema; define bronze/silver/gold schemas
+4. **Replace directory scans** with **Auto Loader** (file notification or directory listing)
+5. **Standardize write semantics**: `saveAsTable` (no `LOCATION`) for curated tables
+6. **Add schema governance**: expectations, constraints, and evolution rules
+7. **Harden merge logic** for dimension/fact upserts; dedupe on business keys
+8. **Introduce grants & policies**: SELECT roles, masking on PII, RLS views where needed
+9. **Cutover**: dual‑run, validate, switch downstream to UC tables, retire legacy paths
 
 ---
 
@@ -167,29 +167,168 @@ WHERE (
 
 ---
 
+## Advanced Before → After Examples
+
+### A) Directory scans → Auto Loader (file notification + managed tables)
+
+```python
+# BEFORE — manual listing + brittle checkpoints
+from pyspark.sql.functions import *
+files = [f.path for f in dbutils.fs.ls("abfss://raw@<acct>.dfs.core.windows.net/sales/orders/")]
+for fp in files:
+    df = spark.read.json(fp)
+    (df
+     .withColumn("ingest_ts", current_timestamp())
+     .write.mode("append")
+     .format("delta")
+     .save("abfss://silver@<acct>.dfs.core.windows.net/sales/orders"))
+```
+
+```python
+# AFTER — Auto Loader with file notification, writing to **managed table**
+(df := spark.readStream
+      .format("cloudFiles")
+      .option("cloudFiles.format", "json")
+      .option("cloudFiles.useNotifications", "true")  # event-driven
+      .option("cloudFiles.schemaLocation", "/Volumes/platform/chk/orders_schema")
+      .load("abfss://raw@<acct>.dfs.core.windows.net/sales/orders/")) \
+  .withColumn("ingest_ts", current_timestamp()) \
+  .writeStream.option("checkpointLocation", "/Volumes/platform/chk/orders") \
+  .toTable("sales_bronze.orders")  # catalog.schema.table
+```
+
+### B) Path-based streaming → Table-centric streaming
+
+```python
+# BEFORE — path to path; no governance
+spark.readStream.format("delta").load("abfss://silver@<acct>/sales/orders").writeStream.format("delta").start("abfss://gold@<acct>/sales/orders")
+```
+
+```python
+# AFTER — governed tables; lineage & policies apply
+spark.table("sales_bronze.orders") \
+  .writeStream \
+  .option("checkpointLocation", "/Volumes/platform/chk/orders_to_silver") \
+  .toTable("sales_silver.orders")
+```
+
+### C) Naïve MERGE → Selective, partitioned MERGE with late-arrival handling
+
+```sql
+-- BEFORE — updates every column; no partitioning
+MERGE INTO sales_silver.orders t
+USING sales_bronze.orders s
+ON t.order_id = s.order_id
+WHEN MATCHED THEN UPDATE SET *
+WHEN NOT MATCHED THEN INSERT *;
+```
+
+```sql
+-- AFTER — selective updates, partition pruning, dedupe window
+CREATE TABLE IF NOT EXISTS sales_silver.orders (
+  order_id BIGINT, order_ts TIMESTAMP, status STRING, amount DECIMAL(18,2), region STRING
+) PARTITIONED BY (to_date(order_ts));
+
+MERGE INTO sales_silver.orders t
+USING (
+  SELECT *, row_number() OVER (PARTITION BY order_id ORDER BY ingest_ts DESC) AS rn
+  FROM sales_bronze.orders
+  WHERE order_ts >= date_sub(current_date(), 30)  -- late-arrival window
+) s
+ON t.order_id = s.order_id
+WHEN MATCHED AND s.rn = 1 THEN UPDATE SET
+  t.status = s.status,
+  t.amount = s.amount,
+  t.region = s.region
+WHEN NOT MATCHED AND s.rn = 1 THEN INSERT (order_id, order_ts, status, amount, region)
+VALUES (s.order_id, s.order_ts, s.status, s.amount, s.region);
+```
+
+### D) Full-table reprocess → Delta **Change Data Feed** (CDF)
+
+```sql
+-- BEFORE — nightly full refresh of gold fact
+INSERT OVERWRITE TABLE sales_gold.fact_orders
+SELECT ... FROM sales_silver.orders;
+```
+
+```sql
+-- AFTER — incremental with CDF
+-- Enable CDF on silver
+ALTER TABLE sales_silver.orders SET TBLPROPERTIES (delta.enableChangeDataFeed = true);
+
+-- Consume only changes since last watermark
+MERGE INTO sales_gold.fact_orders t
+USING (
+  SELECT * FROM table_changes('sales_silver.orders', CAST('${last_cdf_ts}' AS TIMESTAMP))
+  WHERE _change_type IN ('insert', 'update_postimage')
+) c
+ON t.order_id = c.order_id
+WHEN MATCHED THEN UPDATE SET *
+WHEN NOT MATCHED THEN INSERT *;
+```
+
+### E) Custom backfill scripts → `availableNow` with flow control
+
+```python
+# BEFORE — hand-rolled loops over date partitions
+for d in dates:
+    df = spark.read.json(f"abfss://raw@<acct>/sales/orders/date={d}")
+    df.write.mode("append").format("delta").saveAsTable("sales_bronze.orders")
+```
+
+```python
+# AFTER — Auto Loader backfill at scale
+(spark.readStream
+  .format("cloudFiles")
+  .option("cloudFiles.format", "json")
+  .option("cloudFiles.schemaLocation", "/Volumes/platform/chk/orders_schema")
+  .load("abfss://raw@<acct>/sales/orders")) \
+  .writeStream \
+  .trigger(availableNow=True) \
+  .option("maxFilesPerTrigger", 5000) \
+  .option("checkpointLocation", "/Volumes/platform/chk/orders_backfill") \
+  .toTable("sales_bronze.orders")
+```
+
+### F) Secrets sprinkled in code → Centralized identities + grants as code
+
+```python
+# BEFORE — inline secrets + per-job ACLs
+url = "jdbc:sqlserver://..."; user = dbutils.secrets.get(scope="x", key="u");
+```
+
+```sql
+-- AFTER — group-based grants and UC-governed access (example)
+GRANT SELECT ON TABLE sales_silver.customers TO `grp_pbi_readers`;
+-- Connections/credentials centralized; notebooks avoid per-user grants
+```
+
+---
+
 ## Testing & Validation
 
-* Structural: object counts, schema parity, partitioning
-* Data: row counts, min/max per partition, checksums, dup checks
-* Performance: end‑to‑end latency (streaming), batch wall time, Auto Loader file backlog burn‑down
-* Security: grant enforcement, masking/RLS impersonation tests
-* BI: PBIX refresh parity via SQL Warehouse
+* **Structural**: object counts, schema parity, partitioning
+* **Data**: row counts, min/max per partition, checksums, dup checks
+* **Performance**: end‑to‑end latency (streaming), batch wall time, Auto Loader file backlog burn‑down
+* **Security**: grant enforcement, masking/RLS impersonation tests
+* **BI**: PBIX refresh parity via SQL Warehouse
 
 ---
 
 ## Outcomes / Impact
 
-* Resilience: Auto Loader eliminated missed files & fragile directory scans
-* Velocity: schema evolution reduced engineering effort on source changes
-* Governance: UC managed tables + policies simplified audits and access
-* Performance: lower end‑to‑end latency for streaming, faster batch catch‑ups
-* Developer Experience: standardized patterns, fewer bespoke scripts
+* **Resilience**: Auto Loader eliminated missed files & fragile directory scans
+* **Velocity**: schema evolution reduced engineering effort on source changes
+* **Governance**: UC managed tables + policies simplified audits and access
+* **Performance**: lower end‑to‑end latency for streaming, faster batch catch‑ups
+* **Developer Experience**: standardized patterns, fewer bespoke scripts
 
 ---
 
 ## Risks & Mitigations
 
-* Schema drift abuse → require approval for evolution to gold; monitor new columns via alerts
-* Checkpoint hygiene → relocate to UC Volumes and rotate on major schema changes
-* Merge skew → enforce partitioning & Z‑ORDER, selective columns in UPDATE
-* Backfill load → use `availableNow` with tuned `maxFilesPerTrigger` and autoscaling
+* **Schema drift abuse** → require approval for evolution to gold; monitor new columns via alerts
+* **Checkpoint hygiene** → relocate to **UC Volumes** and rotate on major schema changes
+* **Merge skew** → enforce partitioning & Z‑ORDER, selective columns in UPDATE
+* **Backfill load** → use `availableNow` with tuned `maxFilesPerTrigger` and autoscaling

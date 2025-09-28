@@ -1,8 +1,6 @@
 "use client";
 
-import { Card, Column, Media, Row, Avatar, Text, Tag } from "@once-ui-system/core";
-import { formatDate } from "@/utils/formatDate";
-import { person } from "@/resources";
+import { Card, Column, Media, Row, Text, Tag } from "@once-ui-system/core";
 
 interface PostProps {
   post: any;
@@ -39,15 +37,7 @@ export default function Post({ post, thumbnail, direction }: PostProps) {
       )}
       <Row fillWidth>
         <Column maxWidth={28} paddingY="24" paddingX="l" gap="20" vertical="center">
-          <Row gap="24" vertical="center">
-            <Row vertical="center" gap="16">
-              <Avatar src={person.avatar} size="s" />
-              <Text variant="label-default-s">{person.name}</Text>
-            </Row>
-            <Text variant="body-default-xs" onBackground="neutral-weak">
-              {formatDate(post.metadata.publishedAt, false)}
-            </Text>
-          </Row>
+
           <Text variant="heading-strong-l" wrap="balance">
             {post.metadata.title}
           </Text>

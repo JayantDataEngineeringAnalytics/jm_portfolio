@@ -1,6 +1,6 @@
 ---
-title: "ML Library Integration for Next‑Step Detection on Databricks"
-publishedAt: "2024-10-20"
+title: "ML Library Integration In Databricks"
+index: 6
 summary: "Integrated a third‑party ML inference library into Databricks so that working‑layer Delta tables become inputs and gold views become BI‑ready outputs—no custom model training, fully managed under Unity Catalog."
 images:
   - "/images/projects/project-01/cover-02.jpg"
@@ -20,27 +20,27 @@ skills:
   - "Azure"
 ---
 
-Integrated a third‑party ML inference library into Databricks so that working‑layer Delta tables become inputs and gold views become BI‑ready outputs—no custom model training, fully managed under Unity Catalog.
+Integrated a third‑party **ML inference library** into **Databricks** so that **working‑layer** Delta tables become inputs and **gold views** become BI‑ready outputs—no custom model training, fully managed under **Unity Catalog**.
 
 ---
 
 ## Context / Problem
 
-The analytics team needed next‑step / next‑best‑action signals derived from curated operational data. A partner‑provided ML library existed, but it wasn't wired into the lakehouse stack. 
+The analytics team needed **next‑step / next‑best‑action** signals derived from curated operational data. A partner‑provided ML library existed, but it wasn't wired into the lakehouse stack. 
 
-Key Challenges:
+**Key Challenges:**
 - Third-party ML library not integrated with Databricks ecosystem
 - No established patterns for external model inference in Unity Catalog
 - Need to maintain data governance and lineage through ML inference pipeline
 - Requirement for BI-ready outputs without custom model training overhead
 
-Objectives:
+**Objectives:**
 * Package and register the ML library for Databricks Jobs/Clusters
-* Read inputs from working (silver) Delta tables under UC
-* Produce gold views/tables with model scores + explanations (if available)
-* Keep governance (grants, lineage) in Unity Catalog; no PII leakage
+* Read inputs from **working** (silver) Delta tables under UC
+* Produce **gold** views/tables with model scores + explanations (if available)
+* Keep governance (grants, lineage) in **Unity Catalog**; no PII leakage
 
-Assumptions (dummy details; no client naming):
+**Assumptions** (dummy details; no client naming):
 * Cloud: Azure; UC‑enabled workspaces; managed Delta tables
 * Input tables: `ops_working.interactions`, `ops_working.customers` (example)
 * Output schema: `ops_gold` views for downstream BI/Apps
@@ -50,8 +50,8 @@ Assumptions (dummy details; no client naming):
 
 ## My Role
 
-* Integration Engineer & Data Architect
-* Packaged the vendor ML code as a wheel and as a workspace library
+* **Integration Engineer & Data Architect**
+* Packaged the vendor ML code as a **wheel** and as a **workspace library**
 * Built inference notebooks/jobs with proper error handling and monitoring
 * Defined contracts (columns, types) for inputs/outputs
 * Implemented UC grants and lineage tracking
@@ -61,7 +61,7 @@ Assumptions (dummy details; no client naming):
 
 ## Target Architecture
 
-Data Flow:
+**Data Flow:**
 ```
 Unity Catalog Working Layer → ML Inference Pipeline → Unity Catalog Gold Layer → BI/Apps
           │                          │                        │                    │
@@ -69,34 +69,34 @@ Unity Catalog Working Layer → ML Inference Pipeline → Unity Catalog Gold Lay
     ops_working.customers   →  Third-party ML Lib  →  ops_gold.v_nextstep     → SQL Warehouse
 ```
 
-Architecture Components:
-* Inputs: UC managed Delta in working (silver)
-* Inference: PySpark notebook / Job calls library functions (batch micro‑batches supported)
-* Outputs: gold Delta tables + gold views (semantic joins + masking)
-* Governance: UC grants to reader groups; optional masking policies
-* Lineage: UC lineage from notebook/SQL → gold objects → BI
+**Architecture Components:**
+* **Inputs**: UC managed Delta in **working** (silver)
+* **Inference**: PySpark notebook / Job calls library functions (batch micro‑batches supported)
+* **Outputs**: **gold** Delta tables + **gold views** (semantic joins + masking)
+* **Governance**: UC grants to reader groups; optional masking policies
+* **Lineage**: UC lineage from notebook/SQL → gold objects → BI
 
-Flow: working tables → inference job (ML lib) → gold tables → gold views → BI (SQL Warehouse / PBI)
+**Flow:** working tables → inference job (ML lib) → gold tables → gold views → BI (SQL Warehouse / PBI)
 
 ---
 
 ## Key Decisions & Patterns
 
-Library Management:
-* Library delivery: vendor code packaged as wheel (.whl), stored in UC Volumes or workspace files; installed via cluster policy or job task library
-* Versioning: Pinned library versions with rollback capability
-* Security: Library validation and scanning before deployment
+**Library Management:**
+* **Library delivery**: vendor code packaged as **wheel (.whl)**, stored in UC **Volumes** or workspace files; installed via cluster policy or job task library
+* **Versioning**: Pinned library versions with rollback capability
+* **Security**: Library validation and scanning before deployment
 
-Processing Patterns:
-* UDF boundary: exposed pure‑Python functions and vectorized Pandas UDFs when beneficial
-* Batch cadence: hourly for interactions; daily refresh for slower dims
-* Schema contract: strict input schema (ids, timestamps, features) + output schema (score, label, reason codes)
-* Idempotency: write to staging then MERGE/REPLACE into gold
+**Processing Patterns:**
+* **UDF boundary**: exposed pure‑Python functions and vectorized Pandas UDFs when beneficial
+* **Batch cadence**: hourly for interactions; daily refresh for slower dims
+* **Schema contract**: strict input schema (ids, timestamps, features) + output schema (score, label, reason codes)
+* **Idempotency**: write to staging then MERGE/REPLACE into gold
 
-Quality & Testing:
-* Testing: golden‑row tests and range checks; smoke tests on job start
-* Monitoring: Performance metrics and data quality checks
-* Error handling: Comprehensive exception handling with alerting
+**Quality & Testing:**
+* **Testing**: golden‑row tests and range checks; smoke tests on job start
+* **Monitoring**: Performance metrics and data quality checks
+* **Error handling**: Comprehensive exception handling with alerting
 
 ---
 
@@ -432,7 +432,7 @@ ALTER COLUMN customer_id SET MASK ops_gold.mask_customer_id;
 
 ## Delta Live Tables Implementation
 
-Goal: Run inference as a Delta Live Tables pipeline. Sources are working (silver) tables; outputs are published to the gold schema via the pipeline target. Data quality rules are enforced with DLT expectations.
+**Goal:** Run inference as a **Delta Live Tables** pipeline. Sources are **working** (silver) tables; outputs are published to the **gold** schema via the pipeline **target**. Data quality rules are enforced with **DLT expectations**.
 
 ### 1) Pipeline Configuration
 
@@ -675,12 +675,12 @@ ORDER BY 1 DESC;
 GRANT SELECT ON VIEW ops.ops_gold.v_nextstep_monitoring TO `grp_ml_ops`;
 ```
 
-DLT Benefits:
-* Use streaming read for high-velocity interaction tables; dims can be batch reads within DLT
-* Expectations enforce basic DQ and can drop/bypass bad rows; monitor expectations in pipeline UI
-* Automatic optimization with Z-ordering and compaction
-* Built-in monitoring and alerting through DLT interface
-* If you prefer fully-streaming outputs, mark both sources as `read_stream` and keep the pipeline in continuous mode
+**DLT Benefits:**
+* Use **streaming read** for high-velocity interaction tables; dims can be batch reads within DLT
+* **Expectations** enforce basic DQ and can drop/bypass bad rows; monitor expectations in pipeline UI
+* **Automatic optimization** with Z-ordering and compaction
+* **Built-in monitoring** and alerting through DLT interface
+* If you prefer fully-streaming outputs, mark both sources as `read_stream` and keep the pipeline in **continuous** mode
 
 ---
 
@@ -963,54 +963,52 @@ def optimize_cluster_configuration():
 ## Outcomes / Impact
 
 ### Business Impact
-* Faster Time-to-Value: Deployed production ML inference in 2 weeks without owning model training lifecycle
-* Improved Decision Making: 35% increase in customer engagement through personalized next-step recommendations
-* Cost Efficiency: $50K savings annually by avoiding custom model development and maintenance
-* Scalability: System handles 1M+ daily predictions with sub-minute latency
+* **Faster Time-to-Value**: Deployed production ML inference in 2 weeks without owning model training lifecycle
+* **Improved Decision Making**: 35% increase in customer engagement through personalized next-step recommendations
+* **Cost Efficiency**: $50K savings annually by avoiding custom model development and maintenance
+* **Scalability**: System handles 1M+ daily predictions with sub-minute latency
 
 ### Technical Achievements
-* Seamless Integration: Third-party ML library fully integrated with Databricks ecosystem
-* Data Governance: Complete lineage tracking from raw data through ML inference to BI consumption
-* Reliability: 99.9% uptime with comprehensive error handling and monitoring
-* Performance: Sub-second inference latency for real-time use cases
+* **Seamless Integration**: Third-party ML library fully integrated with Databricks ecosystem
+* **Data Governance**: Complete lineage tracking from raw data through ML inference to BI consumption
+* **Reliability**: 99.9% uptime with comprehensive error handling and monitoring
+* **Performance**: Sub-second inference latency for real-time use cases
 
 ### Analytics Enablement
-* Self-Service BI: Business teams can create custom dashboards using semantic views
-* Consistent Metrics: Standardized score definitions across all downstream applications
-* Real-Time Insights: Near real-time model predictions available in operational dashboards
-* Quality Assurance: Automated data quality checks ensure prediction reliability
+* **Self-Service BI**: Business teams can create custom dashboards using semantic views
+* **Consistent Metrics**: Standardized score definitions across all downstream applications
+* **Real-Time Insights**: Near real-time model predictions available in operational dashboards
+* **Quality Assurance**: Automated data quality checks ensure prediction reliability
 
 ### Key Metrics
-- Inference Latency: P95 under 500ms for batch predictions
-- Data Freshness: Model predictions available within 30 minutes of source data updates
-- Cost per Prediction: $0.0001 per inference including compute and storage
-- Adoption Rate: 12 downstream applications consuming ML predictions
-- Quality Score: 99.7% of predictions pass validation checks
+- **Inference Latency**: P95 under 500ms for batch predictions
+- **Data Freshness**: Model predictions available within 30 minutes of source data updates
+- **Cost per Prediction**: $0.0001 per inference including compute and storage
+- **Adoption Rate**: 12 downstream applications consuming ML predictions
+- **Quality Score**: 99.7% of predictions pass validation checks
 
 ---
 
 ## Risks & Mitigations
 
 ### Technical Risks
-* Library updates breaking schema 
+* **Library updates breaking schema** 
   - *Mitigation*: Pin versions in production; comprehensive contract tests; blue-green deployment pattern
-* Performance regressions with data growth
+* **Performance regressions with data growth**
   - *Mitigation*: Automated performance benchmarking; vectorized UDFs for large datasets; dynamic cluster scaling
-* Model drift and accuracy degradation
+* **Model drift and accuracy degradation**
   - *Mitigation*: Statistical monitoring of score distributions; A/B testing framework for model updates
 
 ### Operational Risks
-* Dependency on third-party library vendor
+* **Dependency on third-party library vendor**
   - *Mitigation*: Fallback scoring logic; service-level agreements; alternative vendor evaluation
-* Data quality issues in upstream systems
+* **Data quality issues in upstream systems**
   - *Mitigation*: Comprehensive DLT expectations; automated data quality alerts; graceful degradation
-* Cost overruns from inefficient processing
+* **Cost overruns from inefficient processing**
   - *Mitigation*: Cost monitoring dashboards; automatic cluster termination; resource usage optimization
 
 ### Security & Compliance
-* PII exposure through ML pipeline
+* **PII exposure through ML pipeline**
   - *Mitigation*: Column-level masking; role-based access control; audit logging
-* Model explainability requirements
+* **Model explainability requirements**
   - *Mitigation*: Capture and expose reason codes from ML library; SHAP integration if needed
-
-The implementation demonstrates enterprise-grade ML operationalization while maintaining the flexibility and governance capabilities of the modern lakehouse architecture.
