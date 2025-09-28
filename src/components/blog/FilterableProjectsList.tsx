@@ -11,7 +11,7 @@ interface Project {
     summary: string;
     image?: string;
     tag?: string;
-    skills?: { name: string; icon: string }[];
+    skills?: string[];
   };
   slug: string;
   content: string;
@@ -48,7 +48,7 @@ export function FilterableProjectsList({
     sortedProjects.forEach((project) => {
       if (project.metadata.skills) {
         project.metadata.skills.forEach((skill) => {
-          skillsSet.add(skill.name);
+          skillsSet.add(skill);
         });
       }
     });
@@ -65,9 +65,7 @@ export function FilterableProjectsList({
       if (!project.metadata.skills) return false;
       
       return selectedSkills.every((selectedSkill) =>
-        project.metadata.skills!.some((skill) => 
-          skill.name === selectedSkill
-        )
+        project.metadata.skills!.includes(selectedSkill)
       );
     });
   }, [sortedProjects, selectedSkills]);
@@ -107,11 +105,6 @@ export function FilterableProjectsList({
         
         <Row gap="8" wrap>
           {displayedSkills.map((skillName) => {
-            // Find the skill object to get the icon
-            const skillWithIcon = sortedProjects
-              .flatMap((project) => project.metadata.skills || [])
-              .find((skill) => skill.name === skillName);
-
             const isSelected = selectedSkills.includes(skillName);
             
             return (
@@ -119,7 +112,6 @@ export function FilterableProjectsList({
                 key={skillName}
                 size="s"
                 variant={isSelected ? "primary" : "secondary"}
-                prefixIcon={skillWithIcon?.icon}
                 label={skillName}
                 onClick={() => toggleSkill(skillName)}
               />
