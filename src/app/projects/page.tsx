@@ -14,8 +14,16 @@ export async function generateMetadata() {
 }
 
 export default function Projects() {
-  // Fetch projects server-side
-  const allProjects = getPosts(["src", "app", "projects", "project-posts"]);
+  // Fetch projects server-side and ensure uniqueness by slug
+  const allProjectsRaw = getPosts(["src", "app", "projects", "project-posts"]);
+  const uniqueProjects = new Map();
+  
+  // Remove duplicates by keeping only the latest version of each slug
+  allProjectsRaw.forEach(project => {
+    uniqueProjects.set(project.slug, project);
+  });
+  
+  const allProjects = Array.from(uniqueProjects.values());
 
   return (
     <Column maxWidth="m" paddingTop="24">

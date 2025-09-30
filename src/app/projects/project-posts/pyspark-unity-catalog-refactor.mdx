@@ -1,11 +1,11 @@
 ---
-title: "PySpark Refactor → Unity Catalog‑native Batch & Streaming"
-publishedAt: "2024-09-15"
+title: "Modern PySpark Transformation: Legacy to Unity Catalog Native"
+index: 10
 summary: "Refactored legacy PySpark pipelines to leverage Unity Catalog features end‑to‑end—Auto Loader (cloudFiles), Delta schema evolution/enforcement, managed tables, lineage, and policy‑based security—across both batch and streaming jobs."
 skills: ["PySpark", "Databricks", "Unity Catalog", "Delta Lake", "Auto Loader", "Azure", "Data Governance", "Streaming", "Power BI", "Data Architecture"]
 ---
 
-**Summary:** Refactored legacy PySpark pipelines to leverage **Unity Catalog** features end‑to‑end—**Auto Loader (cloudFiles)**, **Delta schema evolution/enforcement**, **managed tables**, **lineage**, and **policy‑based security**—across both **batch** and **streaming** jobs.
+Refactored legacy PySpark pipelines to leverage **Unity Catalog** features end‑to‑end—**Auto Loader (cloudFiles)**, **Delta schema evolution/enforcement**, **managed tables**, **lineage**, and **policy‑based security**—across both **batch** and **streaming** jobs.
 
 ---
 
@@ -163,6 +163,145 @@ WHERE (
 ) OR (
   is_account_group_member('grp_region_emea') AND o.region = 'EMEA'
 ) OR is_account_group_member('grp_admin');
+```
+
+---
+
+## Advanced Before → After Examples
+
+### A) Directory scans → Auto Loader (file notification + managed tables)
+
+```python
+# BEFORE — manual listing + brittle checkpoints
+from pyspark.sql.functions import *
+files = [f.path for f in dbutils.fs.ls("abfss://raw@<acct>.dfs.core.windows.net/sales/orders/")]
+for fp in files:
+    df = spark.read.json(fp)
+    (df
+     .withColumn("ingest_ts", current_timestamp())
+     .write.mode("append")
+     .format("delta")
+     .save("abfss://silver@<acct>.dfs.core.windows.net/sales/orders"))
+```
+
+```python
+# AFTER — Auto Loader with file notification, writing to **managed table**
+(df := spark.readStream
+      .format("cloudFiles")
+      .option("cloudFiles.format", "json")
+      .option("cloudFiles.useNotifications", "true")  # event-driven
+      .option("cloudFiles.schemaLocation", "/Volumes/platform/chk/orders_schema")
+      .load("abfss://raw@<acct>.dfs.core.windows.net/sales/orders/")) \
+  .withColumn("ingest_ts", current_timestamp()) \
+  .writeStream.option("checkpointLocation", "/Volumes/platform/chk/orders") \
+  .toTable("sales_bronze.orders")  # catalog.schema.table
+```
+
+### B) Path-based streaming → Table-centric streaming
+
+```python
+# BEFORE — path to path; no governance
+spark.readStream.format("delta").load("abfss://silver@<acct>/sales/orders").writeStream.format("delta").start("abfss://gold@<acct>/sales/orders")
+```
+
+```python
+# AFTER — governed tables; lineage & policies apply
+spark.table("sales_bronze.orders") \
+  .writeStream \
+  .option("checkpointLocation", "/Volumes/platform/chk/orders_to_silver") \
+  .toTable("sales_silver.orders")
+```
+
+### C) Naïve MERGE → Selective, partitioned MERGE with late-arrival handling
+
+```sql
+-- BEFORE — updates every column; no partitioning
+MERGE INTO sales_silver.orders t
+USING sales_bronze.orders s
+ON t.order_id = s.order_id
+WHEN MATCHED THEN UPDATE SET *
+WHEN NOT MATCHED THEN INSERT *;
+```
+
+```sql
+-- AFTER — selective updates, partition pruning, dedupe window
+CREATE TABLE IF NOT EXISTS sales_silver.orders (
+  order_id BIGINT, order_ts TIMESTAMP, status STRING, amount DECIMAL(18,2), region STRING
+) PARTITIONED BY (to_date(order_ts));
+
+MERGE INTO sales_silver.orders t
+USING (
+  SELECT *, row_number() OVER (PARTITION BY order_id ORDER BY ingest_ts DESC) AS rn
+  FROM sales_bronze.orders
+  WHERE order_ts >= date_sub(current_date(), 30)  -- late-arrival window
+) s
+ON t.order_id = s.order_id
+WHEN MATCHED AND s.rn = 1 THEN UPDATE SET
+  t.status = s.status,
+  t.amount = s.amount,
+  t.region = s.region
+WHEN NOT MATCHED AND s.rn = 1 THEN INSERT (order_id, order_ts, status, amount, region)
+VALUES (s.order_id, s.order_ts, s.status, s.amount, s.region);
+```
+
+### D) Full-table reprocess → Delta **Change Data Feed** (CDF)
+
+```sql
+-- BEFORE — nightly full refresh of gold fact
+INSERT OVERWRITE TABLE sales_gold.fact_orders
+SELECT ... FROM sales_silver.orders;
+```
+
+```sql
+-- AFTER — incremental with CDF
+-- Enable CDF on silver
+ALTER TABLE sales_silver.orders SET TBLPROPERTIES (delta.enableChangeDataFeed = true);
+
+-- Consume only changes since last watermark
+MERGE INTO sales_gold.fact_orders t
+USING (
+  SELECT * FROM table_changes('sales_silver.orders', CAST('${last_cdf_ts}' AS TIMESTAMP))
+  WHERE _change_type IN ('insert', 'update_postimage')
+) c
+ON t.order_id = c.order_id
+WHEN MATCHED THEN UPDATE SET *
+WHEN NOT MATCHED THEN INSERT *;
+```
+
+### E) Custom backfill scripts → `availableNow` with flow control
+
+```python
+# BEFORE — hand-rolled loops over date partitions
+for d in dates:
+    df = spark.read.json(f"abfss://raw@<acct>/sales/orders/date={d}")
+    df.write.mode("append").format("delta").saveAsTable("sales_bronze.orders")
+```
+
+```python
+# AFTER — Auto Loader backfill at scale
+(spark.readStream
+  .format("cloudFiles")
+  .option("cloudFiles.format", "json")
+  .option("cloudFiles.schemaLocation", "/Volumes/platform/chk/orders_schema")
+  .load("abfss://raw@<acct>/sales/orders")) \
+  .writeStream \
+  .trigger(availableNow=True) \
+  .option("maxFilesPerTrigger", 5000) \
+  .option("checkpointLocation", "/Volumes/platform/chk/orders_backfill") \
+  .toTable("sales_bronze.orders")
+```
+
+### F) Secrets sprinkled in code → Centralized identities + grants as code
+
+```python
+# BEFORE — inline secrets + per-job ACLs
+url = "jdbc:sqlserver://..."; user = dbutils.secrets.get(scope="x", key="u");
+```
+
+```sql
+-- AFTER — group-based grants and UC-governed access (example)
+GRANT SELECT ON TABLE sales_silver.customers TO `grp_pbi_readers`;
+-- Connections/credentials centralized; notebooks avoid per-user grants
 ```
 
 ---

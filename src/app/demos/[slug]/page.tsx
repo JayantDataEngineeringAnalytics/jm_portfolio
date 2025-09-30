@@ -73,8 +73,8 @@ export default async function DemoPost({ params }: { params: Promise<{ slug: str
             path={`${demos.path}/${post.slug}`}
             title={post.metadata.title}
             description={post.metadata.summary}
-            datePublished={post.metadata.publishedAt}
-            dateModified={post.metadata.publishedAt}
+            datePublished={undefined}
+            dateModified={undefined}
             image={
               post.metadata.image ||
               `/api/og/generate?title=${encodeURIComponent(post.metadata.title)}`
@@ -89,9 +89,6 @@ export default async function DemoPost({ params }: { params: Promise<{ slug: str
             <SmartLink href="/demos">
               <Text variant="label-strong-m">Demos</Text>
             </SmartLink>
-            <Text variant="body-default-xs" onBackground="neutral-weak" marginBottom="12">
-              {post.metadata.publishedAt && formatDate(post.metadata.publishedAt)}
-            </Text>
             <Heading variant="display-strong-m">{post.metadata.title}</Heading>
           </Column>
           <Row marginBottom="32" horizontal="center">

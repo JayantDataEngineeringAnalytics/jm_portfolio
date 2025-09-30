@@ -4,12 +4,12 @@ import { baseURL, routes as routesConfig } from "@/resources";
 export default async function sitemap() {
   const projects = getPosts(["src", "app", "projects", "project-posts"]).map((post) => ({
     url: `${baseURL}/projects/${post.slug}`,
-    lastModified: post.metadata.publishedAt,
+    lastModified: new Date().toISOString(),
   }));
 
   const works = getPosts(["src", "app", "work", "projects"]).map((post) => ({
     url: `${baseURL}/work/${post.slug}`,
-    lastModified: post.metadata.publishedAt,
+    lastModified: new Date().toISOString(),
   }));
 
   const activeRoutes = Object.keys(routesConfig).filter(

@@ -51,34 +51,54 @@ export default function Home() {
               paddingBottom="32"
               paddingLeft="12"
             >
-              <Row gap="16" vertical="center">
-                <Badge
-                  background="brand-alpha-weak"
-                  paddingX="12"
-                  paddingY="4"
-                  onBackground="neutral-strong"
-                  textVariant="label-default-s"
-                  arrow={false}
-                >
-                  <Row paddingY="2">{home.featured.title}</Row>
-                </Badge>
-                <Badge
-                  background="brand-alpha-weak"
-                  paddingX="12"
-                  paddingY="4"
-                  onBackground="neutral-strong"
-                  textVariant="label-default-s"
-                  arrow={false}
-                >
-                  <Row gap="12" vertical="center">
-                    <strong className="ml-4">Microsoft Certified</strong>{" "}
-                    <Line background="brand-alpha-strong" vert height="20" />
-                    <Text marginRight="4" onBackground="brand-medium">
-                      Power BI Data Analyst
-                    </Text>
-                  </Row>
-                </Badge>
-              </Row>
+              <Column gap="12" horizontal="center">
+                <Row gap="16" vertical="center" horizontal="center">
+                  <Badge
+                    background="brand-alpha-weak"
+                    paddingX="12"
+                    paddingY="4"
+                    onBackground="neutral-strong"
+                    textVariant="label-default-s"
+                    arrow={false}
+                  >
+                    <Row paddingY="2">{home.featured.title}</Row>
+                  </Badge>
+                  <Badge
+                    background="brand-alpha-weak"
+                    paddingX="12"
+                    paddingY="4"
+                    onBackground="neutral-strong"
+                    textVariant="label-default-s"
+                    arrow={false}
+                  >
+                    <Row gap="12" vertical="center">
+                      <strong className="ml-4">Microsoft Certified</strong>{" "}
+                      <Line background="brand-alpha-strong" vert height="20" />
+                      <Text marginRight="4" onBackground="brand-medium">
+                        Azure Administrator
+                      </Text>
+                    </Row>
+                  </Badge>
+                </Row>
+                <Row gap="16" vertical="center" horizontal="center">
+                  <Badge
+                    background="brand-alpha-weak"
+                    paddingX="12"
+                    paddingY="4"
+                    onBackground="neutral-strong"
+                    textVariant="label-default-s"
+                    arrow={false}
+                  >
+                    <Row gap="12" vertical="center">
+                      <strong className="ml-4">Microsoft Certified</strong>{" "}
+                      <Line background="brand-alpha-strong" vert height="20" />
+                      <Text marginRight="4" onBackground="brand-medium">
+                        Power BI Data Analyst
+                      </Text>
+                    </Row>
+                  </Badge>
+                </Row>
+              </Column>
             </RevealFx>
           )}
           <RevealFx translateY="4" fillWidth horizontal="center" paddingBottom="16">

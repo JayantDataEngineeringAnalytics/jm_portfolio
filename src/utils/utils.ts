@@ -11,7 +11,7 @@ type Team = {
 
 type Metadata = {
   title: string;
-  publishedAt: string;
+  index?: number;
   summary: string;
   image?: string;
   images: string[];
@@ -24,40 +24,106 @@ type Metadata = {
 
 import { notFound } from "next/navigation";
 
-// Mapping from skill names to icon names
+// Central mapping from skill names to icon names - matches the About page system
 function mapSkillsToIcons(skills: string[]): { name: string; icon: string }[] {
   const skillIconMap: Record<string, string> = {
-    "Databricks": "databricks",
-    "Unity Catalog": "databricks", // Use databricks icon for Unity Catalog
-    "Delta Lake": "databricks", // Use databricks icon for Delta Lake
-    "Azure": "azure",
-    "Data Governance": "book", // Use book icon for Data Governance
-    "PySpark": "python", // Use python icon for PySpark
-    "SQL": "postgresql", // Use postgresql icon for SQL
-    "Power BI": "googleAnalytics", // Use analytics icon for Power BI
-    "Data Architecture": "grid", // Use grid icon for Data Architecture
+    // Data Engineering
     "Apache Kafka": "apacheKafka",
-    "Apache Spark": "apacheSpark",
+    "Kafka": "apacheKafka",
+    "RabbitMQ": "rabbitmq",
+    "Rest API": "postman",
+    "REST APIs": "postman",
+    "Databricks": "databricks",
     "Apache Hadoop": "apacheHadoop",
+    "Azure Synapse": "azureDevops",
+    "Azure Synapse Analytics": "azure",
+    "Azure Data Factory": "azure",
+    "Snowflake": "snowflake",
+    "Hive": "apacheHive",
     "Apache Hive": "apacheHive",
-    "Apache Cassandra": "apacheCassandra",
-    "MongoDB": "mongodb",
+    "Spark": "apacheSpark",
+    "Apache Spark": "apacheSpark",
+    "PySpark": "apacheSpark",
+    "Python": "python",
+    "Airflow": "apacheAirflow",
+    "Apache Airflow": "apacheAirflow",
+    
+    // Power BI & Analytics
+    "Power BI": "googleAnalytics",
+    "Superset": "apacheSuperset",
+    "Apache Superset": "apacheSuperset",
+    "Tableau": "tableau",
+    
+    // Databases
     "PostgreSQL": "postgresql",
     "MySQL": "mysql",
+    "MongoDB": "mongodb",
+    "Cassandra": "apacheCassandra",
+    "Apache Cassandra": "apacheCassandra",
     "Neo4j": "neo4j",
-    "Python": "python",
-    "Snowflake": "snowflake",
-    "Tableau": "tableau",
+    
+    // Cloud Platforms
+    "Azure": "azure",
+    "AWS": "aws",
     "Salesforce": "salesforce",
-    "Apache Airflow": "apacheAirflow",
-    "Apache Superset": "apacheSuperset",
+    
+    // Azure Services
+    "Azure Functions": "azure",
+    "Azure Event Hubs": "azure",
+    "Event Hubs": "azure",
+    "Azure ML": "azure",
+    "Azure Advisor": "azure",
+    "Azure DevOps": "azureDevops",
+    
+    // Specialized Technologies
+    "Unity Catalog": "databricks",
+    "Delta Lake": "databricks",
+    "Auto Loader": "databricks",
+    "MLflow": "book",
+    "Docker": "book",
+    "Kubernetes": "book",
+    "JavaScript": "javascript",
+    "Next.js": "nextjs",
+    "Supabase": "supabase",
+    "Figma": "figma",
+    
+    // Generic categories - using appropriate fallback icons
+    "Data Governance": "book",
+    "Data Architecture": "grid",
+    "Data Warehousing": "book",
+    "ETL/ELT": "book",
+    "CDC": "book",
+    "Streaming": "book",
+    "Structured Streaming": "apacheSpark",
+    "Real-time Processing": "book",
+    "Event-driven Architecture": "book",
+    "MLOps": "book",
+    "Machine Learning": "book",
+    "Real-time Analytics": "book",
+    "Financial Analytics": "book",
+    "High Availability": "book",
+    "Sharding": "mongodb",
+    "Replica Sets": "mongodb",
+    "Database Architecture": "book",
+    "Database Administration": "mongodb",
+    "Performance Optimization": "book",
+    "DevOps": "book",
+    "Monitoring": "book",
+    "Cost Management": "book",
+    "Debezium": "book",
+    "Kafka Connect": "apacheKafka",
+    "SQL Warehouse": "book",
+    "IoT": "book",
+    "SQL": "postgresql",
   };
 
   return skills.map(skill => ({
     name: skill,
-    icon: skillIconMap[skill] || "book" // Default to book icon if not found
+    icon: skillIconMap[skill] || "book" // Default to arrow icon if not found
   }));
 }
+
+
 
 function getMDXFiles(dir: string) {
   if (!fs.existsSync(dir)) {
@@ -77,7 +143,7 @@ function readMDXFile(filePath: string) {
 
   const metadata: Metadata = {
     title: data.title || "",
-    publishedAt: data.publishedAt,
+    index: data.index,
     summary: data.summary || "",
     image: data.image || "",
     images: data.images || [],

@@ -7,7 +7,7 @@ import Post from "./Post";
 interface Project {
   metadata: {
     title: string;
-    publishedAt: string;
+    index?: number;
     summary: string;
     image?: string;
     tag?: string;
@@ -33,10 +33,12 @@ export function FilterableProjectsList({
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [showAllSkills, setShowAllSkills] = useState(false);
 
-  // Sort projects by date
+  // Sort projects by index
   const sortedProjects = useMemo(() => {
     return projects.sort((a, b) => {
-      return new Date(b.metadata.publishedAt).getTime() - new Date(a.metadata.publishedAt).getTime();
+      const indexA = a.metadata.index ?? 999;
+      const indexB = b.metadata.index ?? 999;
+      return indexA - indexB;
     });
   }, [projects]);
 
@@ -63,9 +65,7 @@ export function FilterableProjectsList({
       if (!project.metadata.skills) return false;
       
       return selectedSkills.every((selectedSkill) =>
-        project.metadata.skills!.some((skill) => 
-          skill.name === selectedSkill
-        )
+        project.metadata.skills!.some((skill) => skill.name === selectedSkill)
       );
     });
   }, [sortedProjects, selectedSkills]);
@@ -109,7 +109,7 @@ export function FilterableProjectsList({
             const skillWithIcon = sortedProjects
               .flatMap((project) => project.metadata.skills || [])
               .find((skill) => skill.name === skillName);
-
+            
             const isSelected = selectedSkills.includes(skillName);
             
             return (

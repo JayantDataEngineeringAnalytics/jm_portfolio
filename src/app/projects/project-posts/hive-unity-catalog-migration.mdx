@@ -1,11 +1,11 @@
 ---
-title: "Hive → Unity Catalog Migration"
-publishedAt: "2025-03-15"
+title: "Legacy to Modern: Enterprise Hive-to-Unity Catalog Migration"
+index: 2
 summary: "Migrated Hive external tables to Unity Catalog managed tables (Delta)—consolidating storage under UC‑managed locations, standardizing governance (ABAC/RBAC), and enabling lineage & cross‑workspace sharing."
 skills: ["Databricks", "Unity Catalog", "Delta Lake", "Azure", "Data Governance", "PySpark", "SQL", "Power BI", "Data Architecture"]
 ---
 
-**Summary:** Migrated **Hive external tables** to **Unity Catalog *managed* tables (Delta)**—consolidating storage under UC‑managed locations, standardizing governance (ABAC/RBAC), and enabling lineage & cross‑workspace sharing. Performed **DEEP CLONE/CTAS copy** with a short write freeze for cutover.
+Migrated **Hive external tables** to **Unity Catalog *managed* tables (Delta)**—consolidating storage under UC‑managed locations, standardizing governance (ABAC/RBAC), and enabling lineage & cross‑workspace sharing. Performed **DEEP CLONE/CTAS copy** with a short write freeze for cutover.
 
 ---
 
@@ -107,7 +107,7 @@ To support the move from Hive external tables to **Unity Catalog managed** table
 
 ### Refactor Themes
 
-* **Three‑part naming everywhere**: switch from `db.table` to `catalog.schema.table` (e.g., `finance_silver.orders`).
+* **Three‑part naming everywhere**: switch from `db.table` to `catalog.schema.table` (e.g., `finance.silver.orders`).
 * **Managed storage semantics**: remove hard‑coded `LOCATION` and path‑based writes; let UC manage data placement.
 * **Path abstraction**: replace direct `abfss://...` strings with a small helper (e.g., `path("silver", "finance/orders")`) only where raw/external is still needed.
 * **Grant orchestration**: migrate ad‑hoc GRANTs to idempotent SQL scripts or Terraform; grant **groups**, not users.

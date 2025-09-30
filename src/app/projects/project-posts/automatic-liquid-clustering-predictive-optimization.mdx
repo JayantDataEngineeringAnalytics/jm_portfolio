@@ -1,0 +1,160 @@
+---
+title: "Self-Tuning Delta Tables: AI-Powered Liquid Clustering Optimization"
+index: 1
+summary: "Modernized table layout by enabling Automatic Liquid Clustering (ALC) with Predictive Optimization on Unity Catalog–managed Delta tables; replaced rigid partitions/Z‑ORDER with self‑tuning clustering and Auto Optimize, cutting scan time and small‑file overhead."
+skills: ["Delta Lake", "Databricks", "Unity Catalog", "Liquid Clustering", "Predictive Optimization", "Azure", "Performance Optimization", "PySpark", "SQL", "Auto Optimize"]
+---
+
+Modernized table layout by enabling **Automatic Liquid Clustering (ALC)** with **Predictive Optimization** on Unity Catalog–managed Delta tables; replaced rigid partitions/Z‑ORDER with **self‑tuning clustering** and **Auto Optimize**, cutting scan time and small‑file overhead.
+
+---
+
+## Context / Problem
+
+Growing data and mixed query patterns (multi‑tenant joins, range filters on event dates) made static partitioning costly and fragile. Daily OPTIMIZE/Z‑ORDER jobs were expensive and often out of sync with actual workload.
+
+**Goals**
+
+* Let the platform **learn and adapt** clustering keys automatically
+* Reduce **scan time** and **shuffle** without maintaining partitions
+* Keep file health with **optimizeWrite/autoCompact**
+* Work natively under **Unity Catalog** with clear lineage and grants
+
+**Assumptions (dummy details)**
+
+* Azure Databricks, **DBR 15.4 LTS+** for ALC
+* **Unity Catalog–managed** Delta tables in `sales_silver` and `sales_gold`
+* Predictive Optimization **enabled** at the metastore/warehouse level
+
+---
+
+## My Role
+
+* **Data Platform Architect & Implementer**
+* Identified candidate tables, rolled out ALC, tuned write paths, and built the telemetry dashboard for file health & skipped bytes
+
+---
+
+## Architecture (Target)
+
+* **Bronze**: ingestion as‑is (streaming/batch); minimal table services
+* **Silver/Gold**: **ALC enabled**; Predictive Optimization maintains layout asynchronously
+* **Write hygiene**: **Auto Optimize** (optimizeWrite + autoCompact) on curated tables
+* **Observability**: table health metrics (avg file size, small‑file ratio, skipped bytes, scan time)
+
+**Flow:** Ingest → Curate to managed Delta → **ALC + Auto Optimize** maintain layout → BI/ML queries benefit automatically
+
+---
+
+## Why ALC over Partitioning
+
+* No directory explosion; layout adapts to **real predicates** over time
+* Can **change keys** without table rewrites; platform converges automatically
+* Plays well with **streaming** and mixed predicates (e.g., `tenant_id` + `event_date`)
+
+---
+
+## Rollout Plan
+
+1. **Select candidates**: large tables with high scan time, many small files, frequent filters/joins
+2. **Pre‑checks**: confirm UC‑managed, protocol OK, Predictive Optimization available
+3. **Enable ALC** (`CLUSTER BY AUTO`) on targets
+4. **Enable/verify Auto Optimize** on write paths
+5. **Measure**: before/after (scan time, skipped bytes, avg file size, job latency)
+6. **Expand** to more tables; remove legacy daily OPTIMIZE/Z‑ORDER where validated
+
+---
+
+## Implementation Examples
+
+### Create managed schemas (UC)
+
+```sql
+CREATE CATALOG IF NOT EXISTS sales
+  MANAGED LOCATION 'abfss://uc-managed@<acct>.dfs.core.windows.net/sales';
+CREATE SCHEMA IF NOT EXISTS sales_silver;
+CREATE SCHEMA IF NOT EXISTS sales_gold;
+```
+
+### Turn on Automatic Liquid Clustering
+
+```sql
+-- New table with ALC
+CREATE TABLE sales_silver.orders
+USING DELTA
+AS SELECT * FROM source.orders
+CLUSTER BY AUTO;  -- Predictive Optimization chooses & maintains keys
+
+-- Existing table: switch on ALC
+ALTER TABLE sales_silver.events CLUSTER BY AUTO;
+```
+
+**Notes**: ALC requires **Predictive Optimization** enabled; the platform analyzes query history and adjusts keys when benefits outweigh costs. You can still revert or explicitly set keys later with `CLUSTER BY (col1, col2)` if needed.
+
+### Write‑path hygiene (Auto Optimize)
+
+```sql
+ALTER TABLE sales_silver.orders SET TBLPROPERTIES (
+  delta.autoOptimize.optimizeWrite = true,
+  delta.autoOptimize.autoCompact  = true
+);
+```
+
+### Streaming sink stays simple
+
+```python
+(spark.readStream.table("bronze.orders")
+  .writeStream
+  .option("checkpointLocation", "/Volumes/platform/chk/sales/orders_silver")
+  .toTable("sales_silver.orders"))
+# ALC + Predictive Optimization maintain layout asynchronously
+```
+
+### Health checks (examples)
+
+```sql
+-- Avg file size (MB)
+SELECT AVG(size_bytes)/1024/1024 AS avg_mb
+FROM system.storage.files
+WHERE table_name = 'sales_silver.orders';
+
+-- 7‑day read performance snapshot
+SELECT avg(duration_ms) AS avg_ms
+FROM system.query
+WHERE object = 'sales_silver.orders' AND start_time >= current_date() - 7;
+```
+
+---
+
+## Testing & Validation
+
+* **Performance**: wall‑clock latency (batch/stream), scan time ↓, skipped bytes ↑
+* **Files**: fewer tiny files; avg file size in target band (128–512MB)
+* **Correctness**: row counts and checksums match pre‑ALC baselines
+* **Cost**: fewer cluster hours for heavy queries; OPTIMIZE jobs retired where safe
+
+---
+
+## Outcomes / Impact
+
+* **Query time**: −20–45% on high‑read tables
+* **Ops**: removed daily OPTIMIZE/Z‑ORDER for selected tables; hands‑off maintenance
+* **Flexibility**: layout adjusts as query patterns evolve—no rewrites
+
+---
+
+## Risks & Mitigations
+
+* **PO not available in region** → fall back to manual `CLUSTER BY (keys)` until available
+* **Write bursts** → ensure autoscaling; monitor checkpoint lag (for streaming)
+* **Residual small files** → occasional housekeeping window if needed (rare with Auto Optimize)
+
+---
+
+## Runbook
+
+* Confirm UC‑managed + DBR 15.4 LTS+
+* Enable Predictive Optimization; validate on representative warehouse/jobs
+* `ALTER TABLE ... CLUSTER BY AUTO`
+* Turn on table‑level Auto Optimize
+* Add health monitors; compare before/after; expand rollout
