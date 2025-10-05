@@ -75,7 +75,7 @@ export default function Home() {
                       <strong className="ml-4">Microsoft Certified</strong>{" "}
                       <Line background="brand-alpha-strong" vert height="20" />
                       <Text marginRight="4" onBackground="brand-medium">
-                        Azure Administrator
+                        Azure Administrator Associate
                       </Text>
                     </Row>
                   </Badge>
