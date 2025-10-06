@@ -309,4 +309,11 @@ const gallery = {
   ]
 };
 
-export { person, social, newsletter, home, about, work, projects, demos, gallery };
+const certifications = {
+  path: "/certifications",
+  label: "Certifications",
+  title: "Professional Certifications",
+  description: `Industry-recognized certifications in data engineering and cloud technologies by ${person.name}`,
+};
+
+export { person, social, newsletter, home, about, work, projects, demos, gallery, certifications };

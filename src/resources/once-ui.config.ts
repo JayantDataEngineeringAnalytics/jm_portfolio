@@ -24,6 +24,7 @@ const routes: RoutesConfig = {
   "/gallery": true,
   "/projects": true,
   "/demos": true,
+  "/certifications": true,
 };
 
 const display: DisplayConfig = {

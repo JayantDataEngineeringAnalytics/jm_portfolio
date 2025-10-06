@@ -9,6 +9,7 @@ export {
   projects,
   demos,
   gallery,
+  certifications,
 } from "./content";
 
 export {
