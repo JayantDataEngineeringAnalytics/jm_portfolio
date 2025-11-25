@@ -14,6 +14,12 @@ import { baseURL, person, about } from "@/resources";
 
 const certifications = [
   {
+    id: "azure-solutions-architect-expert",
+    title: "Microsoft Certified: Azure Solutions Architect Expert",
+    image: "/images/certifications/azure-solutions-architect-expert.png",
+    link: "https://learn.microsoft.com/api/credentials/share/en-us/JayantMohite-7081/E090708CEEDE4E8C?sharingId=644BB608B7498BD6",
+  },
+  {
     id: "power-bi-data-analyst",
     title: "Microsoft Certified: Power BI Data Analyst",
     image: "/images/certifications/power-bi-data-analyst.png",
@@ -73,7 +79,7 @@ export default function CertificationsPage() {
 
       <Grid columns="2" s={{ columns: "1" }} m={{ columns: "2" }} l={{ columns: "2" }} fillWidth gap="32" marginTop="32">
         {certifications.map((cert) => (
-          <Column key={cert.id} gap="20" align="center">
+          <Column key={cert.id} gap="20">
             <Media
               src={cert.image}
               alt={cert.title}
@@ -94,7 +100,6 @@ export default function CertificationsPage() {
             >
               <Text 
                 variant="heading-strong-m" 
-                align="center"
                 onBackground="brand-strong"
                 style={{ 
                   cursor: "pointer",

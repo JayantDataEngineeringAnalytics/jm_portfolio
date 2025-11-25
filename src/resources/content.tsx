@@ -12,6 +12,7 @@ const person: Person = {
   email: "hello@jayantmohite.com",
   location: "Asia/Kolkata", // India/Pune uses Asia/Kolkata IANA time zone
   languages: [
+  "Microsoft Certified: Azure Solutions Architect Expert",
     "Databricks Certified Data Engineer Professional",
     "Microsoft Certified Power BI Data Analyst",
     "Microsoft Certified Azure Administrator",
