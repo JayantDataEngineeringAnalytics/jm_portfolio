@@ -51,8 +51,8 @@ export default function Home() {
               paddingBottom="32"
               paddingLeft="12"
             >
-              <Column gap="12" horizontal="center">
-                <Row gap="16" vertical="center" horizontal="center">
+              <Column gap="12" horizontal="start" align="start">
+                <Row gap="12" vertical="center" horizontal="start">
                   <Badge
                     background="brand-alpha-weak"
                     paddingX="12"
@@ -75,12 +75,28 @@ export default function Home() {
                       <strong className="ml-4">Microsoft Certified</strong>{" "}
                       <Line background="brand-alpha-strong" vert height="20" />
                       <Text marginRight="4" onBackground="brand-medium">
-                        Azure Administrator Associate
+                        Azure Solutions Architect Expert
                       </Text>
                     </Row>
                   </Badge>
                 </Row>
-                <Row gap="16" vertical="center" horizontal="center">
+                <Row gap="12" vertical="center" horizontal="start">
+                  <Badge
+                    background="brand-alpha-weak"
+                    paddingX="12"
+                    paddingY="4"
+                    onBackground="neutral-strong"
+                    textVariant="label-default-s"
+                    arrow={false}
+                  >
+                    <Row gap="12" vertical="center">
+                      <strong className="ml-4">Microsoft Certified</strong>{" "}
+                      <Line background="brand-alpha-strong" vert height="20" />
+                      <Text marginRight="4" onBackground="brand-medium">
+                        Azure Administrator Associate
+                      </Text>
+                    </Row>
+                  </Badge>
                   <Badge
                     background="brand-alpha-weak"
                     paddingX="12"
