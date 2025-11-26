@@ -12,7 +12,7 @@ import { VscAzure, VscAzureDevops } from "react-icons/vsc";
 import { SiPostgresql, SiMysql, SiApacheairflow, SiApachesuperset, SiDatabricks } from "react-icons/si";
 import { TbBrandGoogleAnalytics } from "react-icons/tb";
 import { FaRegSnowflake } from "react-icons/fa";
-import { SiApachenifi, SiDocker, SiElasticsearch, SiGrafana, SiKibana, SiKubernetes, SiPrometheus, SiTerraform, SiApacheflink, SiMicrosoft } from "react-icons/si";
+import { SiApachenifi, SiDocker, SiElasticsearch, SiGrafana, SiKibana, SiKubernetes, SiPrometheus, SiTerraform, SiApacheflink } from "react-icons/si";
 import { SiChartdotjs } from "react-icons/si";
 import { TbMoneybag, TbDatabase, TbCloud, TbServer, TbCode } from "react-icons/tb";
 import { BiData } from "react-icons/bi";
@@ -85,7 +85,7 @@ export const iconLibrary: Record<string, IconType> = {
   prometheus: SiPrometheus,
   terraform: SiTerraform,
   apacheFlink: SiApacheflink,
-  eventHub: SiMicrosoft,
+  eventHub: VscAzure,
   chartjs: SiChartdotjs,
   finops: TbMoneybag,
   database: TbDatabase,
