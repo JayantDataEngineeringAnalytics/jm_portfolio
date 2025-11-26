@@ -184,16 +184,19 @@ export default function About() {
               <Column fillWidth gap="l" marginBottom="40">
                 {about.work.experiences.map((experience, index) => (
                   <Column key={`${experience.company}-${experience.role}-${index}`} fillWidth>
+                    <Text variant="heading-strong-l">
+                      {experience.role}
+                    </Text>
                     <Row fillWidth horizontal="between" vertical="end" marginBottom="4">
-                      <Text id={experience.company} variant="heading-strong-l">
+                      <Text id={experience.company} variant="body-default-s" onBackground="brand-weak">
                         {experience.company}
                       </Text>
                       <Text variant="heading-default-xs" onBackground="neutral-weak">
                         {experience.timeframe}
                       </Text>
                     </Row>
-                    <Text variant="body-default-s" onBackground="brand-weak" marginBottom="m">
-                      {experience.role}
+                    <Text variant="body-default-m" marginBottom="m">
+                      {experience.summary}
                     </Text>
                     <Column as="ul" gap="16">
                       {experience.achievements.map(
