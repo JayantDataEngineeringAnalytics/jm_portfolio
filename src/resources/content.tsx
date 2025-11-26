@@ -7,7 +7,7 @@ const person: Person = {
   firstName: "Jayant",
   lastName: "Mohite",
   name: `Jayant Mohite`,
-  role: "Certified Big Data Enginner, Architect and Analyst",
+  role: "Certified Cloud Data Platform Architect | Big Data Consultant | Technical Trainer",
   avatar: "/images/avatar.jpg",
   email: "hello@jayantmohite.com",
   location: "Asia/Kolkata", // India/Pune uses Asia/Kolkata IANA time zone
@@ -85,11 +85,14 @@ const about: About = {
   intro: {
     display: true,
     title: "Introduction",
-        description: (
-          <>I simplify complex data into insight. For 13+ years, I’ve built cloud-ready platforms 
-          and analytics that scale—aligning engineering, governance, and business outcomes across finance, 
-          e-commerce, healthcare, and education.</>
-        ),
+    description: (
+      <>
+        <p>Results-driven <b>Azure Solutions Architect & Technical Manager</b> with 13+ years of experience designing and delivering enterprise-scale data platforms across <b>Azure</b>, <b>Databricks</b>, <b>Microsoft Fabric</b>, and <b>Power BI</b>.</p>
+        <p>Proven expertise in building end-to-end cloud data ecosystems unifying <b>ingestion</b>, <b>processing</b>, <b>governance</b>, <b>machine learning</b>, and <b>analytics</b>.</p>
+        <p>Strong background in <b>Hadoop</b>, <b>Spark</b>, <b>Kafka</b>, <b>MongoDB</b>, <b>Cassandra</b>, and <b>Neo4j</b>, evolved into modern lakehouse architectures leveraging <b>Delta Lake</b>, <b>Synapse</b>, and <b>Fabric OneLake</b>.</p>
+        <p>Skilled in <b>FinOps</b>, <b>CI/CD</b>, <b>data governance</b>, and <b>real-time streaming</b>, with a track record of driving cost optimization, scalability, and actionable insights for global organizations.</p>
+      </>
+    ),
   },
   studies: {
     display: false,
@@ -176,64 +179,78 @@ const about: About = {
     title: "Work Experience",
     experiences: [
       {
-        company: "Skan.ai",
-        role: "Technical Manager / Data Platform Architect",
-        timeframe: "Oct 2020 — Present",
+        company: "SKAN AI LABS",
+        role: "Data Platform Manager / Solutions Architect",
+        timeframe: "2020 — Present",
         achievements: [
-          "Designed & operationalized Delta Lake with Delta Engine, Z-Ordering, Data Skipping; boosted performance & storage efficiency.",
-          "Built real-time & batch ETL in Databricks (Workflows, Auto Loader, Structured Streaming) → ~40% faster processing across JSON/CSV/Parquet/API.",
-          "Led Hive Metastore → Unity Catalog migration with ABAC, table ACLs, lineage; zero downtime and stronger governance.",
-          "Optimized ADF & Synapse pipelines → ~25% faster execution, 99.9% uptime for critical workloads.",
-          "Delivered Power BI models, DAX, and exec dashboards with drill-through KPIs; enabled self-service analytics.",
-          "Directed MongoDB Atlas migration (sharding, global clusters) → ~20% storage savings, ~30% faster queries.",
-          "Mentored teams on Spark performance tuning and Power BI optimization at scale."
+          "Partnered with CXOs, product owners, and client stakeholders to define modernization roadmaps, cloud strategies, and reference architectures aligned with business goals.",
+          "Designed end-to-end architectures integrating Data Factory, Synapse, Event Hub, Kafka, Airflow, Blob Storage, ADLS, OneLake, and Delta Lake for unified batch and streaming workloads.",
+          "Engineered optimized PySpark and Structured Streaming pipelines via Databricks Workflows, Auto Loader, and REST APIs, achieving a 40% increase in throughput and reduced latency.",
+          "Led Delta Lake infrastructure design using Delta Engine, Z-Ordering, and Data Skipping, improving query and storage performance; orchestrated the Hive Metastore → Unity Catalog migration with ABAC and ACLs for robust data governance.",
+          "Led architectural assessments for external client engagements, recommending Hadoop-to-Databricks, SQL-to-Fabric, and on-prem to cloud landing zone migration strategies.",
+          "Managed and modernized MongoDB infrastructure, overseeing migration to MongoDB Atlas with Global Clusters, Multi-Region Writes, and Automated Sharding; optimized schema design and indexing for a 30% improvement in query execution times.",
+          "Built secure multi-region infrastructure with VNets, private endpoints, and managed identities; executed FinOps and performance-tuning strategies (auto-scaling, caching, parallelization, telemetry) via Azure Monitor and Log Analytics, reducing compute costs by 25%.",
+          "Established data governance, lineage, and monitoring frameworks using Unity Catalog, Purview, Fabric Workspaces, and Log Analytics, ensuring 99.9% uptime for critical operations.",
+          "Architected semantic and visualization layers with Power BI, Fabric DirectLake, and Synapse SQL, delivering governed dashboards and KPI reporting for leadership teams.",
+          "Integrated Azure Machine Learning, Snowflake, PostgreSQL, MongoDB, and Scikit-Learn for predictive analytics and cross-platform data exchange.",
+          "Promoted automated CI/CD and release management practices via Azure DevOps, enabling faster, scalable, and cost-effective pipeline deployments.",
+          "Led the feature engineering team using Agile methodologies, managing sprint planning, reviews, and delivery of high-impact data and analytics features aligned with business objectives."
         ],
       },
       {
-        company: "Palanntech India",
-        role: "Big Data Consultant/Manager",
-        timeframe: "Jun 2017 — Oct 2020",
+        company: "PALANNTECH INDIA",
+        role: "Senior Big Data Consultant",
+        timeframe: "2017 — 2020",
         achievements: [
-          "Delivered enterprise Big Data solutions with Hadoop, Spark (PySpark), Cassandra, MongoDB, Neo4j.",
-          "Implemented PySpark-based ETL frameworks for streaming & batch analytics; standardized reusable patterns.",
-          "Directed Power BI/Tableau rollouts with RLS and automated refreshes for near real-time insights.",
-          "Defined visualization standards and reusable Power BI templates across projects.",
-          "Reduced cloud costs ~20% via right-sizing, storage tiering, and workload optimization.",
-          "Led onboarding & upskilling programs for Big Data engineering teams."
+          "Managed agile data-engineering and DevOps teams delivering new analytics capabilities and advanced feature-engineering pipelines under aggressive timelines.",
+          "Designed and deployed end-to-end Hadoop clusters using HDFS, YARN, Hive, Pig, Sqoop, and Spark, enabling distributed analytics on multi-terabyte workloads.",
+          "Built ETL and ELT workflows with Apache Airflow, Oozie, and Kafka, orchestrating ingestion from RDBMS, APIs, and file systems at enterprise scale.",
+          "Architected and administered Cassandra, MongoDB, and Neo4j environments for high-volume, schema-flexible, and relationship-intensive use cases.",
+          "Achieved a 20% reduction in cloud infrastructure spend through improved resource utilization and cross-cloud cost governance (Azure + AWS).",
+          "Implemented partitioning and schema-design strategies in Hive and HBase for optimized query performance and scalability.",
+          "Developed Power BI, Tableau, and Superset dashboards to provide real-time insights and visual analytics to business stakeholders.",
+          "Configured cluster security, capacity planning, and performance tuning, ensuring high availability and efficient workload distribution.",
+          "Provided architecture consulting and migration roadmaps for transitioning on-prem Hadoop workloads to cloud-native data platforms on Azure and AWS."
         ],
       },
       {
-        company: "Freelance",
+        company: "FREELANCER",
         role: "Big Data Consultant",
-        timeframe: "Jun 2014 — Jun 2017",
+        timeframe: "2014 — 2017",
         achievements: [
-          "Built custom ETL with Apache NiFi, Airflow, Pig, and PySpark; delivered streaming with Kafka + Spark Streaming for finance & e-commerce.",
-          "Designed Power BI dashboards integrating Hadoop, MongoDB, SQL to enable self-service analytics.",
-          "Delivered corporate trainings across India, Singapore, Malaysia, Vietnam, Philippines on Spark, Hadoop, Kafka, MongoDB, Cassandra, Power BI.",
-          "Founded Wisdom Sprouts; partnered with colleges for Big Data certification programs."
+          "Built and deployed data platforms using Apache Hadoop (Hortonworks, Cloudera), Spark, Kafka, Cassandra, MongoDB, and Neo4j, enabling high-volume analytics and real-time processing.",
+          "Designed custom ETL frameworks with Apache NiFi, Airflow, and Pig to automate ingestion, transformation, and loading workflows, improving reliability and reducing manual intervention.",
+          "Implemented Kafka + Spark Streaming pipelines for financial and ecommerce clients, delivering low-latency, high-throughput event-driven analytics.",
+          "Developed scalable data models and replication/sharding strategies in MongoDB, Cassandra, and Neo4j, optimizing query performance and fault tolerance.",
+          "Built Hadoop data lakes supporting batch and near real-time workloads with Hive, Pig, Sqoop, and Spark, consolidating structured and semi-structured data sources.",
+          "Conducted hands-on client training sessions on Big Data stacks, empowering internal teams to manage and scale their own data infrastructure.",
+          "Created shell/Python-based monitoring and data-flow scripts using REST APIs for pipeline observability and operational control."
         ],
       },
       {
-        company: "DB Xento Systems",
+        company: "DB XENTO SYSTEMS",
         role: "Software Engineer",
-        timeframe: "May 2012 — Jun 2014",
+        timeframe: "2012 — 2014",
         achievements: [
-          "Administered & optimized PostgreSQL (query tuning, indexing); automated data validation with Python.",
-          "Built Power BI prototypes for internal performance monitoring (SQL + Python outputs).",
-          "Monitored & tuned servers for high availability and scalability."
+          "Administered and optimized PostgreSQL databases, improving performance through query tuning and indexing.",
+          "Automated data validation and reconciliation processes using Python scripts, reducing manual QA effort and improving data reliability.",
+          "Developed Power BI prototypes for internal performance monitoring, combining SQL and Python outputs into visual insights for engineering managers.",
+          "Monitored and fine-tuned application and database servers for high availability, fault tolerance, and scalability.",
+          "Built reusable ETL utilities in Python to extract and transform data from REST APIs, CSVs, and transactional databases.",
+          "Wrote stored procedures, functions, and triggers to support business workflows and reporting use cases."
         ],
       },
       {
-        company: "Freelance",
-        role: "Training & Publications",
-        timeframe: "May 2014 — Present",
+        company: "TRAINING & PUBLICATIONS",
+        role: "Technical Trainer & Author",
+        timeframe: "2014 — Present",
         achievements: [
-          "Best-Seller Author – MongoDB Administration course on Udemy (4.3+ stars, thousands of learners).",
-          "Published Author – Technical content for HP Micro Focus Big Data, O’Reilly, Packt.",
-          "Delivered 12+ Salesforce-authorized courses as a certified Sales/Service Cloud Consultant.",
-          "Certified Trainer – Salesforce, MongoDB, Apache Spark, Power BI, and Data Engineering.",
+          "Best-Seller Author - MongoDB Administration course on Udemy (4.3+ stars, thousands of learners).",
+          "Published Author - Technical content for HP Micro Focus Big Data, O'Reilly, Packt Publications.",
           "Featured in Higher Education Magazine for contributions to skill-based technical education.",
-          "Conducted 200+ corporate and academic workshops on Big Data, Spark, Power BI, and NoSQL technologies."
+          "Conducted 300+ corporate, academic and retail trainings on Databricks, Big Data, Spark, Power BI, NoSQL Databases and Salesforce.",
+          "Certified Salesforce Trainer for 12+ courses.",
+          "Founded Wisdom Sprouts in 2016 - An Academic and Retail Training Platform."
         ],
       },
     ],
