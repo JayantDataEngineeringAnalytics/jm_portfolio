@@ -55,9 +55,9 @@ const social: Social = [
 
 const home: Home = {
   path: "/",
-  image: "/api/og/generate?title=Certified Data Engineer & Solutions Architect",
+  image: "/api/og/generate?title=Certified Solutions Architect",
   label: "Home",
-  title: "Jayant Mohite - Certified Data Engineer & Solutions Architect",
+  title: "Jayant Mohite - Certified Solutions Architect",
   description: "Certified Big Data Engineer with 13+ years of experience building scalable data platforms and analytics solutions. Specialized in Databricks, Azure, Power BI, and modern data architecture.",
   headline: <>Turning Data into Actionable Insights</>,
   featured: {
@@ -75,7 +75,7 @@ const home: Home = {
   },
   subline: (
     <>
-      I'm <b>Jayant</b>, a Certified Data Engineer And Solutions Architect. <br /> I design and build data
+      I'm <b>Jayant</b>, a Certified Solutions Architect. <br /> I design and build data
       solutions that drive business growth and efficiency.
     </>
   ),
