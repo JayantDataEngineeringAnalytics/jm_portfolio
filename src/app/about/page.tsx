@@ -183,21 +183,19 @@ export default function About() {
               </Heading>
               <Column fillWidth gap="l" marginBottom="40">
                 {about.work.experiences.map((experience, index) => (
-                  <Column key={`${experience.company}-${experience.role}-${index}`} fillWidth>
-                    <Text variant="heading-strong-l">
-                      {experience.role}
-                    </Text>
-                    <Row fillWidth horizontal="between" vertical="end" marginBottom="4">
-                      <Text id={experience.company} variant="body-default-s" onBackground="brand-weak">
-                        {experience.company}
-                      </Text>
-                      <Text variant="heading-default-xs" onBackground="neutral-weak">
-                        {experience.timeframe}
-                      </Text>
-                    </Row>
-                    <Text variant="body-default-m" marginBottom="m">
-                      {experience.summary}
-                    </Text>
+                  <Column key={`${experience.company}-${index}`} fillWidth gap="m">
+                    <Heading as="h3" id={experience.company} variant="heading-strong-l">
+                      {experience.company}
+                    </Heading>
+                    {experience.tags && experience.tags.length > 0 && (
+                      <Row wrap gap="8" paddingBottom="8">
+                        {experience.tags.map((tag, tagIndex) => (
+                          <Tag key={`${experience.company}-${tagIndex}`} size="l" prefixIcon={tag.icon}>
+                            {tag.name}
+                          </Tag>
+                        ))}
+                      </Row>
+                    )}
                     <Column as="ul" gap="16">
                       {experience.achievements.map(
                         (achievement: React.ReactNode, index: number) => (
