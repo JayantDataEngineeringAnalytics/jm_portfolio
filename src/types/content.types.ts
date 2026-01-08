@@ -152,6 +152,11 @@ export interface About extends BasePageConfig {
       summary: React.ReactNode;
       /** Achievements at the company */
       achievements: React.ReactNode[];
+      /** Skill tags related to the experience */
+      tags?: Array<{
+        name: string;
+        icon?: string;
+      }>;
       /** Images related to the experience */
       images?: Array<{
         /** Image source path */
