@@ -334,7 +334,12 @@ const about: About = {
           <><b>AWS</b>: S3, EMR, Glue, Redshift, Lambda, Step Functions, Aurora/RDS.</>,
           <><b>GCP</b> (working knowledge & PoCs): BigQuery, Dataflow, Cloud Storage.</>,
           <>Designed multi-cloud architectures, ensuring portability, operational consistency, and secure cross-cloud integration.</>,
-          <>Led architectural assessments for external client engagements, recommending <b>Hadoop-to-Databricks</b>, <b>SQL-to-Fabric</b>, and on-prem to cloud landing zone migration strategies.</>
+          <>Led architectural assessments for external client engagements, recommending <b>Hadoop-to-Databricks</b>, <b>SQL-to-Fabric</b>, and on-prem to cloud landing zone migration strategies.</>,
+          <>Reduced platform infrastructure spend from ~$300K/month to &lt;$180K/month (≈45%), improving unit economics from ~$35/license to &lt;$20/license while workloads and customers continued to scale.</>,
+          <>Designed and operationalized <b>DaaS / RaaS</b> data-sharing architecture, now the primary custom reporting model, enabling repeatable enterprise onboarding for 10+ customers.</>,
+          <>Led <b>Azure → GCP migration</b> of the data & analytics platform for ~30 enterprise customers across the US, UK, and Germany, defining the coexistence strategy where required and owning migration strategy, phased cutovers, and risk controls.</>,
+          <>Negotiated a strategic <b>$10M GCP agreement</b> securing <b>$3.5M in credits</b> plus ~25% list-price discounts, materially improving migration economics and long-term cloud runway.</>,
+          <>Acted as the primary SME for all customer data & analytics discussions, leading architecture, security, and scalability reviews and resolving escalations, reducing customer issues by &gt;50%.</>
         ],
       },
       {
