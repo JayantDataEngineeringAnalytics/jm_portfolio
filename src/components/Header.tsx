@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 import { Fade, Flex, Line, Row, ToggleButton } from "@once-ui-system/core";
 
-import { person, social, home, about, work, projects, demos, gallery, certifications } from "@/resources";
+import { person, social, home, about, work, projects, demos, gallery, certifications, courses, showcase } from "@/resources";
 import { routes, display } from "@/resources/once-ui.config";
 import { ThemeToggle } from "./ThemeToggle";
 import styles from "./Header.module.scss";
@@ -144,6 +144,44 @@ export const Header = () => {
                             prefixIcon="play"
                             href="/demos"
                             selected={pathname.startsWith("/demos")}
+                          />
+                        </Row>
+                      </>
+                    )}
+                    {routes["/showcase"] && (
+                      <>
+                        <Row s={{ hide: true }}>
+                          <ToggleButton
+                            prefixIcon="grid"
+                            href="/showcase"
+                            label={showcase.label}
+                            selected={pathname.startsWith("/showcase")}
+                          />
+                        </Row>
+                        <Row hide s={{ hide: false }}>
+                          <ToggleButton
+                            prefixIcon="grid"
+                            href="/showcase"
+                            selected={pathname.startsWith("/showcase")}
+                          />
+                        </Row>
+                      </>
+                    )}
+                    {routes["/courses"] && (
+                      <>
+                        <Row s={{ hide: true }}>
+                          <ToggleButton
+                            prefixIcon="academy"
+                            href="/courses"
+                            label={courses.label}
+                            selected={pathname.startsWith("/courses")}
+                          />
+                        </Row>
+                        <Row hide s={{ hide: false }}>
+                          <ToggleButton
+                            prefixIcon="academy"
+                            href="/courses"
+                            selected={pathname.startsWith("/courses")}
                           />
                         </Row>
                       </>

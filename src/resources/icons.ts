@@ -30,6 +30,13 @@ import {
   HiOutlineDocument,
   HiOutlineGlobeAsiaAustralia,
   HiOutlineRocketLaunch,
+  HiOutlineUserGroup,
+  HiOutlineBriefcase,
+  HiOutlineChartBar,
+  HiOutlineAcademicCap,
+  HiOutlineLightBulb,
+  HiOutlineClipboardDocumentCheck,
+  HiOutlinePresentationChartLine,
 } from "react-icons/hi2";
 
 import {
@@ -97,6 +104,13 @@ export const iconLibrary: Record<string, IconType> = {
   arrowRight: HiArrowRight,
   email: HiEnvelope,
   globe: HiOutlineGlobeAsiaAustralia,
+  users: HiOutlineUserGroup,
+  briefcase: HiOutlineBriefcase,
+  chartBar: HiOutlineChartBar,
+  academicCap: HiOutlineAcademicCap,
+  lightBulb: HiOutlineLightBulb,
+  clipboardCheck: HiOutlineClipboardDocumentCheck,
+  presentationChart: HiOutlinePresentationChartLine,
   person: PiUserCircleDuotone,
   grid: PiGridFourDuotone,
   book: PiBookBookmarkDuotone,
