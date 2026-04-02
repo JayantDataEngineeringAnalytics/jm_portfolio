@@ -10,6 +10,8 @@ export {
   demos,
   gallery,
   certifications,
+  courses,
+  showcase,
 } from "./content";
 
 export {

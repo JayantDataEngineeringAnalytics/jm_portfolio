@@ -14,6 +14,7 @@ import {
   SpacingToken,
 } from "@once-ui-system/core";
 import { Footer, Header, RouteGuard, Providers } from "@/components";
+import EtlBackground from "@/components/EtlBackground";
 import { baseURL, effects, fonts, style, dataStyle, home } from "@/resources";
 
 export async function generateMetadata() {
@@ -113,6 +114,7 @@ export default async function RootLayout({
           padding="0"
           horizontal="center"
         >
+          <EtlBackground />
           <RevealFx fill position="absolute">
             <Background
               mask={{

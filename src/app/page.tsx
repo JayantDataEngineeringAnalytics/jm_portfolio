@@ -51,8 +51,8 @@ export default function Home() {
               paddingBottom="32"
               paddingLeft="12"
             >
-              <Column gap="12" horizontal="start" align="start">
-                <Row gap="12" vertical="center" horizontal="start">
+              <Column gap="12" fillWidth>
+                <Row gap="12" vertical="center" horizontal="start" wrap>
                   <Badge
                     background="brand-alpha-weak"
                     paddingX="12"
@@ -71,16 +71,14 @@ export default function Home() {
                     textVariant="label-default-s"
                     arrow={false}
                   >
-                    <Row gap="12" vertical="center">
-                      <strong className="ml-4">Microsoft Certified</strong>{" "}
-                      <Line background="brand-alpha-strong" vert height="20" />
-                      <Text marginRight="4" onBackground="brand-medium">
-                        Azure Solutions Architect Expert
-                      </Text>
+                    <Row gap="8" vertical="center">
+                      <strong>Microsoft Certified</strong>
+                      <Line background="brand-alpha-strong" vert height="16" />
+                      <Text onBackground="brand-medium">Azure AI Engineer Associate</Text>
                     </Row>
                   </Badge>
                 </Row>
-                <Row gap="12" vertical="center" horizontal="start">
+                <Row gap="12" vertical="center" horizontal="start" wrap>
                   <Badge
                     background="brand-alpha-weak"
                     paddingX="12"
@@ -89,12 +87,10 @@ export default function Home() {
                     textVariant="label-default-s"
                     arrow={false}
                   >
-                    <Row gap="12" vertical="center">
-                      <strong className="ml-4">Microsoft Certified</strong>{" "}
-                      <Line background="brand-alpha-strong" vert height="20" />
-                      <Text marginRight="4" onBackground="brand-medium">
-                        Azure Administrator Associate
-                      </Text>
+                    <Row gap="8" vertical="center">
+                      <strong>Microsoft Certified</strong>
+                      <Line background="brand-alpha-strong" vert height="16" />
+                      <Text onBackground="brand-medium">Azure Solutions Architect Expert</Text>
                     </Row>
                   </Badge>
                   <Badge
@@ -105,12 +101,26 @@ export default function Home() {
                     textVariant="label-default-s"
                     arrow={false}
                   >
-                    <Row gap="12" vertical="center">
-                      <strong className="ml-4">Microsoft Certified</strong>{" "}
-                      <Line background="brand-alpha-strong" vert height="20" />
-                      <Text marginRight="4" onBackground="brand-medium">
-                        Power BI Data Analyst
-                      </Text>
+                    <Row gap="8" vertical="center">
+                      <strong>Microsoft Certified</strong>
+                      <Line background="brand-alpha-strong" vert height="16" />
+                      <Text onBackground="brand-medium">Azure Administrator Associate</Text>
+                    </Row>
+                  </Badge>
+                </Row>
+                <Row gap="12" vertical="center" horizontal="center" fillWidth wrap>
+                  <Badge
+                    background="brand-alpha-weak"
+                    paddingX="12"
+                    paddingY="4"
+                    onBackground="neutral-strong"
+                    textVariant="label-default-s"
+                    arrow={false}
+                  >
+                    <Row gap="8" vertical="center">
+                      <strong>Microsoft Certified</strong>
+                      <Line background="brand-alpha-strong" vert height="16" />
+                      <Text onBackground="brand-medium">Power BI Data Analyst Associate</Text>
                     </Row>
                   </Badge>
                 </Row>
