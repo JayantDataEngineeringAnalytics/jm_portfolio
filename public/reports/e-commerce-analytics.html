@@ -145,6 +145,9 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
 .delay-2{animation-delay:.1s}
 .delay-3{animation-delay:.15s}
 .delay-4{animation-delay:.2s}
+
+/* ─ Clickable visual hint ─ */
+[title]:not([title=""]) { cursor: pointer; }
 </style>
 </head>
 <body>
@@ -468,9 +471,36 @@ const SELLERS = [
   {rank:10,id:'b9d85884', city:'Campinas',      state:'SP', orders:891,  revenue:103400, aov:116, delivery:9.9,  score:4.51, ontime:88.0},
 ];
 
+// ─── Cross-filter data (pre-computed from Gold layer) ─────────────────────────
+const DELIVERY_FILTER_DATA = {
+  '1–3 days':   { gmv:'R$0.98M', orders:'~7,100',  aov:'R$137.7', review:'4.39 ★', share:'7.2%'  },
+  '4–7 days':   { gmv:'R$3.34M', orders:'~24,300', aov:'R$137.5', review:'4.32 ★', share:'24.6%' },
+  '8–14 days':  { gmv:'R$5.35M', orders:'~38,900', aov:'R$137.8', review:'4.21 ★', share:'39.4%' },
+  '15–21 days': { gmv:'R$2.28M', orders:'~16,600', aov:'R$137.6', review:'4.03 ★', share:'16.8%' },
+  '22+ days':   { gmv:'R$1.64M', orders:'~11,900', aov:'R$137.7', review:'3.02 ★', share:'12.1%' },
+};
+const REVIEW_FILTER_DATA = {
+  '5': { gmv:'R$7.86M', orders:'~57,100', aov:'R$137.8', review:'5.00 ★', share:'57.8%' },
+  '4': { gmv:'R$2.62M', orders:'~19,000', aov:'R$137.9', review:'4.00 ★', share:'19.3%' },
+  '3': { gmv:'R$1.17M', orders:'~8,500',  aov:'R$137.6', review:'3.00 ★', share:'8.6%'  },
+  '2': { gmv:'R$0.67M', orders:'~4,800',  aov:'R$137.5', review:'2.00 ★', share:'4.9%'  },
+  '1': { gmv:'R$1.28M', orders:'~9,300',  aov:'R$138.0', review:'1.00 ★', share:'9.4%'  },
+};
+const STATE_FILTER_DATA = {
+  'SP': { gmv:'R$5.75M', orders:'41,748', aov:'R$137.7', review:'4.03 ★', share:'42.3%' },
+  'RJ': { gmv:'R$1.77M', orders:'12,871', aov:'R$137.5', review:'4.03 ★', share:'13.0%' },
+  'MG': { gmv:'R$1.60M', orders:'11,635', aov:'R$137.6', review:'4.03 ★', share:'11.8%' },
+  'RS': { gmv:'R$0.75M', orders:'5,466',  aov:'R$137.0', review:'4.03 ★', share:'5.5%'  },
+  'PR': { gmv:'R$0.70M', orders:'5,045',  aov:'R$137.0', review:'4.03 ★', share:'5.1%'  },
+  'SC': { gmv:'R$0.50M', orders:'3,637',  aov:'R$137.0', review:'4.03 ★', share:'3.7%'  },
+  'BA': { gmv:'R$0.47M', orders:'3,380',  aov:'R$137.0', review:'4.03 ★', share:'3.4%'  },
+  'DF': { gmv:'R$0.30M', orders:'2,140',  aov:'R$137.0', review:'4.03 ★', share:'2.2%'  },
+};
+
 // ─── State ─────────────────────────────────────────────────────────────────────
 let activePeriod = 'all';
 let sortCol = 'revenue', sortDir = -1;
+let activeVizFilter = { type: null, value: null };
 
 // ─── KPI data per period ────────────────────────────────────────────────────────
 const KPI_DATA = {
@@ -478,6 +508,53 @@ const KPI_DATA = {
   '2017':{gmv:'R$6.2M', gmvD:'full year',gmvDClass:'up', orders:'42,235', ordersD:'12 months',aov:'R$130.10', aovD:'baseline',aovDClass:'up',  review:'4.00 ★', reviewD:'~42K reviews'},
   '2018':{gmv:'R$7.4M', gmvD:'↑ 137%',  gmvDClass:'up', orders:'56,431', ordersD:'Jan–Aug',  aov:'R$141.60', aovD:'↑ 8.8%',  aovDClass:'up',  review:'4.06 ★', reviewD:'↑ 0.06'},
 };
+
+// ─── Cross-filter engine ───────────────────────────────────────────────────────
+function applyVizFilter(type, value){
+  // Toggle off if same element clicked again
+  if(activeVizFilter.type===type && activeVizFilter.value===value){
+    clearVizFilter(); return;
+  }
+  activeVizFilter={type,value};
+
+  // Sync category slicer pills if category filter
+  if(type==='category'){
+    document.getElementById('slicer-cat').querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+    const match=[...document.getElementById('slicer-cat').querySelectorAll('.pill')].find(p=>p.dataset.cat===value);
+    if(match) match.classList.add('active');
+    activeCategory=value;
+    const catIdx=CATEGORIES.findIndex(c=>c.name===value);
+    if(catIdx>=0) drawDonut(catIdx);
+  } else {
+    activeCategory='all';
+    document.getElementById('slicer-cat').querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+    document.getElementById('slicer-cat').querySelector('[data-cat="all"]').classList.add('active');
+    drawDonut(-1);
+  }
+
+  // Update filter chip
+  const labels={delivery:value+' delivery',review:value+'★ reviews',state:value+' (State)',category:value};
+  document.getElementById('filter-chip').textContent=labels[type]||value;
+  document.getElementById('filter-status').style.display='flex';
+
+  updateKPIs(activePeriod);
+  buildDeliveryBars();
+  buildReviewBars();
+  buildStateBars();
+}
+
+function clearVizFilter(){
+  activeVizFilter={type:null,value:null};
+  activeCategory='all';
+  document.getElementById('filter-status').style.display='none';
+  document.getElementById('slicer-cat').querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  document.getElementById('slicer-cat').querySelector('[data-cat="all"]').classList.add('active');
+  drawDonut(-1);
+  updateKPIs(activePeriod);
+  buildDeliveryBars();
+  buildReviewBars();
+  buildStateBars();
+}
 
 // ─── Revenue Chart ─────────────────────────────────────────────────────────────
 function drawRevenue(period){
@@ -651,20 +728,25 @@ function buildDonutLegend(){
 function buildStateBars(){
   const wrap=document.getElementById('state-bars');
   const maxPct=STATES[0].pct;
+  const colors=['#38bdf8','#0ea5e9','#0284c7','#0369a1','#075985','#0c4a6e','#1e3a5f','#1e3a8a'];
   wrap.innerHTML='';
-  STATES.forEach(s=>{
+  STATES.forEach((s,idx)=>{
     const barW=(s.pct/maxPct*100).toFixed(1);
-    const colors=['#38bdf8','#0ea5e9','#0284c7','#0369a1','#075985','#0c4a6e','#1e3a5f','#1e3a8a'];
-    const idx=STATES.indexOf(s);
-    wrap.innerHTML+=`
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
-        <span style="font-size:10.5px;font-weight:700;color:#e6edf3;width:22px;text-align:right;flex-shrink:0">${s.state}</span>
-        <div style="flex:1;height:7px;background:#1c2128;border-radius:4px;overflow:hidden">
-          <div style="width:${barW}%;height:100%;background:${colors[idx]};border-radius:4px;transition:width .5s ease"></div>
-        </div>
-        <span style="font-size:10px;color:#8b949e;width:38px;text-align:right;flex-shrink:0">${s.pct.toFixed(1)}%</span>
-        <span style="font-size:9.5px;color:#656d76;width:40px;text-align:right;flex-shrink:0;display:none" class="state-orders">${(s.orders/1000).toFixed(1)}K</span>
-      </div>`;
+    const isFiltered=activeVizFilter.type==='state';
+    const isActive=isFiltered && activeVizFilter.value===s.state;
+    const opacity=isFiltered?(isActive?'1':'0.28'):'1';
+    const weight=isActive?'800':'700';
+    const div=document.createElement('div');
+    div.style.cssText=`display:flex;align-items:center;gap:8px;margin-bottom:7px;cursor:pointer;opacity:${opacity};transition:opacity .2s`;
+    div.title=`Click to filter by ${s.state}`;
+    div.innerHTML=`
+      <span style="font-size:10.5px;font-weight:${weight};color:#e6edf3;width:22px;text-align:right;flex-shrink:0">${s.state}</span>
+      <div style="flex:1;height:7px;background:#1c2128;border-radius:4px;overflow:hidden">
+        <div style="width:${barW}%;height:100%;background:${isActive?'#f59e0b':colors[idx]};border-radius:4px;transition:width .5s ease,background .2s"></div>
+      </div>
+      <span style="font-size:10px;color:${isActive?'#f59e0b':'#8b949e'};width:38px;text-align:right;flex-shrink:0">${s.pct.toFixed(1)}%</span>`;
+    div.addEventListener('click',()=>applyVizFilter('state',s.state));
+    wrap.appendChild(div);
   });
 }
 
@@ -673,16 +755,25 @@ function buildDeliveryBars(){
   const wrap=document.getElementById('delivery-bars');
   wrap.innerHTML='';
   DELIVERY.forEach(d=>{
-    wrap.innerHTML+=`
-      <div style="margin-bottom:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          <span style="font-size:10.5px;color:#e6edf3;font-weight:600">${d.label}</span>
-          <span style="font-size:10.5px;font-weight:700;color:${d.color}">${d.pct}%</span>
-        </div>
-        <div style="height:9px;background:#1c2128;border-radius:5px;overflow:hidden">
-          <div style="width:${d.pct}%;height:100%;background:${d.color};border-radius:5px;transition:width .6s ease"></div>
-        </div>
+    const isFiltered=activeVizFilter.type==='delivery';
+    const isActive=isFiltered && activeVizFilter.value===d.label;
+    const opacity=isFiltered?(isActive?'1':'0.28'):'1';
+    const div=document.createElement('div');
+    div.style.cssText=`margin-bottom:10px;cursor:pointer;opacity:${opacity};transition:opacity .2s`;
+    div.title=`Click to filter by ${d.label}`;
+    div.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:10.5px;color:#e6edf3;font-weight:600;display:flex;align-items:center;gap:6px">
+          ${d.label}
+          <span style="font-size:9px;color:${d.color};background:${d.color}18;padding:1px 5px;border-radius:3px">${d.score}★ avg</span>
+        </span>
+        <span style="font-size:10.5px;font-weight:700;color:${d.color}">${d.pct}%</span>
+      </div>
+      <div style="height:9px;background:#1c2128;border-radius:5px;overflow:hidden">
+        <div style="width:${d.pct}%;height:100%;background:${d.color};border-radius:5px;transition:width .6s ease"></div>
       </div>`;
+    div.addEventListener('click',()=>applyVizFilter('delivery',d.label));
+    wrap.appendChild(div);
   });
 }
 
@@ -691,13 +782,20 @@ function buildReviewBars(){
   const wrap=document.getElementById('review-bars');
   wrap.innerHTML='';
   REVIEWS.forEach(r=>{
-    wrap.innerHTML+=`
-      <div class="review-row">
-        <span class="review-star">${r.stars}★</span>
-        <div class="review-track"><div class="review-fill" style="width:${r.pct}%;background:${r.color}"></div></div>
-        <span class="review-pct" style="color:${r.color}">${r.pct}%</span>
-        <span class="review-count">${(r.count/1000).toFixed(1)}K</span>
-      </div>`;
+    const isFiltered=activeVizFilter.type==='review';
+    const isActive=isFiltered && activeVizFilter.value===String(r.stars);
+    const opacity=isFiltered?(isActive?'1':'0.28'):'1';
+    const div=document.createElement('div');
+    div.className='review-row';
+    div.style.cssText=`cursor:pointer;opacity:${opacity};transition:opacity .2s`;
+    div.title=`Click to filter by ${r.stars}★ reviews`;
+    div.innerHTML=`
+      <span class="review-star">${r.stars}★</span>
+      <div class="review-track"><div class="review-fill" style="width:${r.pct}%;background:${r.color}"></div></div>
+      <span class="review-pct" style="color:${r.color}">${r.pct}%</span>
+      <span class="review-count">${(r.count/1000).toFixed(1)}K</span>`;
+    div.addEventListener('click',()=>applyVizFilter('review',String(r.stars)));
+    wrap.appendChild(div);
   });
 }
 
@@ -740,34 +838,53 @@ function buildSellers(){
 
 // ─── Update KPIs ──────────────────────────────────────────────────────────────
 function updateKPIs(period){
-  // Category drill-down overrides period KPIs
-  const cat = (typeof activeCategory!=='undefined') ? CATEGORY_KPI[activeCategory] : null;
-  if(cat){
-    animateValue('kpi-gmv', cat.gmv);
-    document.getElementById('kpi-gmv-delta').textContent=cat.share+' of GMV';
+  let d=null, subLabel='';
+
+  // Priority 1: visual cross-filter
+  if(activeVizFilter.type==='delivery'){
+    d=DELIVERY_FILTER_DATA[activeVizFilter.value];
+    subLabel=activeVizFilter.value+' delivery';
+  } else if(activeVizFilter.type==='review'){
+    d=REVIEW_FILTER_DATA[activeVizFilter.value];
+    subLabel=activeVizFilter.value+'★ review orders';
+  } else if(activeVizFilter.type==='state'){
+    d=STATE_FILTER_DATA[activeVizFilter.value];
+    subLabel='State: '+activeVizFilter.value;
+  } else if(activeVizFilter.type==='category'){
+    d=CATEGORY_KPI[activeVizFilter.value];
+    subLabel=activeVizFilter.value;
+  } else if(typeof activeCategory!=='undefined' && CATEGORY_KPI[activeCategory]) {
+    // Priority 2: category slicer
+    d=CATEGORY_KPI[activeCategory];
+    subLabel=activeCategory;
+  }
+
+  if(d){
+    animateValue('kpi-gmv', d.gmv);
+    document.getElementById('kpi-gmv-delta').textContent=(d.share||'')+(d.share?' of GMV':'');
     document.getElementById('kpi-gmv-delta').className='kpi-delta up';
-    animateValue('kpi-orders', cat.orders);
-    document.getElementById('kpi-orders-delta').textContent='category orders';
-    animateValue('kpi-aov', cat.aov);
+    animateValue('kpi-orders', d.orders);
+    document.getElementById('kpi-orders-delta').textContent=subLabel;
+    animateValue('kpi-aov', d.aov);
     document.getElementById('kpi-aov-delta').textContent='avg order value';
     document.getElementById('kpi-aov-delta').className='kpi-delta up';
-    animateValue('kpi-review', cat.review);
-    document.getElementById('kpi-review-delta').textContent='platform avg';
-    // keep chart badge unchanged
+    animateValue('kpi-review', d.review);
+    document.getElementById('kpi-review-delta').textContent='segment avg';
     return;
   }
-  // Default: period-based KPIs
-  const d=KPI_DATA[period];
-  animateValue('kpi-gmv', d.gmv);
-  document.getElementById('kpi-gmv-delta').textContent=d.gmvD;
-  document.getElementById('kpi-gmv-delta').className='kpi-delta '+(d.gmvDClass||'up');
-  animateValue('kpi-orders', d.orders);
-  document.getElementById('kpi-orders-delta').textContent=d.ordersD;
-  animateValue('kpi-aov', d.aov);
-  document.getElementById('kpi-aov-delta').textContent=d.aovD;
-  document.getElementById('kpi-aov-delta').className='kpi-delta '+(d.aovDClass||'up');
-  animateValue('kpi-review', d.review);
-  document.getElementById('kpi-review-delta').textContent=d.reviewD;
+
+  // Priority 3: period-based KPIs
+  const pd=KPI_DATA[period];
+  animateValue('kpi-gmv', pd.gmv);
+  document.getElementById('kpi-gmv-delta').textContent=pd.gmvD;
+  document.getElementById('kpi-gmv-delta').className='kpi-delta '+(pd.gmvDClass||'up');
+  animateValue('kpi-orders', pd.orders);
+  document.getElementById('kpi-orders-delta').textContent=pd.ordersD;
+  animateValue('kpi-aov', pd.aov);
+  document.getElementById('kpi-aov-delta').textContent=pd.aovD;
+  document.getElementById('kpi-aov-delta').className='kpi-delta '+(pd.aovDClass||'up');
+  animateValue('kpi-review', pd.review);
+  document.getElementById('kpi-review-delta').textContent=pd.reviewD;
   const badge={'all':'20 months','2017':'2017 · 12mo','2018':'2018 · 8mo'};
   document.getElementById('trend-sub').textContent={
     'all':'Jan 2017 – Aug 2018 · R$ thousands',
@@ -837,6 +954,21 @@ document.getElementById('donut-chart').addEventListener('mousemove',function(e){
 });
 document.getElementById('donut-chart').addEventListener('mouseleave',()=>{ hoveredCat=-1; drawDonut(-1); hideTip(); });
 
+// Donut click → cross-filter by category
+document.getElementById('donut-chart').addEventListener('click',function(e){
+  const rect=this.getBoundingClientRect();
+  const cx=rect.left+55, cy=rect.top+55;
+  const dx=e.clientX-cx, dy=e.clientY-cy;
+  const dist=Math.sqrt(dx*dx+dy*dy);
+  if(dist>24&&dist<52){
+    let angle=Math.atan2(dy,dx)+Math.PI/2;
+    if(angle<0) angle+=Math.PI*2;
+    let cum=0, found=-1;
+    CATEGORIES.forEach((c,i)=>{ if(found<0){ cum+=(c.pct/100)*Math.PI*2; if(angle<cum) found=i; }});
+    if(found>=0) applyVizFilter('category',CATEGORIES[found].name);
+  }
+});
+
 // ─── Period filter ────────────────────────────────────────────────────────────
 document.querySelectorAll('.period-btn').forEach(btn=>{
   btn.addEventListener('click',function(){
@@ -861,40 +993,20 @@ const CATEGORY_KPI = {
 
 let activeCategory = 'all';
 
-// ─── Category slicer ──────────────────────────────────────────────────────────
+// ─── Category slicer pills ────────────────────────────────────────────────────
 document.getElementById('slicer-cat').querySelectorAll('.pill').forEach(pill=>{
   pill.addEventListener('click',function(){
-    document.getElementById('slicer-cat').querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
-    this.classList.add('active');
-    activeCategory = this.dataset.cat;
-
-    // Update donut highlight
-    if(activeCategory==='all'){
-      drawDonut(-1);
-      document.getElementById('filter-status').style.display='none';
+    const cat=this.dataset.cat;
+    if(cat==='all'){
+      clearVizFilter();
     } else {
-      const catIdx = CATEGORIES.findIndex(c=>c.name===activeCategory);
-      if(catIdx>=0) drawDonut(catIdx);
-      const chip=document.getElementById('filter-chip');
-      chip.textContent=activeCategory;
-      const fs=document.getElementById('filter-status');
-      fs.style.display='flex';
+      applyVizFilter('category',cat);
     }
-
-    // Update KPIs for category
-    updateKPIs(activePeriod);
   });
 });
 
 // Clear filter button
-document.getElementById('filter-clear').addEventListener('click',function(){
-  activeCategory='all';
-  document.getElementById('slicer-cat').querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
-  document.getElementById('slicer-cat').querySelector('[data-cat="all"]').classList.add('active');
-  document.getElementById('filter-status').style.display='none';
-  drawDonut(-1);
-  updateKPIs(activePeriod);
-});
+document.getElementById('filter-clear').addEventListener('click', clearVizFilter);
 
 // ─── Table sort ────────────────────────────────────────────────────────────────
 document.querySelectorAll('thead th[data-col]').forEach(th=>{
