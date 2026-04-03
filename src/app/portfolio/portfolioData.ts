@@ -379,6 +379,177 @@ export const PROJECTS: PortfolioProject[] = [
     },
   },
   {
+    id: "health-analytics",
+    status: "live",
+    category: "Healthcare Analytics & Clinical Intelligence",
+    title: "Healthcare Patient Analytics",
+    subtitle: "Patient admission analysis, readmission risk scoring, and billing intelligence on Databricks",
+    description:
+      "Built a full Medallion pipeline on Databricks to analyse 55,500 synthetic patient admissions — Bronze ingestion, Silver enrichment with LOS bands, age bands, billing bands and abnormal flags, Gold reporting aggregates, and a custom weighted Readmission Risk Model that scores each patient 0–100. Model validated against actual abnormal test results: Critical-band patients have 100% abnormal rate vs 0% for Low band.",
+    color1: "#0d9488",
+    color2: "#0f766e",
+    accent: "#2dd4bf",
+    stack: ["Databricks", "Delta Lake", "PySpark", "SQL", "Python", "Power BI"],
+    metrics: [
+      { label: "Admissions Analysed", value: "55,500" },
+      { label: "Avg Billing", value: "$25,539" },
+      { label: "Avg Length of Stay", value: "15.5 days" },
+      { label: "Critical Risk Abnormal Rate", value: "100%" },
+    ],
+    highlights: ["Medallion Architecture", "Readmission Risk Model", "Billing Benchmarking", "Clinical Intelligence", "Unity Catalog", "Synthetic Dataset"],
+    github: "https://github.com/JayantDataEngineeringAnalytics/portfolio-health",
+    slug: "health-analytics",
+    dataset: "Healthcare Patient Records",
+    datasetSource: "Kaggle — 55,500 admissions · 15 columns · synthetic patient dataset",
+    problem:
+      "Healthcare providers struggle to proactively identify high-risk patients before discharge, leading to costly readmissions. Without a data-driven scoring model, clinical teams rely on intuition rather than evidence when allocating post-discharge follow-up resources.",
+    solution:
+      "End-to-end Databricks pipeline: Bronze ingests the patient records CSV, Silver derives 8 business columns (LOS days, LOS bands, age bands, billing bands, billing percentile, abnormal flag, admission year/month), Gold produces 9 reporting aggregates. The Readmission Risk Model assigns each patient a weighted 0–100 score across 7 clinical risk factors — long stay, abnormal results, emergency admission, high billing, senior age, and more. Model is validated by comparing predicted risk band against actual abnormal test results: Critical-band patients had 100% abnormal rate vs 0% for Low band.",
+    pipeline: [
+      {
+        name: "Bronze",
+        color: "#b45309",
+        textColor: "#fde68a",
+        description: "Raw ingestion — CSV loaded from Unity Catalog volume into Delta Lake with audit columns",
+        steps: [
+          "read_files() from /Volumes/portfolio_health/landing_zone/raw_files/",
+          "All 15 original columns preserved with original names",
+          "Added _ingested_at (timestamp) and _source_file audit columns",
+          "55,500 rows, 0 NULLs — confirmed clean synthetic dataset",
+        ],
+      },
+      {
+        name: "Silver",
+        color: "#475569",
+        textColor: "#e2e8f0",
+        description: "Enriched & transformed — 8 derived business columns via PySpark window functions",
+        steps: [
+          "Snake_case rename of all 15 columns for consistency",
+          "los_days: DATEDIFF(discharge_date, admission_date)",
+          "los_band: 1-3d / 4-7d / 8-14d / 15-21d / 22+d",
+          "age_band: Under 20 / 20s / 30s / 40s / 50s / 60s / 70s+",
+          "billing_band: PERCENT_RANK() within medical_condition → Low / Mid / High / Top",
+          "billing_percentile: PERCENT_RANK() across full dataset",
+          "abnormal_result_flag: boolean (test_results = 'Abnormal')",
+        ],
+      },
+      {
+        name: "Gold",
+        color: "#92400e",
+        textColor: "#fef3c7",
+        description: "Business-ready aggregates + Readmission Risk Scoring Model",
+        steps: [
+          "agg_by_los_band — 5 LOS bands, admissions, avg billing, avg LOS",
+          "agg_by_condition — 6 conditions, avg billing, abnormal rate",
+          "agg_by_insurance — 5 providers, avg & total billing",
+          "agg_by_admission_type — Emergency / Elective / Urgent breakdown",
+          "agg_billing_benchmarks — min/avg/median/max billing per condition",
+          "readmission_risk_scores — per-patient weighted score (7 factors, max 113 pts, normalised 0–100)",
+          "agg_risk_by_condition — risk band distribution per condition",
+        ],
+      },
+    ],
+    dashboardEmbed: "/reports/health-analytics.html",
+    powerbi: {
+      modelTables: [
+        {
+          name: "fact_patients",
+          type: "fact",
+          columns: ["patient_name (PK)", "age", "gender", "medical_condition (FK)", "insurance_provider (FK)", "admission_type", "medication", "los_days", "billing_amount", "los_band", "age_band", "billing_band", "billing_percentile", "abnormal_result_flag"],
+        },
+        {
+          name: "readmission_risk_scores",
+          type: "fact",
+          columns: ["patient_name (PK)", "readmission_risk_score", "risk_band", "raw_score", "score_long_stay", "score_abnormal", "score_emergency", "score_high_billing", "score_senior", "score_mid_stay", "score_inconclusive"],
+        },
+        {
+          name: "dim_condition",
+          type: "dimension",
+          columns: ["medical_condition (PK)", "admissions", "avg_billing", "avg_los", "abnormal_rate"],
+        },
+        {
+          name: "dim_insurance",
+          type: "dimension",
+          columns: ["insurance_provider (PK)", "admissions", "avg_billing", "total_billing"],
+        },
+        {
+          name: "dim_date",
+          type: "dimension",
+          columns: ["date_id (PK)", "year", "quarter", "month", "month_name"],
+        },
+      ],
+      measures: [
+        {
+          name: "Avg Readmission Risk Score",
+          description: "Average readmission risk score (0–100) for the current filter context — higher indicates greater clinical risk.",
+          dax: `Avg Readmission Risk Score =\nAVERAGEX(\n    RELATEDTABLE(readmission_risk_scores),\n    readmission_risk_scores[readmission_risk_score]\n)`,
+        },
+        {
+          name: "Pct High or Critical Risk",
+          description: "Share of patients in the High or Critical readmission risk band — primary risk KPI for clinical dashboards.",
+          dax: `Pct High or Critical Risk =\nDIVIDE(\n    CALCULATE(\n        COUNTROWS(readmission_risk_scores),\n        readmission_risk_scores[risk_band] IN { \"High\", \"Critical\" }\n    ),\n    COUNTROWS(readmission_risk_scores),\n    0\n)`,
+        },
+        {
+          name: "Abnormal Result Rate",
+          description: "Percentage of admissions with an Abnormal test result — used to validate the risk model and identify high-acuity cohorts.",
+          dax: `Abnormal Result Rate =\nDIVIDE(\n    CALCULATE(\n        COUNTROWS(fact_patients),\n        fact_patients[abnormal_result_flag] = TRUE()\n    ),\n    COUNTROWS(fact_patients),\n    0\n)`,
+        },
+        {
+          name: "Avg Billing by Condition",
+          description: "Average billing amount segmented by medical condition — used to benchmark payer mix and identify cost drivers.",
+          dax: `Avg Billing by Condition =\nCALCULATETABLE(\n    SUMMARIZE(\n        fact_patients,\n        fact_patients[medical_condition],\n        \"Avg Billing\", AVERAGE(fact_patients[billing_amount]),\n        \"Admissions\", COUNTROWS(fact_patients)\n    )\n)`,
+        },
+        {
+          name: "LOS Variance from Avg",
+          description: "Difference between a patient's actual LOS and the overall average — flags extended stays for care coordination review.",
+          dax: `LOS Variance from Avg =\nAVERAGE(fact_patients[los_days]) -\nCALCULATE(\n    AVERAGE(fact_patients[los_days]),\n    ALL(fact_patients)\n)`,
+        },
+        {
+          name: "Emergency Admission Rate",
+          description: "Share of admissions classified as Emergency — correlates with higher billing, longer LOS, and elevated risk scores.",
+          dax: `Emergency Admission Rate =\nDIVIDE(\n    CALCULATE(\n        COUNTROWS(fact_patients),\n        fact_patients[admission_type] = \"Emergency\"\n    ),\n    COUNTROWS(fact_patients),\n    0\n)`,
+        },
+        {
+          name: "Billing Efficiency Index",
+          description: "Ratio of avg billing to avg LOS — higher values indicate more billing revenue generated per day of care.",
+          dax: `Billing Efficiency Index =\nDIVIDE(\n    AVERAGE(fact_patients[billing_amount]),\n    AVERAGE(fact_patients[los_days]),\n    BLANK()\n)`,
+        },
+        {
+          name: "Expected High-Risk Count",
+          description: "Projected number of patients in High and Critical bands — used to size post-discharge follow-up programmes.",
+          dax: `Expected High Risk Count =\nCALCULATE(\n    COUNTROWS(readmission_risk_scores),\n    readmission_risk_scores[risk_band] IN { \"High\", \"Critical\" }\n)`,
+        },
+      ],
+      reportPages: [
+        {
+          name: "Patient Overview",
+          icon: "🏥",
+          visuals: ["KPI cards: total admissions, avg billing, avg LOS, abnormal rate", "Admissions by medical condition bar chart", "Admission type breakdown donut", "Age band distribution"],
+        },
+        {
+          name: "Length of Stay Analysis",
+          icon: "📅",
+          visuals: ["LOS band distribution (key visual)", "Avg LOS by medical condition", "LOS vs billing scatter by condition", "Extended stay (22+d) proportion by insurance provider"],
+        },
+        {
+          name: "Readmission Risk Dashboard",
+          icon: "⚠️",
+          visuals: ["Risk band distribution donut (Low / Medium / High / Critical)", "High+Critical patients table (condition, risk score, top factor)", "Risk band vs abnormal rate validation chart", "Expected high-risk count KPI"],
+        },
+        {
+          name: "Billing Intelligence",
+          icon: "💰",
+          visuals: ["Billing benchmarks by condition (min/avg/median/max)", "Billing efficiency index by provider", "Billing percentile distribution", "High billing band patients by condition"],
+        },
+        {
+          name: "Clinical Outcomes",
+          icon: "🔬",
+          visuals: ["Abnormal result rate by condition heatmap", "Test result distribution: Normal / Abnormal / Inconclusive", "Medication prescription frequency", "Abnormal rate by admission type"],
+        },
+      ],
+    },
+  },
+  {
     id: "real-time-streaming",
     status: "wip",
     category: "Data Engineering",

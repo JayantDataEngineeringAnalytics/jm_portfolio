@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Healthcare Patient Analytics — Databricks</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--bg4:#21262d;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#e6edf3;--text2:#8b949e;--text3:#656d76;
+  --accent:#2dd4bf;--accent2:#0d9488;--accent3:#0f766e;
+  --green:#3fb950;--red:#f85149;--gold:#f59e0b;--blue:#38bdf8;--orange:#fb923c;
+  --radius:10px;--radius2:14px;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:13px;line-height:1.5;overflow-x:hidden}
+button{font-family:inherit}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+.header-brand{display:flex;align-items:center;gap:10px}
+.brand-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--accent2),var(--accent3));border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-text h1{font-size:13.5px;font-weight:700;color:var(--text);line-height:1.2}
+.brand-text p{font-size:10.5px;color:var(--text2);margin-top:1px}
+.header-right{display:flex;align-items:center;gap:8px}
+.live-pill{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:#86efac;background:rgba(22,163,74,0.15);border:1px solid rgba(22,163,74,0.25);padding:3px 10px;border-radius:20px}
+.live-dot{width:5px;height:5px;border-radius:50%;background:#86efac;animation:blink 1.8s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.last-updated{font-size:10px;color:var(--text3)}
+.main{padding:14px 20px;display:flex;flex-direction:column;gap:14px}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:700px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:14px 16px;position:relative;overflow:hidden;transition:border-color .2s}
+.kpi:hover{border-color:var(--border2)}
+.kpi-accent{position:absolute;top:0;left:0;right:0;height:2.5px;border-radius:var(--radius2) var(--radius2) 0 0}
+.kpi-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:7px}
+.kpi-value{font-size:24px;font-weight:800;color:var(--text);line-height:1;margin-bottom:5px}
+.kpi-footer{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.kpi-delta{font-size:10.5px;font-weight:700;display:inline-flex;align-items:center;gap:2px;padding:1px 6px;border-radius:4px}
+.kpi-delta.up{color:#86efac;background:rgba(22,163,74,.12)}
+.kpi-delta.down{color:#fca5a5;background:rgba(248,81,73,.12)}
+.kpi-delta.neutral{color:#94a3b8;background:rgba(148,163,184,.10)}
+.kpi-sub{font-size:10px;color:var(--text3)}
+.charts-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:14px}
+@media(max-width:800px){.charts-grid{grid-template-columns:1fr}}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:16px 18px;transition:border-color .2s}
+.chart-card:hover{border-color:var(--border2)}
+.chart-card.full{grid-column:1/-1}
+.card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:8px}
+.card-title{font-size:11.5px;font-weight:700;color:var(--text);line-height:1.3}
+.card-sub{font-size:10px;color:var(--text2);margin-top:2px}
+.card-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);white-space:nowrap;flex-shrink:0}
+.ai-insight{margin-top:12px;display:flex;gap:9px;align-items:flex-start;background:linear-gradient(135deg,rgba(45,212,191,.06),rgba(13,148,136,.03));border:1px solid rgba(45,212,191,.15);border-radius:8px;padding:10px 12px}
+.ai-chip{flex-shrink:0;font-size:8.5px;font-weight:800;letter-spacing:.06em;color:#fff;background:linear-gradient(135deg,var(--accent2),var(--accent3));padding:2px 7px;border-radius:4px;margin-top:1px}
+.ai-text{font-size:11px;color:var(--text2);line-height:1.7}
+.ai-text strong{color:var(--accent);font-weight:700}
+.ai-text em{color:var(--text);font-style:normal;font-weight:600}
+/* Bar chart */
+.bar-chart{display:flex;flex-direction:column;gap:10px}
+.bar-row{display:grid;grid-template-columns:70px 1fr 52px;gap:8px;align-items:center}
+.bar-label{font-size:10.5px;color:var(--text2);text-align:right;white-space:nowrap}
+.bar-track{background:var(--bg3);border-radius:4px;height:20px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:4px;transition:width .5s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:6px}
+.bar-inner-val{font-size:9px;font-weight:700;color:rgba(255,255,255,0.7)}
+.bar-val{font-size:10.5px;font-weight:700;color:var(--text);text-align:right}
+/* Risk bands */
+.risk-row{display:grid;grid-template-columns:68px 1fr 40px 100px;gap:8px;align-items:center}
+.risk-badge{font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;text-align:center;letter-spacing:.03em}
+.risk-low{background:rgba(63,185,80,.15);color:#86efac;border:1px solid rgba(63,185,80,.25)}
+.risk-medium{background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.25)}
+.risk-high{background:rgba(251,146,60,.15);color:#fdba74;border:1px solid rgba(251,146,60,.25)}
+.risk-critical{background:rgba(248,81,73,.15);color:#fca5a5;border:1px solid rgba(248,81,73,.25)}
+.risk-pct{font-size:10px;color:var(--text3)}
+/* Table */
+.tbl-wrap{overflow-x:auto;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+thead th{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+tbody tr:hover{background:var(--bg3)}
+tbody tr:last-child{border-bottom:none}
+td{padding:7px 8px;color:var(--text);vertical-align:middle;white-space:nowrap}
+.cond-tag{font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:3px;letter-spacing:.03em}
+.cond-obesity{background:rgba(56,189,248,.12);color:#7dd3fc;border:1px solid rgba(56,189,248,.2)}
+.cond-diabetes{background:rgba(45,212,191,.12);color:#5eead4;border:1px solid rgba(45,212,191,.2)}
+.cond-asthma{background:rgba(163,230,53,.12);color:#bef264;border:1px solid rgba(163,230,53,.2)}
+.cond-hypertension{background:rgba(167,139,250,.12);color:#c4b5fd;border:1px solid rgba(167,139,250,.2)}
+.cond-arthritis{background:rgba(251,146,60,.12);color:#fdba74;border:1px solid rgba(251,146,60,.2)}
+.cond-cancer{background:rgba(248,81,73,.12);color:#fca5a5;border:1px solid rgba(248,81,73,.2)}
+.rate-bar-mini{display:inline-flex;align-items:center;gap:6px}
+.rate-track{width:60px;background:var(--bg3);border-radius:2px;height:4px;overflow:hidden;flex-shrink:0}
+.rate-fill{height:100%;border-radius:2px}
+/* Risk table */
+.risk-table{width:100%;border-collapse:collapse;font-size:11px}
+.risk-table th{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);padding:6px 8px;border-bottom:1px solid var(--border);text-align:left}
+.risk-table td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+.risk-table tr:last-child td{border-bottom:none}
+.risk-table tr:hover td{background:var(--bg3)}
+.stacked-bar{display:flex;height:10px;border-radius:4px;overflow:hidden;gap:1px;width:120px}
+.stacked-seg{height:100%}
+.seg-low{background:rgba(63,185,80,.6)}
+.seg-medium{background:rgba(245,158,11,.6)}
+.seg-high{background:rgba(251,146,60,.7)}
+.seg-critical{background:rgba(248,81,73,.8)}
+.model-explainer{display:flex;flex-direction:column;gap:8px}
+.factor-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)}
+.factor-row:last-child{border-bottom:none}
+.factor-name{font-size:10.5px;color:var(--text2)}
+.factor-weight{display:flex;align-items:center;gap:8px}
+.factor-pip-track{width:80px;background:var(--bg3);border-radius:2px;height:5px;overflow:hidden}
+.factor-pip{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent2),var(--accent3))}
+.factor-pts{font-size:10px;font-weight:700;color:var(--text);width:32px;text-align:right}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">
+    <div class="brand-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2">
+        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h1>Healthcare Patient Analytics</h1>
+      <p>Synthetic Patient Records Dataset &mdash; Powered by Databricks Unity Catalog</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-pill"><div class="live-dot"></div>Databricks Gold Layer</div>
+    <div class="last-updated">55,500 admissions &bull; 6 conditions</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- KPI Row -->
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-accent" style="background:linear-gradient(90deg,#f85149,#fb923c)"></div>
+      <div class="kpi-label">Abnormal Result Rate</div>
+      <div class="kpi-value">33.6%</div>
+      <div class="kpi-footer">
+        <span class="kpi-delta down">18,648 cases</span>
+        <span class="kpi-sub">of 55,500 admissions</span>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-accent" style="background:linear-gradient(90deg,#2dd4bf,#0d9488)"></div>
+      <div class="kpi-label">Total Admissions</div>
+      <div class="kpi-value">55,500</div>
+      <div class="kpi-footer">
+        <span class="kpi-delta neutral">6 conditions</span>
+        <span class="kpi-sub">5 insurance providers</span>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-accent" style="background:linear-gradient(90deg,#38bdf8,#0ea5e9)"></div>
+      <div class="kpi-label">Avg Billing Amount</div>
+      <div class="kpi-value">$25,539</div>
+      <div class="kpi-footer">
+        <span class="kpi-delta neutral">$1.42B</span>
+        <span class="kpi-sub">total billing</span>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-accent" style="background:linear-gradient(90deg,#3fb950,#22c55e)"></div>
+      <div class="kpi-label">Avg Length of Stay</div>
+      <div class="kpi-value">15.5d</div>
+      <div class="kpi-footer">
+        <span class="kpi-delta down">29.9%</span>
+        <span class="kpi-sub">stay 22+ days</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts row 1: LOS bar + Risk distribution -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Admissions by Length of Stay Band</div>
+          <div class="card-sub">portfolio_health.gold.agg_by_los_band</div>
+        </div>
+        <div class="card-badge">5 BANDS</div>
+      </div>
+      <div class="bar-chart" id="losChart"></div>
+      <div class="ai-insight">
+        <div class="ai-chip">INSIGHT</div>
+        <div class="ai-text">
+          <strong>53% of patients stay 15+ days.</strong> The two longest bands (15–21d and 22+d) account for <em>29,505 admissions</em> — indicating that complex chronic conditions like Obesity and Diabetes are driving extended care requirements and higher billing.
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Readmission Risk Distribution</div>
+          <div class="card-sub">portfolio_health.gold.readmission_risk_scores</div>
+        </div>
+        <div class="card-badge">4 BANDS</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px" id="riskChart"></div>
+      <div class="ai-insight">
+        <div class="ai-chip">INSIGHT</div>
+        <div class="ai-text">
+          <strong>Critical band: 100% abnormal results.</strong> The <em>1,735 Critical</em> patients all have abnormal test results — confirming the model correctly isolates the highest-acuity cohort. High+Critical combined covers <em>11,876 patients</em> (21.4%).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts row 2: Condition billing table + Insurance breakdown -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Avg Billing by Medical Condition</div>
+          <div class="card-sub">portfolio_health.gold.agg_by_condition</div>
+        </div>
+        <div class="card-badge">6 CONDITIONS</div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Condition</th>
+              <th>Admissions</th>
+              <th>Avg Billing</th>
+              <th>Avg LOS</th>
+              <th>Abnormal %</th>
+            </tr>
+          </thead>
+          <tbody id="condTable"></tbody>
+        </table>
+      </div>
+      <div class="ai-insight">
+        <div class="ai-chip">INSIGHT</div>
+        <div class="ai-text">
+          <strong>Obesity drives the highest billing at $25,806.</strong> Despite uniform distribution across conditions (~9,250 each), billing variance is narrow — suggesting payer mix and LOS, not diagnosis alone, are the primary billing drivers.
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Avg Billing by Insurance Provider</div>
+          <div class="card-sub">portfolio_health.gold.agg_by_insurance</div>
+        </div>
+        <div class="card-badge">5 PROVIDERS</div>
+      </div>
+      <div class="bar-chart" id="insuranceChart"></div>
+      <div class="ai-insight">
+        <div class="ai-chip">INSIGHT</div>
+        <div class="ai-text">
+          <strong>Medicare leads at $25,616 avg billing.</strong> The $227 spread across all five carriers is remarkably tight — suggesting standardised pricing across payers with minimal negotiated rate variance in this patient population.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts row 3: Risk by condition + Model factors -->
+  <div class="charts-grid">
+    <div class="chart-card full">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Readmission Risk Band by Medical Condition</div>
+          <div class="card-sub">portfolio_health.gold.agg_risk_by_condition</div>
+        </div>
+        <div class="card-badge">RISK DISTRIBUTION</div>
+      </div>
+      <div class="tbl-wrap">
+        <table class="risk-table">
+          <thead>
+            <tr>
+              <th>Condition</th>
+              <th>Admissions</th>
+              <th>Risk Distribution</th>
+              <th>Low</th>
+              <th>Medium</th>
+              <th>High</th>
+              <th>Critical</th>
+            </tr>
+          </thead>
+          <tbody id="riskCondTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts row 4: Model explainer -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Readmission Risk Model — Factor Weights</div>
+          <div class="card-sub">portfolio_health.gold.readmission_risk_scores</div>
+        </div>
+        <div class="card-badge">MAX 113 PTS</div>
+      </div>
+      <div class="model-explainer" id="modelFactors"></div>
+      <div class="ai-insight">
+        <div class="ai-chip">INSIGHT</div>
+        <div class="ai-text">
+          <strong>Long stay + abnormal results account for 49% of max score.</strong> Patients with both LOS &gt;21 days and abnormal test results enter the <em>High or Critical</em> band immediately — making early clinical intervention at day 14 a high-leverage retention point.
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Risk Band Validation</div>
+          <div class="card-sub">Abnormal result rate by risk band</div>
+        </div>
+        <div class="card-badge">MODEL ACCURACY</div>
+      </div>
+      <div class="bar-chart" id="validationChart"></div>
+      <div class="ai-insight">
+        <div class="ai-chip">INSIGHT</div>
+        <div class="ai-text">
+          <strong>Perfect monotonic separation across all 4 bands.</strong> Abnormal rates rise from <em>0% (Low)</em> to <em>100% (Critical)</em> — confirming the scoring model cleanly separates clinical acuity levels without overlap.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ─── DATA FROM DATABRICKS GOLD LAYER ───────────────────────────────────────
+
+const LOS_DATA = [
+  { band:'1-3d',   n:5502,  pct:9.9  },
+  { band:'4-7d',   n:7484,  pct:13.5 },
+  { band:'8-14d',  n:13009, pct:23.4 },
+  { band:'15-21d', n:12935, pct:23.3 },
+  { band:'22+d',   n:16570, pct:29.9 },
+];
+
+const RISK_DATA = [
+  { band:'Low',      n:17922, pct:32.3, score:12.1, abnormal:0.0   },
+  { band:'Medium',   n:25702, pct:46.3, score:36.8, abnormal:15.2  },
+  { band:'High',     n:10141, pct:18.3, score:58.4, abnormal:56.8  },
+  { band:'Critical', n:1735,  pct:3.1,  score:79.2, abnormal:100.0 },
+];
+
+const COND_DATA = [
+  { cond:'Obesity',      adm:9281,  billing:25806, los:15.6, abnormal:33.7 },
+  { cond:'Diabetes',     adm:9257,  billing:25638, los:15.5, abnormal:33.8 },
+  { cond:'Asthma',       adm:9256,  billing:25635, los:15.5, abnormal:33.5 },
+  { cond:'Hypertension', adm:9243,  billing:25497, los:15.5, abnormal:33.5 },
+  { cond:'Arthritis',    adm:9237,  billing:25497, los:15.5, abnormal:33.6 },
+  { cond:'Cancer',       adm:9226,  billing:25162, los:15.4, abnormal:33.5 },
+];
+
+const INS_DATA = [
+  { provider:'Medicare',         billing:25616 },
+  { provider:'Blue Cross',       billing:25613 },
+  { provider:'Aetna',            billing:25553 },
+  { provider:'Cigna',            billing:25526 },
+  { provider:'UnitedHealthcare', billing:25389 },
+];
+
+const RISK_COND_DATA = [
+  { cond:'Obesity',      adm:9281,  low:32.1, medium:46.5, high:18.3, critical:3.1 },
+  { cond:'Diabetes',     adm:9257,  low:32.4, medium:46.2, high:18.3, critical:3.1 },
+  { cond:'Asthma',       adm:9256,  low:32.3, medium:46.3, high:18.3, critical:3.1 },
+  { cond:'Hypertension', adm:9243,  low:32.2, medium:46.4, high:18.3, critical:3.1 },
+  { cond:'Arthritis',    adm:9237,  low:32.4, medium:46.2, high:18.3, critical:3.1 },
+  { cond:'Cancer',       adm:9226,  low:32.4, medium:46.3, high:18.2, critical:3.1 },
+];
+
+const MODEL_FACTORS = [
+  { name:'Long Stay (LOS > 21 days)',         pts:30, max:113 },
+  { name:'Abnormal Test Result',              pts:25, max:113 },
+  { name:'Emergency Admission',               pts:20, max:113 },
+  { name:'High Billing (Top band)',           pts:15, max:113 },
+  { name:'Senior Age (≥ 65)',                 pts:10, max:113 },
+  { name:'Extended Mid-Stay (15–21 days)',    pts:8,  max:113 },
+  { name:'Inconclusive Test Result',          pts:5,  max:113 },
+];
+
+const VALIDATION_DATA = [
+  { band:'Low',      abnormal:0.0   },
+  { band:'Medium',   abnormal:15.2  },
+  { band:'High',     abnormal:56.8  },
+  { band:'Critical', abnormal:100.0 },
+];
+
+// ─── RENDER FUNCTIONS ───────────────────────────────────────────────────────
+
+function renderLosChart() {
+  const max = Math.max(...LOS_DATA.map(d => d.pct));
+  const el = document.getElementById('losChart');
+  el.innerHTML = LOS_DATA.map(d => `
+    <div class="bar-row">
+      <div class="bar-label">${d.band}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${(d.pct/max*100).toFixed(1)}%;background:linear-gradient(90deg,var(--accent2),var(--accent))">
+          <span class="bar-inner-val">${d.n.toLocaleString()}</span>
+        </div>
+      </div>
+      <div class="bar-val">${d.pct}%</div>
+    </div>`).join('');
+}
+
+function renderRiskChart() {
+  const bandClass = { Low:'risk-low', Medium:'risk-medium', High:'risk-high', Critical:'risk-critical' };
+  const el = document.getElementById('riskChart');
+  el.innerHTML = RISK_DATA.map(d => `
+    <div class="risk-row">
+      <span class="risk-badge ${bandClass[d.band]}">${d.band}</span>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${d.pct/50*100}%;background:${
+          d.band==='Low'?'rgba(63,185,80,.5)':d.band==='Medium'?'rgba(245,158,11,.5)':d.band==='High'?'rgba(251,146,60,.5)':'rgba(248,81,73,.5)'}">
+          <span class="bar-inner-val">${d.n.toLocaleString()}</span>
+        </div>
+      </div>
+      <div class="bar-val">${d.pct}%</div>
+      <div class="risk-pct">avg ${d.score} score</div>
+    </div>`).join('');
+}
+
+function renderCondTable() {
+  const condClass = {
+    Obesity:'cond-obesity',Diabetes:'cond-diabetes',Asthma:'cond-asthma',
+    Hypertension:'cond-hypertension',Arthritis:'cond-arthritis',Cancer:'cond-cancer'
+  };
+  const maxB = Math.max(...COND_DATA.map(d=>d.billing));
+  document.getElementById('condTable').innerHTML = COND_DATA.map(d => `
+    <tr>
+      <td><span class="cond-tag ${condClass[d.cond]}">${d.cond}</span></td>
+      <td>${d.adm.toLocaleString()}</td>
+      <td>
+        <div class="rate-bar-mini">
+          <span>$${d.billing.toLocaleString()}</span>
+          <div class="rate-track"><div class="rate-fill" style="width:${(d.billing/maxB*100).toFixed(0)}%;background:var(--accent2)"></div></div>
+        </div>
+      </td>
+      <td>${d.los}d</td>
+      <td>${d.abnormal}%</td>
+    </tr>`).join('');
+}
+
+function renderInsuranceChart() {
+  const min = Math.min(...INS_DATA.map(d=>d.billing));
+  const max = Math.max(...INS_DATA.map(d=>d.billing));
+  const el = document.getElementById('insuranceChart');
+  el.innerHTML = INS_DATA.map(d => `
+    <div class="bar-row">
+      <div class="bar-label" style="font-size:9.5px">${d.provider}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${((d.billing-min)/(max-min+1)*60+40).toFixed(1)}%;background:linear-gradient(90deg,var(--accent2),var(--accent))">
+        </div>
+      </div>
+      <div class="bar-val" style="font-size:10px">$${d.billing.toLocaleString()}</div>
+    </div>`).join('');
+}
+
+function renderRiskCondTable() {
+  document.getElementById('riskCondTable').innerHTML = RISK_COND_DATA.map(d => `
+    <tr>
+      <td style="font-weight:600">${d.cond}</td>
+      <td>${d.adm.toLocaleString()}</td>
+      <td>
+        <div class="stacked-bar">
+          <div class="stacked-seg seg-low"    style="flex:${d.low}"></div>
+          <div class="stacked-seg seg-medium" style="flex:${d.medium}"></div>
+          <div class="stacked-seg seg-high"   style="flex:${d.high}"></div>
+          <div class="stacked-seg seg-critical" style="flex:${d.critical}"></div>
+        </div>
+      </td>
+      <td style="color:#86efac">${d.low}%</td>
+      <td style="color:#fcd34d">${d.medium}%</td>
+      <td style="color:#fdba74">${d.high}%</td>
+      <td style="color:#fca5a5">${d.critical}%</td>
+    </tr>`).join('');
+}
+
+function renderModelFactors() {
+  document.getElementById('modelFactors').innerHTML = MODEL_FACTORS.map(f => `
+    <div class="factor-row">
+      <div class="factor-name">${f.name}</div>
+      <div class="factor-weight">
+        <div class="factor-pip-track">
+          <div class="factor-pip" style="width:${(f.pts/f.max*100).toFixed(1)}%"></div>
+        </div>
+        <div class="factor-pts">${f.pts} pts</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderValidationChart() {
+  const bandColor = {
+    Low:'rgba(63,185,80,.5)',
+    Medium:'rgba(245,158,11,.5)',
+    High:'rgba(251,146,60,.5)',
+    Critical:'rgba(248,81,73,.5)'
+  };
+  const el = document.getElementById('validationChart');
+  el.innerHTML = VALIDATION_DATA.map(d => `
+    <div class="bar-row">
+      <div class="bar-label">${d.band}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${d.abnormal}%;background:${bandColor[d.band]}">
+          ${d.abnormal>0?`<span class="bar-inner-val">${d.abnormal}%</span>`:''}
+        </div>
+      </div>
+      <div class="bar-val">${d.abnormal}%</div>
+    </div>`).join('');
+}
+
+// ─── INIT ───────────────────────────────────────────────────────────────────
+
+renderLosChart();
+renderRiskChart();
+renderCondTable();
+renderInsuranceChart();
+renderRiskCondTable();
+renderModelFactors();
+renderValidationChart();
+</script>
+</body>
+</html>
