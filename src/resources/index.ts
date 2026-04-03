@@ -12,6 +12,7 @@ export {
   certifications,
   courses,
   showcase,
+  portfolio,
 } from "./content";
 
 export {

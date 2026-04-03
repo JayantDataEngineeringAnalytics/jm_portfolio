@@ -638,4 +638,11 @@ const courses = {
   description: `Expert-led corporate training in Databricks, Power BI, and Microsoft Fabric by ${person.name}`,
 };
 
-export { person, social, newsletter, home, about, work, projects, demos, gallery, certifications, courses, showcase };
+const portfolio = {
+  path: "/portfolio",
+  label: "Portfolio",
+  title: "Data Engineering & Analytics Portfolio",
+  description: `End-to-end data engineering and analytics projects with real datasets, Databricks pipelines, and interactive dashboards by ${person.name}`,
+};
+
+export { person, social, newsletter, home, about, work, projects, demos, gallery, certifications, courses, showcase, portfolio };

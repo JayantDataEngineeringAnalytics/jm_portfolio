@@ -99,7 +99,7 @@ export default async function DemoPost({ params }: { params: Promise<{ slug: str
               </Text>
             </Row>
           </Row>
-          
+
           {/* Power BI Embed Section - Moved to top */}
           {post.metadata.powerbi_embed && (
             <Column maxWidth="xl" horizontal="center" marginBottom="40">
@@ -108,8 +108,8 @@ export default async function DemoPost({ params }: { params: Promise<{ slug: str
                   Interactive Dashboard
                 </Heading>
               </Column>
-              <div 
-                style={{ 
+              <div
+                style={{
                   width: '100%',
                   position: 'relative',
                   paddingBottom: '56.25%', // 16:9 aspect ratio
@@ -136,7 +136,7 @@ export default async function DemoPost({ params }: { params: Promise<{ slug: str
               </div>
             </Column>
           )}
-          
+
           <Column as="article" maxWidth="s">
             <CustomMDX source={post.content} />
           </Column>
