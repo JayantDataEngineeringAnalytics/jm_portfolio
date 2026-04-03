@@ -204,7 +204,7 @@ export default function PortfolioPage() {
           </div>
           <div className={styles.heroStatDivider} />
           <div className={styles.heroStat}>
-            <span className={styles.heroStatValue}>2M+</span>
+            <span className={styles.heroStatValue}>1.6M+</span>
             <span className={styles.heroStatLabel}>Records Processed</span>
           </div>
           <div className={styles.heroStatDivider} />
