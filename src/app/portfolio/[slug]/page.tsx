@@ -257,7 +257,7 @@ function DashboardEmbed({ src, title, accent }: { src: string; title: string; ac
           <div className={styles.fullscreenHeader}>
             <div className={styles.embedToolbarLeft}>
               <span className={styles.embedLiveDot} />
-              <span className={styles.fullscreenTitle}>{title} — Interactive Dashboard</span>
+              <span className={styles.fullscreenTitle}>{title} — Dashboard</span>
             </div>
             <div className={styles.embedToolbarRight}>
               <a
@@ -358,11 +358,8 @@ export default function ProjectPage({ params }: { params: Promise<{ slug: string
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>
               <span className={styles.sectionIcon}>📊</span>
-              Interactive Dashboard
+              Dashboard
             </h2>
-            <p className={styles.sectionSubtitle}>
-              Live report with cross-filtering and drill-through. Use period buttons and slicers to filter visuals. For the best experience use full screen.
-            </p>
             {project.dashboardEmbed ? (
               <DashboardEmbed src={project.dashboardEmbed} title={project.title} accent={project.accent} />
             ) : (
