@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HR Workforce Analytics — IBM Dataset</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--bg4:#21262d;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#e6edf3;--text2:#8b949e;--text3:#656d76;
+  --accent:#a78bfa;--accent2:#8b5cf6;--accent3:#7c3aed;
+  --green:#3fb950;--red:#f85149;--gold:#f59e0b;--blue:#38bdf8;--orange:#fb923c;
+  --radius:10px;--radius2:14px;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:13px;line-height:1.5;overflow-x:hidden}
+button{font-family:inherit}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+.header-brand{display:flex;align-items:center;gap:10px}
+.brand-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--accent2),var(--accent3));border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-text h1{font-size:13.5px;font-weight:700;color:var(--text);line-height:1.2}
+.brand-text p{font-size:10.5px;color:var(--text2);margin-top:1px}
+.header-right{display:flex;align-items:center;gap:8px}
+.live-pill{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:#86efac;background:rgba(22,163,74,0.15);border:1px solid rgba(22,163,74,0.25);padding:3px 10px;border-radius:20px}
+.live-dot{width:5px;height:5px;border-radius:50%;background:#86efac;animation:blink 1.8s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.last-updated{font-size:10px;color:var(--text3)}
+.main{padding:14px 20px;display:flex;flex-direction:column;gap:14px}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:700px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:14px 16px;position:relative;overflow:hidden;transition:border-color .2s}
+.kpi:hover{border-color:var(--border2)}
+.kpi-accent{position:absolute;top:0;left:0;right:0;height:2.5px;border-radius:var(--radius2) var(--radius2) 0 0}
+.kpi-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:7px}
+.kpi-value{font-size:24px;font-weight:800;color:var(--text);line-height:1;margin-bottom:5px}
+.kpi-footer{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.kpi-delta{font-size:10.5px;font-weight:700;display:inline-flex;align-items:center;gap:2px;padding:1px 6px;border-radius:4px}
+.kpi-delta.up{color:#86efac;background:rgba(22,163,74,.12)}
+.kpi-delta.down{color:#fca5a5;background:rgba(248,81,73,.12)}
+.kpi-delta.neutral{color:#94a3b8;background:rgba(148,163,184,.10)}
+.kpi-sub{font-size:10px;color:var(--text3)}
+.charts-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:14px}
+@media(max-width:800px){.charts-grid{grid-template-columns:1fr}}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:16px 18px;transition:border-color .2s}
+.chart-card:hover{border-color:var(--border2)}
+.chart-card.full{grid-column:1/-1}
+.card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:8px}
+.card-title{font-size:11.5px;font-weight:700;color:var(--text);line-height:1.3}
+.card-sub{font-size:10px;color:var(--text2);margin-top:2px}
+.card-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);white-space:nowrap;flex-shrink:0}
+.ai-insight{margin-top:12px;display:flex;gap:9px;align-items:flex-start;background:linear-gradient(135deg,rgba(167,139,250,.06),rgba(139,92,246,.03));border:1px solid rgba(167,139,250,.15);border-radius:8px;padding:10px 12px}
+.ai-chip{flex-shrink:0;font-size:8.5px;font-weight:800;letter-spacing:.06em;color:#fff;background:linear-gradient(135deg,var(--accent2),var(--accent3));padding:2px 7px;border-radius:4px;margin-top:1px}
+.ai-text{font-size:11px;color:var(--text2);line-height:1.7}
+.ai-text strong{color:var(--accent);font-weight:700}
+.ai-text em{color:var(--text);font-style:normal;font-weight:600}
+/* Bar chart */
+.bar-chart{display:flex;flex-direction:column;gap:10px}
+.bar-row{display:grid;grid-template-columns:70px 1fr 52px;gap:8px;align-items:center}
+.bar-label{font-size:10.5px;color:var(--text2);text-align:right;white-space:nowrap}
+.bar-track{background:var(--bg3);border-radius:4px;height:20px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:4px;transition:width .5s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:6px}
+.bar-inner-val{font-size:9px;font-weight:700;color:rgba(255,255,255,0.7)}
+.bar-val{font-size:10.5px;font-weight:700;color:var(--text);text-align:right}
+/* Risk bands */
+.risk-row{display:grid;grid-template-columns:68px 1fr 40px 100px;gap:8px;align-items:center}
+.risk-badge{font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;text-align:center;letter-spacing:.03em}
+.risk-low{background:rgba(63,185,80,.15);color:#86efac;border:1px solid rgba(63,185,80,.25)}
+.risk-medium{background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.25)}
+.risk-high{background:rgba(251,146,60,.15);color:#fdba74;border:1px solid rgba(251,146,60,.25)}
+.risk-critical{background:rgba(248,81,73,.15);color:#fca5a5;border:1px solid rgba(248,81,73,.25)}
+.risk-pct{font-size:10px;color:var(--text3)}
+/* Table */
+.tbl-wrap{overflow-x:auto;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+thead th{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+tbody tr:hover{background:var(--bg3)}
+tbody tr:last-child{border-bottom:none}
+td{padding:7px 8px;color:var(--text);vertical-align:middle;white-space:nowrap}
+.dept-tag{font-size:8.5px;font-weight:700;padding:1px 7px;border-radius:3px;letter-spacing:.03em}
+.dept-sales{background:rgba(56,189,248,.12);color:#7dd3fc;border:1px solid rgba(56,189,248,.2)}
+.dept-rd{background:rgba(167,139,250,.12);color:#c4b5fd;border:1px solid rgba(167,139,250,.2)}
+.dept-hr{background:rgba(163,230,53,.12);color:#bef264;border:1px solid rgba(163,230,53,.2)}
+.rate-bar-mini{display:inline-flex;align-items:center;gap:6px}
+.rate-track{width:60px;background:var(--bg3);border-radius:2px;height:4px;overflow:hidden;flex-shrink:0}
+.rate-fill{height:100%;border-radius:2px}
+/* Dept risk table */
+.dept-risk-table{width:100%;border-collapse:collapse;font-size:11px}
+.dept-risk-table th{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);padding:6px 8px;border-bottom:1px solid var(--border);text-align:left}
+.dept-risk-table td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+.dept-risk-table tr:last-child td{border-bottom:none}
+.dept-risk-table tr:hover td{background:var(--bg3)}
+.stacked-bar{display:flex;height:10px;border-radius:4px;overflow:hidden;gap:1px;width:120px}
+.stacked-seg{height:100%}
+.seg-low{background:rgba(63,185,80,.6)}
+.seg-medium{background:rgba(245,158,11,.6)}
+.seg-high{background:rgba(251,146,60,.7)}
+.seg-critical{background:rgba(248,81,73,.8)}
+.model-explainer{display:flex;flex-direction:column;gap:8px}
+.factor-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)}
+.factor-row:last-child{border-bottom:none}
+.factor-name{font-size:10.5px;color:var(--text2)}
+.factor-weight{display:flex;align-items:center;gap:8px}
+.factor-pip-track{width:80px;background:var(--bg3);border-radius:2px;height:5px;overflow:hidden}
+.factor-pip{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent2),var(--accent3))}
+.factor-pts{font-size:10px;font-weight:700;color:var(--text);width:32px;text-align:right}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">
+    <div class="brand-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h1>HR Workforce Analytics</h1>
+      <p>IBM HR Attrition Dataset &mdash; Powered by Databricks Unity Catalog</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-pill"><div class="live-dot"></div>Databricks Gold Layer</div>
+    <div class="last-updated">1,470 employees &bull; 3 departments</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- KPI Row -->
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-accent" style="background:linear-gradient(90deg,#f85149,#fb923c)"></div>
+      <div class="kpi-label">Attrition Rate</div>
+      <div class="kpi-value">16.1%</div>
+      <div class="kpi-footer">
+        <span class="kpi-delta down">237 left</span>
+        <span class="kpi-sub">of 1,470 employees</span>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-accent" style="background:linear-gradient(90deg,#a78bfa,#8b5cf6)"></div>
+      <div class="kpi-label">Total Employees</div>
+      <div class="kpi-value">1,470</div>
+      <div class="kpi-footer">
+        <span class="kpi-delta neutral">3 depts</span>
+        <span class="kpi-sub">9 job roles</span>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-accent" style="background:linear-gradient(90deg,#38bdf8,#0ea5e9)"></div>
+      <div class="kpi-label">Avg Monthly Income</div>
+      <div class="kpi-value">$6,503</div>
+      <div class="kpi-footer">
+        <span class="kpi-delta neutral">28.3%</span>
+        <span class="kpi-sub">on overtime</span>
+      </div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-accent" style="background:linear-gradient(90deg,#3fb950,#22c55e)"></div>
+      <div class="kpi-label">Avg Tenure</div>
+      <div class="kpi-value">7.0 yrs</div>
+      <div class="kpi-footer">
+        <span class="kpi-delta down">34.9%</span>
+        <span class="kpi-sub">attrition in year 1</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts row 1: Tenure bar + Risk distribution -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Attrition Rate by Tenure Band</div>
+          <div class="card-sub">portfolio_hr.gold.agg_attrition_by_tenure</div>
+        </div>
+        <div class="card-badge">5 BANDS</div>
+      </div>
+      <div class="bar-chart" id="tenureChart"></div>
+      <div class="ai-insight">
+        <div class="ai-chip">INSIGHT</div>
+        <div class="ai-text">
+          <strong>First-year risk is 4.3× the 10+ year rate.</strong> Employees in their first year attrited at <em>34.9%</em> vs <em>8.1%</em> for tenured staff — pointing to critical onboarding and expectation-setting gaps in the first 12 months.
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Flight Risk Score Distribution</div>
+          <div class="card-sub">portfolio_hr.gold.flight_risk_scores</div>
+        </div>
+        <div class="card-badge">WEIGHTED MODEL</div>
+      </div>
+      <div class="bar-chart" id="riskChart"></div>
+      <div class="ai-insight">
+        <div class="ai-chip">INSIGHT</div>
+        <div class="ai-text">
+          High/Critical employees represent <strong>11.1%</strong> of the workforce yet account for <em>45–60% actual attrition</em> — the model correctly concentrates risk, enabling targeted HR intervention on ~163 employees.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts row 2: Roles table + Risk by dept + Model explainer -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Attrition by Job Role</div>
+          <div class="card-sub">portfolio_hr.gold.agg_attrition_by_role</div>
+        </div>
+        <div class="card-badge">9 ROLES</div>
+      </div>
+      <div class="tbl-wrap">
+        <table id="rolesTable">
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>Dept</th>
+              <th>Headcount</th>
+              <th>Attrited</th>
+              <th>Rate</th>
+              <th>Avg Income</th>
+            </tr>
+          </thead>
+          <tbody id="rolesBody"></tbody>
+        </table>
+      </div>
+      <div class="ai-insight">
+        <div class="ai-chip">INSIGHT</div>
+        <div class="ai-text">
+          <strong>Sales Representatives</strong> lead at <em>39.8%</em> attrition — driven by low compensation ($2,626/mo avg) and high overtime pressure. Compare to Research Directors at <em>2.5%</em> with $16K+ income.
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Flight Risk by Department</div>
+          <div class="card-sub">portfolio_hr.gold.agg_flight_risk_by_dept</div>
+        </div>
+        <div class="card-badge">3 DEPTS</div>
+      </div>
+      <div class="tbl-wrap" style="margin-top:4px">
+        <table class="dept-risk-table" id="deptRiskTable">
+          <thead>
+            <tr>
+              <th>Department</th>
+              <th>Risk Mix</th>
+              <th>High+Critical</th>
+              <th>Actual Attrited</th>
+            </tr>
+          </thead>
+          <tbody id="deptRiskBody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px">
+        <div class="card-header" style="margin-bottom:8px">
+          <div class="card-title" style="font-size:11px">Flight Risk Model — Factor Weights</div>
+        </div>
+        <div class="model-explainer" id="modelFactors"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── DATA (all values from Databricks Gold layer) ───────────────────────────
+
+const TENURE_DATA = [
+  { band:'0-1 yr',  n:215, attrited:75,  rate:34.9 },
+  { band:'1-3 yr',  n:255, attrited:47,  rate:18.4 },
+  { band:'3-5 yr',  n:306, attrited:40,  rate:13.1 },
+  { band:'5-10 yr', n:448, attrited:55,  rate:12.3 },
+  { band:'10+ yr',  n:246, attrited:20,  rate: 8.1 }
+];
+
+const RISK_DATA = [
+  { band:'Low',      n:733, pct:49.9, score:14.0, attrited:60,  rate: 8.2 },
+  { band:'Medium',   n:574, pct:39.0, score:35.1, attrited:102, rate:17.8 },
+  { band:'High',     n:153, pct:10.4, score:56.8, attrited:69,  rate:45.1 },
+  { band:'Critical', n:10,  pct: 0.7, score:78.2, attrited:6,   rate:60.0 }
+];
+
+const ROLES_DATA = [
+  { role:'Sales Representative',      dept:'Sales',                n: 83, attrited:33, rate:39.8, income: 2626 },
+  { role:'Laboratory Technician',     dept:'Research & Development',n:259, attrited:62, rate:23.9, income: 3237 },
+  { role:'Human Resources',           dept:'Human Resources',      n: 52, attrited:12, rate:23.1, income: 4236 },
+  { role:'Sales Executive',           dept:'Sales',                n:326, attrited:57, rate:17.5, income: 6924 },
+  { role:'Research Scientist',        dept:'Research & Development',n:292, attrited:47, rate:16.1, income: 3240 },
+  { role:'Manufacturing Director',    dept:'Research & Development',n:145, attrited:10, rate: 6.9, income: 7295 },
+  { role:'Healthcare Representative', dept:'Research & Development',n:131, attrited: 9, rate: 6.9, income: 7529 },
+  { role:'Manager',                   dept:'R&D / Sales / HR',     n:102, attrited: 5, rate: 4.9, income:17202 },
+  { role:'Research Director',         dept:'Research & Development',n: 80, attrited: 2, rate: 2.5, income:16034 }
+];
+
+const DEPT_RISK_DATA = [
+  { dept:'Human Resources',       low:31, medium:26, high:6,   critical:0,  total:63,  attrited:12 },
+  { dept:'Research & Development',low:486,medium:367,high:100, critical:8,  total:961, attrited:133 },
+  { dept:'Sales',                 low:216,medium:181,high:47,  critical:2,  total:446, attrited:92  }
+];
+
+const MODEL_FACTORS = [
+  { factor:'Overtime = Yes',                  pts:25 },
+  { factor:'Salary band = Low',               pts:20 },
+  { factor:'Tenure ≤ 1 year',                 pts:15 },
+  { factor:'Job satisfaction ≤ 2',            pts:15 },
+  { factor:'Environment satisfaction ≤ 2',    pts:10 },
+  { factor:'Work-life balance ≤ 2',           pts:10 },
+  { factor:'No promotion ≥ 4 years',          pts: 8 },
+  { factor:'Distance from home ≥ 20km',       pts: 5 },
+  { factor:'New manager (≤ 1 yr)',            pts: 5 },
+  { factor:'Job-hopper (4+ companies)',        pts: 3 }
+];
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+
+function rateColor(rate) {
+  if (rate >= 30) return '#f85149';
+  if (rate >= 20) return '#fb923c';
+  if (rate >= 12) return '#f59e0b';
+  return '#3fb950';
+}
+
+function buildTenureChart() {
+  const el = document.getElementById('tenureChart');
+  const maxRate = Math.max(...TENURE_DATA.map(d => d.rate));
+  el.innerHTML = TENURE_DATA.map(d => {
+    const w = Math.round((d.rate / maxRate) * 100);
+    const col = rateColor(d.rate);
+    return `
+      <div class="bar-row">
+        <div class="bar-label">${d.band}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${w}%;background:${col}">
+            <span class="bar-inner-val">${d.n} empl</span>
+          </div>
+        </div>
+        <div class="bar-val" style="color:${col}">${d.rate}%</div>
+      </div>`;
+  }).join('');
+}
+
+function buildRiskChart() {
+  const el = document.getElementById('riskChart');
+  const maxN = Math.max(...RISK_DATA.map(d => d.n));
+  const bandCls = { Low:'risk-low', Medium:'risk-medium', High:'risk-high', Critical:'risk-critical' };
+  const barColors = { Low:'rgba(63,185,80,.5)', Medium:'rgba(245,158,11,.6)', High:'rgba(251,146,60,.7)', Critical:'rgba(248,81,73,.8)' };
+  el.innerHTML = RISK_DATA.map(d => {
+    const w = Math.round((d.n / maxN) * 100);
+    return `
+      <div class="risk-row">
+        <span class="risk-badge ${bandCls[d.band]}">${d.band}</span>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${w}%;background:${barColors[d.band]}">
+            <span class="bar-inner-val">${d.n}</span>
+          </div>
+        </div>
+        <div class="bar-val">${d.pct}%</div>
+        <div class="risk-pct" style="font-size:9.5px">Attr: <strong style="color:${rateColor(d.rate)}">${d.rate}%</strong></div>
+      </div>`;
+  }).join('');
+}
+
+function deptTag(dept) {
+  if (dept.includes('Sales')) return `<span class="dept-tag dept-sales">Sales</span>`;
+  if (dept.includes('Research') || dept.includes('R&D')) return `<span class="dept-tag dept-rd">R&D</span>`;
+  return `<span class="dept-tag dept-hr">HR</span>`;
+}
+
+function buildRolesTable() {
+  const tbody = document.getElementById('rolesBody');
+  tbody.innerHTML = ROLES_DATA.map(d => {
+    const col = rateColor(d.rate);
+    const w = Math.round(d.rate / 40 * 100);
+    return `<tr>
+      <td style="font-weight:600">${d.role}</td>
+      <td>${deptTag(d.dept)}</td>
+      <td style="color:var(--text2)">${d.n}</td>
+      <td style="color:var(--text2)">${d.attrited}</td>
+      <td>
+        <div class="rate-bar-mini">
+          <span style="font-weight:700;color:${col};min-width:34px">${d.rate}%</span>
+          <div class="rate-track"><div class="rate-fill" style="width:${w}%;background:${col}"></div></div>
+        </div>
+      </td>
+      <td style="color:var(--text2)">$${d.income.toLocaleString()}</td>
+    </tr>`;
+  }).join('');
+}
+
+function buildDeptRiskTable() {
+  const tbody = document.getElementById('deptRiskBody');
+  tbody.innerHTML = DEPT_RISK_DATA.map(d => {
+    const lowPct  = Math.round(d.low / d.total * 100);
+    const medPct  = Math.round(d.medium / d.total * 100);
+    const hiPct   = Math.round(d.high / d.total * 100);
+    const criPct  = Math.round(d.critical / d.total * 100);
+    const hiCri   = d.high + d.critical;
+    const hiCriPct = ((hiCri / d.total) * 100).toFixed(1);
+    const tag = d.dept === 'Sales' ? 'dept-sales' : d.dept === 'Research & Development' ? 'dept-rd' : 'dept-hr';
+    const shortDept = d.dept === 'Research & Development' ? 'R&D' : d.dept === 'Human Resources' ? 'HR' : 'Sales';
+    return `<tr>
+      <td><span class="dept-tag ${tag}">${shortDept}</span></td>
+      <td>
+        <div class="stacked-bar">
+          <div class="stacked-seg seg-low" style="width:${lowPct}%" title="Low ${lowPct}%"></div>
+          <div class="stacked-seg seg-medium" style="width:${medPct}%" title="Medium ${medPct}%"></div>
+          <div class="stacked-seg seg-high" style="width:${hiPct}%" title="High ${hiPct}%"></div>
+          <div class="stacked-seg seg-critical" style="width:${criPct}%" title="Critical ${criPct}%"></div>
+        </div>
+      </td>
+      <td style="font-weight:700;color:${rateColor(parseFloat(hiCriPct))}">${hiCriPct}%</td>
+      <td style="color:var(--text2)">${d.attrited} of ${d.total}</td>
+    </tr>`;
+  }).join('');
+}
+
+function buildModelFactors() {
+  const el = document.getElementById('modelFactors');
+  const maxPts = 25;
+  el.innerHTML = MODEL_FACTORS.map(f => {
+    const w = Math.round((f.pts / maxPts) * 100);
+    return `
+      <div class="factor-row">
+        <div class="factor-name">${f.factor}</div>
+        <div class="factor-weight">
+          <div class="factor-pip-track"><div class="factor-pip" style="width:${w}%"></div></div>
+          <div class="factor-pts">+${f.pts} pts</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// Init
+buildTenureChart();
+buildRiskChart();
+buildRolesTable();
+buildDeptRiskTable();
+buildModelFactors();
+</script>
+</body>
+</html>

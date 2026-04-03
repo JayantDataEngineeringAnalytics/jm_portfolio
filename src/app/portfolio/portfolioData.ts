@@ -210,6 +210,175 @@ export const PROJECTS: PortfolioProject[] = [
     },
   },
   {
+    id: "hr-analytics",
+    status: "live",
+    category: "HR Analytics & People Intelligence",
+    title: "HR Workforce Intelligence",
+    subtitle: "Attrition analysis, flight risk scoring model, and compensation benchmarking on Databricks",
+    description:
+      "Built a full Medallion pipeline on Databricks to analyse IBM HR attrition data — Bronze ingestion, Silver enrichment with 12 derived columns, Gold reporting aggregates, and a custom weighted Flight Risk Model that assigns each of 1,470 employees a 0–100 risk score. Model is validated against actual attrition: Critical-band employees attrite at 60% vs 8% for Low band.",
+    color1: "#8b5cf6",
+    color2: "#6d28d9",
+    accent: "#a78bfa",
+    stack: ["Databricks", "Delta Lake", "SQL", "Python", "Power BI"],
+    metrics: [
+      { label: "Employees Analysed", value: "1,470" },
+      { label: "Attrition Rate", value: "16.1%" },
+      { label: "Flight Risk Factors", value: "10" },
+      { label: "Critical Risk Attrition", value: "60%" },
+    ],
+    highlights: ["Medallion Architecture", "Flight Risk Model", "Salary Benchmarking", "People Analytics", "Unity Catalog", "IBM Dataset"],
+    github: "https://github.com/JayantDataEngineeringAnalytics/portfolio-hr-analytics",
+    slug: "hr-analytics",
+    dataset: "IBM HR Employee Attrition",
+    datasetSource: "IBM Watson Analytics — 1,470 employees · 35 columns · synthetic HR dataset",
+    problem:
+      "HR teams lack a systematic, data-driven way to identify which employees are at risk of leaving before they resign. Reactive exit interviews and blanket retention programs waste budget on the wrong people while missing the real flight risks.",
+    solution:
+      "End-to-end Databricks pipeline: Bronze ingests the IBM HR dataset, Silver derives 12 business columns (tenure bands, salary bands, satisfaction labels, attrition flag), Gold produces 8 reporting aggregates. The Flight Risk Model assigns each employee a weighted 0–100 score across 10 risk factors — overtime, low salary band, poor satisfaction, stagnation, and more. Model is validated by comparing predicted risk band against actual attrition: Critical-band employees attrited at 60%, 7.3× the Low-band rate.",
+    pipeline: [
+      {
+        name: "Bronze",
+        color: "#b45309",
+        textColor: "#fde68a",
+        description: "Raw ingestion — CSV loaded from Unity Catalog volume into Delta Lake with audit columns",
+        steps: [
+          "read_files() from /Volumes/portfolio_hr/landing_zone/raw_files/",
+          "All 35 original columns preserved with original names",
+          "Added _ingested_at (timestamp) and _source_file audit columns",
+          "1,470 rows, 0 NULLs — confirmed clean dataset",
+        ],
+      },
+      {
+        name: "Silver",
+        color: "#475569",
+        textColor: "#e2e8f0",
+        description: "Enriched & transformed — 12 derived business columns via SQL window functions",
+        steps: [
+          "Snake_case rename of all 35 columns for consistency",
+          "tenure_band: 0–1yr / 1–3yr / 3–5yr / 5–10yr / 10+yr",
+          "salary_band: PERCENT_RANK() within job_role → Low / Mid / High / Top",
+          "Satisfaction labels: integer codes mapped to Low / Medium / High / Very High",
+          "income_percentile: PERCENT_RANK() across full dataset",
+          "attrition_flag: boolean cast for ML-ready target variable",
+        ],
+      },
+      {
+        name: "Gold",
+        color: "#92400e",
+        textColor: "#fef3c7",
+        description: "Business-ready aggregates + Flight Risk Scoring Model",
+        steps: [
+          "agg_attrition_by_tenure — 5 tenure bands, headcount, rate per band",
+          "agg_attrition_by_role — 9 job roles, attrition rate, avg income",
+          "agg_salary_benchmarks — min/avg/median/max income per role",
+          "agg_satisfaction_vs_attrition — satisfaction gap: attrited vs retained",
+          "flight_risk_scores — per-employee weighted score (10 factors, max 116 pts, normalised 0–100)",
+          "agg_flight_risk_by_dept — risk band distribution per department",
+        ],
+      },
+    ],
+    dashboardEmbed: "/reports/hr-analytics.html",
+    powerbi: {
+      modelTables: [
+        {
+          name: "fact_employees",
+          type: "fact",
+          columns: ["employee_id (PK)", "department (FK)", "job_role (FK)", "age", "gender", "marital_status", "monthly_income", "years_at_company", "attrition_flag", "overtime", "tenure_band", "salary_band", "income_percentile"],
+        },
+        {
+          name: "flight_risk_scores",
+          type: "fact",
+          columns: ["employee_id (PK)", "flight_risk_score", "risk_band", "raw_score", "score_overtime", "score_salary", "score_new_hire", "score_job_sat", "score_env_sat", "score_wlb", "score_no_promo"],
+        },
+        {
+          name: "dim_department",
+          type: "dimension",
+          columns: ["department (PK)", "headcount", "avg_income", "avg_tenure"],
+        },
+        {
+          name: "dim_job_role",
+          type: "dimension",
+          columns: ["job_role (PK)", "department (FK)", "avg_income", "attrition_rate"],
+        },
+        {
+          name: "dim_date",
+          type: "dimension",
+          columns: ["date_id (PK)", "year", "quarter", "month", "month_name"],
+        },
+      ],
+      measures: [
+        {
+          name: "Attrition Rate",
+          description: "Percentage of employees who have left, respecting all active filters (department, role, risk band).",
+          dax: `Attrition Rate =\nDIVIDE(\n    CALCULATE(\n        COUNTROWS(fact_employees),\n        fact_employees[attrition_flag] = TRUE()\n    ),\n    COUNTROWS(fact_employees),\n    0\n)`,
+        },
+        {
+          name: "Flight Risk Score (Avg)",
+          description: "Average flight risk score (0–100) for the current filter context — higher is more at-risk.",
+          dax: `Avg Flight Risk Score =\nAVERAGEX(\n    RELATEDTABLE(flight_risk_scores),\n    flight_risk_scores[flight_risk_score]\n)`,
+        },
+        {
+          name: "Pct High or Critical Risk",
+          description: "Share of employees in the High or Critical flight risk band — primary risk KPI for HR dashboards.",
+          dax: `Pct High or Critical Risk =\nDIVIDE(\n    CALCULATE(\n        COUNTROWS(flight_risk_scores),\n        flight_risk_scores[risk_band] IN { \"High\", \"Critical\" }\n    ),\n    COUNTROWS(flight_risk_scores),\n    0\n)`,
+        },
+        {
+          name: "Salary Equity Ratio",
+          description: "Ratio of avg income for attrited vs retained employees in the same job role — values below 1 indicate compensation-driven attrition.",
+          dax: `Salary Equity Ratio =\nVAR AtritedIncome =\n    CALCULATE(\n        AVERAGE(fact_employees[monthly_income]),\n        fact_employees[attrition_flag] = TRUE()\n    )\nVAR RetainedIncome =\n    CALCULATE(\n        AVERAGE(fact_employees[monthly_income]),\n        fact_employees[attrition_flag] = FALSE()\n    )\nRETURN\n    DIVIDE(AtritedIncome, RetainedIncome, BLANK())`,
+        },
+        {
+          name: "Overtime Attrition Premium",
+          description: "How much higher the attrition rate is for overtime employees vs non-overtime — quantifies the burnout-attrition link.",
+          dax: `Overtime Attrition Premium =\nVAR OTRate =\n    CALCULATE([Attrition Rate], fact_employees[overtime] = \"Yes\")\nVAR NonOTRate =\n    CALCULATE([Attrition Rate], fact_employees[overtime] = \"No\")\nRETURN\n    DIVIDE(OTRate - NonOTRate, NonOTRate, BLANK())`,
+        },
+        {
+          name: "Manager Effectiveness Index",
+          description: "Inverse attrition rate for employees with 3+ years under the same manager — higher = better retention signal from manager stability.",
+          dax: `Manager Effectiveness Index =\n1 - CALCULATE(\n    [Attrition Rate],\n    fact_employees[years_with_curr_manager] >= 3\n)`,
+        },
+        {
+          name: "Attrition by Tenure Band",
+          description: "Attrition rate segmented by tenure band — used in the key visual showing how first-year risk (34.9%) compares to 10+ year risk (8.1%).",
+          dax: `Attrition by Tenure Band =\nCALCULATETABLE(\n    SUMMARIZE(\n        fact_employees,\n        fact_employees[tenure_band],\n        \"Headcount\", COUNTROWS(fact_employees),\n        \"Attrited\", CALCULATE(\n            COUNTROWS(fact_employees),\n            fact_employees[attrition_flag] = TRUE()\n        ),\n        \"Rate\", [Attrition Rate]\n    )\n)`,
+        },
+        {
+          name: "Expected Attritions (High+Critical)",
+          description: "Projected headcount loss if High and Critical risk employees attrite at their historical band rates — used to size retention program cost.",
+          dax: `Expected Attritions =\nVAR HighCount =\n    CALCULATE(\n        COUNTROWS(flight_risk_scores),\n        flight_risk_scores[risk_band] = \"High\"\n    )\nVAR CriticalCount =\n    CALCULATE(\n        COUNTROWS(flight_risk_scores),\n        flight_risk_scores[risk_band] = \"Critical\"\n    )\nRETURN\n    INT(HighCount * 0.451) + INT(CriticalCount * 0.600)`,
+        },
+      ],
+      reportPages: [
+        {
+          name: "Workforce Overview",
+          icon: "👥",
+          visuals: ["KPI cards: headcount, attrition rate, avg income, avg tenure", "Attrition by department bar chart", "Headcount by age band donut", "Overtime vs non-overtime attrition comparison"],
+        },
+        {
+          name: "Attrition Deep-Dive",
+          icon: "📉",
+          visuals: ["Attrition rate by tenure band (key visual)", "Attrition by job role ranked bar", "Attrition by salary band scatter", "YoY attrition trend (simulated cohort)"],
+        },
+        {
+          name: "Flight Risk Dashboard",
+          icon: "⚠️",
+          visuals: ["Risk band distribution donut (Low / Medium / High / Critical)", "High+Critical employees table (dept, role, score, top factor)", "Risk band vs actual attrition validation chart", "Expected attritions KPI with cost estimate"],
+        },
+        {
+          name: "Compensation Analysis",
+          icon: "💰",
+          visuals: ["Salary benchmarks by role (min/avg/median/max box)", "Salary equity ratio: attrited vs retained", "Income percentile distribution", "Salary hike % vs attrition scatter"],
+        },
+        {
+          name: "Satisfaction & Wellbeing",
+          icon: "❤️",
+          visuals: ["Satisfaction score comparison: attrited vs retained radar", "Work-life balance vs attrition heatmap", "Job involvement by department", "Manager effectiveness index gauge per department"],
+        },
+      ],
+    },
+  },
+  {
     id: "real-time-streaming",
     status: "wip",
     category: "Data Engineering",
