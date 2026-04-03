@@ -204,6 +204,97 @@ function PowerBISection({ pbi }: { pbi: PowerBILayer }) {
   );
 }
 
+// ─── Dashboard Embed with Fullscreen ─────────────────────────────────────────
+function DashboardEmbed({ src, title, accent }: { src: string; title: string; accent: string }) {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  return (
+    <>
+      {/* Inline embed */}
+      <div className={styles.embedContainer}>
+        <div className={styles.embedToolbar}>
+          <div className={styles.embedToolbarLeft}>
+            <span className={styles.embedLiveDot} />
+            <span className={styles.embedLiveLabel}>Live Report</span>
+          </div>
+          <div className={styles.embedToolbarRight}>
+            <a
+              href={src}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.embedBtn}
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 2h8M10 2v8M10 2L4 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              Open in new tab
+            </a>
+            <button
+              className={styles.embedBtn}
+              onClick={() => setIsFullscreen(true)}
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M1 4V1h3M8 1h3v3M11 8v3H8M4 11H1V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Full screen
+            </button>
+          </div>
+        </div>
+        <div className={styles.embedWrapper}>
+          <iframe
+            src={src}
+            className={styles.embedIframe}
+            allowFullScreen
+            allow="scripts; same-origin"
+            title={`${title} Dashboard`}
+          />
+        </div>
+      </div>
+
+      {/* Fullscreen overlay */}
+      {isFullscreen && (
+        <div className={styles.fullscreenOverlay}>
+          <div className={styles.fullscreenHeader}>
+            <div className={styles.embedToolbarLeft}>
+              <span className={styles.embedLiveDot} />
+              <span className={styles.fullscreenTitle}>{title} — Interactive Dashboard</span>
+            </div>
+            <div className={styles.embedToolbarRight}>
+              <a
+                href={src}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.embedBtn}
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 2h8M10 2v8M10 2L4 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                Open in new tab
+              </a>
+              <button
+                className={`${styles.embedBtn} ${styles.embedBtnClose}`}
+                onClick={() => setIsFullscreen(false)}
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                Close
+              </button>
+            </div>
+          </div>
+          <iframe
+            src={src}
+            className={styles.fullscreenIframe}
+            allowFullScreen
+            allow="scripts; same-origin"
+            title={`${title} Dashboard — Full Screen`}
+          />
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const project = PROJECTS.find((p) => p.slug === slug);
@@ -270,17 +361,10 @@ export default function ProjectPage({ params }: { params: Promise<{ slug: string
               Interactive Dashboard
             </h2>
             <p className={styles.sectionSubtitle}>
-              Live report with cross-filtering and drill-through. Click any visual to filter the rest.
+              Live report with cross-filtering and drill-through. Use period buttons and slicers to filter visuals. For the best experience use full screen.
             </p>
             {project.dashboardEmbed ? (
-              <div className={styles.embedWrapper}>
-                <iframe
-                  src={project.dashboardEmbed}
-                  className={styles.embedIframe}
-                  allowFullScreen
-                  title={`${project.title} Dashboard`}
-                />
-              </div>
+              <DashboardEmbed src={project.dashboardEmbed} title={project.title} accent={project.accent} />
             ) : (
               <div className={styles.embedPlaceholder}>
                 <div className={styles.placeholderInner}>
