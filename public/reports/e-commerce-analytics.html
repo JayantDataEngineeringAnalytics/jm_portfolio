@@ -164,7 +164,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
     </div>
     <div class="brand-text">
       <h1>E-Commerce Sales Analytics</h1>
-      <p>Brazilian E-Commerce · Olist Dataset · 98,666 Orders · 2016–2018</p>
+      <p>Brazilian E-Commerce · Olist Dataset · 98,666 Orders · 2016–2018 · Period filter &amp; Category drill-down enabled</p>
     </div>
   </div>
   <div class="header-controls">
@@ -181,31 +181,20 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
 <!-- ─ Slicers ──────────────────────────────────────────────── -->
 <div class="slicers">
   <div class="slicer">
-    <div class="slicer-label">Order Status</div>
-    <div class="slicer-pills" id="slicer-status">
-      <button class="pill active" data-val="all">All</button>
-      <button class="pill" data-val="delivered">Delivered</button>
-      <button class="pill" data-val="shipped">Shipped</button>
-      <button class="pill" data-val="cancelled">Cancelled</button>
-    </div>
-  </div>
-  <div class="slicer">
-    <div class="slicer-label">Top Region</div>
-    <div class="slicer-pills" data-group="region" id="slicer-region">
-      <button class="pill active" data-val="all">All States</button>
-      <button class="pill" data-val="SP">São Paulo</button>
-      <button class="pill" data-val="RJ">Rio de Janeiro</button>
-      <button class="pill" data-val="MG">Minas Gerais</button>
-    </div>
-  </div>
-  <div class="slicer">
-    <div class="slicer-label">Category</div>
+    <div class="slicer-label">Category Drill-Down</div>
     <div class="slicer-pills" id="slicer-cat">
-      <button class="pill active" data-val="all">All</button>
-      <button class="pill" data-val="electronics">Electronics</button>
-      <button class="pill" data-val="home">Home & Living</button>
-      <button class="pill" data-val="beauty">Health & Beauty</button>
+      <button class="pill active" data-cat="all">All Categories</button>
+      <button class="pill" data-cat="Health &amp; Beauty">Health &amp; Beauty</button>
+      <button class="pill" data-cat="Watches &amp; Gifts">Watches &amp; Gifts</button>
+      <button class="pill" data-cat="Bed &amp; Bath">Bed &amp; Bath</button>
+      <button class="pill" data-cat="Sports &amp; Leisure">Sports &amp; Leisure</button>
+      <button class="pill" data-cat="Computers &amp; Acc.">Computers &amp; Acc.</button>
     </div>
+  </div>
+  <div id="filter-status" style="display:none;align-items:center;gap:8px;margin-left:auto">
+    <span style="font-size:10px;color:#8b949e">Filtered:</span>
+    <span id="filter-chip" style="font-size:10px;font-weight:700;color:#38bdf8;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);padding:2px 10px;border-radius:20px"></span>
+    <button id="filter-clear" style="font-size:10px;color:#8b949e;background:none;border:none;cursor:pointer;padding:2px 4px" title="Clear filter">✕</button>
   </div>
 </div>
 
@@ -751,6 +740,23 @@ function buildSellers(){
 
 // ─── Update KPIs ──────────────────────────────────────────────────────────────
 function updateKPIs(period){
+  // Category drill-down overrides period KPIs
+  const cat = (typeof activeCategory!=='undefined') ? CATEGORY_KPI[activeCategory] : null;
+  if(cat){
+    animateValue('kpi-gmv', cat.gmv);
+    document.getElementById('kpi-gmv-delta').textContent=cat.share+' of GMV';
+    document.getElementById('kpi-gmv-delta').className='kpi-delta up';
+    animateValue('kpi-orders', cat.orders);
+    document.getElementById('kpi-orders-delta').textContent='category orders';
+    animateValue('kpi-aov', cat.aov);
+    document.getElementById('kpi-aov-delta').textContent='avg order value';
+    document.getElementById('kpi-aov-delta').className='kpi-delta up';
+    animateValue('kpi-review', cat.review);
+    document.getElementById('kpi-review-delta').textContent='platform avg';
+    // keep chart badge unchanged
+    return;
+  }
+  // Default: period-based KPIs
   const d=KPI_DATA[period];
   animateValue('kpi-gmv', d.gmv);
   document.getElementById('kpi-gmv-delta').textContent=d.gmvD;
@@ -762,7 +768,6 @@ function updateKPIs(period){
   document.getElementById('kpi-aov-delta').className='kpi-delta '+(d.aovDClass||'up');
   animateValue('kpi-review', d.review);
   document.getElementById('kpi-review-delta').textContent=d.reviewD;
-  const sub={'all':'20 months','2017':'12 months','2018':'8 months'};
   const badge={'all':'20 months','2017':'2017 · 12mo','2018':'2018 · 8mo'};
   document.getElementById('trend-sub').textContent={
     'all':'Jan 2017 – Aug 2018 · R$ thousands',
@@ -844,14 +849,51 @@ document.querySelectorAll('.period-btn').forEach(btn=>{
   });
 });
 
-// ─── Slicer pills (visual feedback) ──────────────────────────────────────────
-document.querySelectorAll('.slicer-pills').forEach(group=>{
-  group.querySelectorAll('.pill').forEach(pill=>{
-    pill.addEventListener('click',function(){
-      group.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
-      this.classList.add('active');
-    });
+// ─── Category KPI data (from Gold layer agg_product_category) ────────────────
+const CATEGORY_KPI = {
+  'all':                null,
+  'Health & Beauty':   { gmv:'R$1.26M', orders:'~9,100',  share:'9.26%', aov:'R$138.1', review:'4.03 ★' },
+  'Watches & Gifts':   { gmv:'R$1.21M', orders:'~8,700',  share:'8.87%', aov:'R$138.5', review:'4.03 ★' },
+  'Bed & Bath':        { gmv:'R$1.04M', orders:'~7,500',  share:'7.63%', aov:'R$138.3', review:'4.03 ★' },
+  'Sports & Leisure':  { gmv:'R$0.99M', orders:'~7,200',  share:'7.27%', aov:'R$137.2', review:'4.03 ★' },
+  'Computers & Acc.':  { gmv:'R$0.91M', orders:'~6,600',  share:'6.71%', aov:'R$138.2', review:'4.03 ★' },
+};
+
+let activeCategory = 'all';
+
+// ─── Category slicer ──────────────────────────────────────────────────────────
+document.getElementById('slicer-cat').querySelectorAll('.pill').forEach(pill=>{
+  pill.addEventListener('click',function(){
+    document.getElementById('slicer-cat').querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+    this.classList.add('active');
+    activeCategory = this.dataset.cat;
+
+    // Update donut highlight
+    if(activeCategory==='all'){
+      drawDonut(-1);
+      document.getElementById('filter-status').style.display='none';
+    } else {
+      const catIdx = CATEGORIES.findIndex(c=>c.name===activeCategory);
+      if(catIdx>=0) drawDonut(catIdx);
+      const chip=document.getElementById('filter-chip');
+      chip.textContent=activeCategory;
+      const fs=document.getElementById('filter-status');
+      fs.style.display='flex';
+    }
+
+    // Update KPIs for category
+    updateKPIs(activePeriod);
   });
+});
+
+// Clear filter button
+document.getElementById('filter-clear').addEventListener('click',function(){
+  activeCategory='all';
+  document.getElementById('slicer-cat').querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  document.getElementById('slicer-cat').querySelector('[data-cat="all"]').classList.add('active');
+  document.getElementById('filter-status').style.display='none';
+  drawDonut(-1);
+  updateKPIs(activePeriod);
 });
 
 // ─── Table sort ────────────────────────────────────────────────────────────────
