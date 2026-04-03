@@ -16,13 +16,9 @@
 }
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:13px;line-height:1.5;overflow-x:hidden}
 button{font-family:inherit}
-
-/* ─ Scrollbar ─ */
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:var(--bg2)}
 ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
-
-/* ─ Header ─ */
 .header{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
 .header-brand{display:flex;align-items:center;gap:10px}
 .brand-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--accent2),var(--accent3));border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -37,8 +33,6 @@ button{font-family:inherit}
 .period-btn:hover{color:var(--text);border-color:var(--border2)}
 .period-btn.active{background:rgba(56,189,248,.15);border-color:rgba(56,189,248,.35);color:var(--accent)}
 .last-updated{font-size:10px;color:var(--text3);white-space:nowrap}
-
-/* ─ Slicers ─ */
 .slicers{padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
 .slicer{display:flex;flex-direction:column;gap:5px}
 .slicer-label{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--text3)}
@@ -46,11 +40,7 @@ button{font-family:inherit}
 .pill{font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap}
 .pill:hover{border-color:var(--border2);color:var(--text)}
 .pill.active{background:rgba(56,189,248,.13);border-color:rgba(56,189,248,.35);color:var(--accent)}
-
-/* ─ Main layout ─ */
 .main{padding:14px 20px;display:flex;flex-direction:column;gap:14px}
-
-/* ─ KPI row ─ */
 .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 @media(max-width:700px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
 .kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:14px 16px;position:relative;overflow:hidden;transition:border-color .2s}
@@ -62,10 +52,9 @@ button{font-family:inherit}
 .kpi-delta{font-size:10.5px;font-weight:700;display:inline-flex;align-items:center;gap:2px;padding:1px 6px;border-radius:4px}
 .kpi-delta.up{color:#86efac;background:rgba(22,163,74,.12)}
 .kpi-delta.down{color:#fca5a5;background:rgba(248,81,73,.12)}
+.kpi-delta.neutral{color:#94a3b8;background:rgba(148,163,184,.10)}
 .kpi-sub{font-size:10px;color:var(--text3)}
 .kpi-sparkline{position:absolute;bottom:10px;right:12px;opacity:.5}
-
-/* ─ Charts grid ─ */
 .charts-grid{display:grid;grid-template-columns:1.7fr 1fr;gap:14px}
 .charts-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 @media(max-width:800px){.charts-grid,.charts-grid-3{grid-template-columns:1fr}}
@@ -76,19 +65,13 @@ button{font-family:inherit}
 .card-title{font-size:11.5px;font-weight:700;color:var(--text);line-height:1.3}
 .card-sub{font-size:10px;color:var(--text2);margin-top:2px}
 .card-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);white-space:nowrap;flex-shrink:0}
-
-/* ─ Chart canvas area ─ */
 .chart-area{width:100%;position:relative}
 .chart-area canvas,.chart-area svg{display:block}
-
-/* ─ AI Insight ─ */
 .ai-insight{margin-top:12px;display:flex;gap:9px;align-items:flex-start;background:linear-gradient(135deg,rgba(56,189,248,.06),rgba(14,165,233,.03));border:1px solid rgba(56,189,248,.15);border-radius:8px;padding:10px 12px}
 .ai-chip{flex-shrink:0;font-size:8.5px;font-weight:800;letter-spacing:.06em;color:#000;background:linear-gradient(135deg,var(--accent),var(--accent2));padding:2px 7px;border-radius:4px;margin-top:1px}
 .ai-text{font-size:11px;color:var(--text2);line-height:1.7}
 .ai-text strong{color:var(--accent);font-weight:700}
 .ai-text em{color:var(--text);font-style:normal;font-weight:600}
-
-/* ─ Table ─ */
 .tbl-wrap{overflow-x:auto;margin-top:4px}
 table{width:100%;border-collapse:collapse;font-size:11px}
 thead th{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;cursor:pointer;user-select:none}
@@ -106,8 +89,6 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
 .bar-track{flex:1;height:5px;background:var(--bg3);border-radius:2px;overflow:hidden;min-width:50px}
 .bar-fill{height:100%;border-radius:2px;transition:width .4s ease}
 .score-pill{font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:4px}
-
-/* ─ Donut legend ─ */
 .donut-layout{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .donut-legend{display:flex;flex-direction:column;gap:7px;flex:1;min-width:120px}
 .leg-item{display:flex;align-items:center;gap:7px;cursor:pointer;padding:2px 4px;border-radius:4px;transition:background .15s}
@@ -115,20 +96,13 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
 .leg-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
 .leg-name{font-size:10.5px;color:var(--text2);flex:1;line-height:1.3}
 .leg-val{font-size:10px;font-weight:700;color:var(--text);white-space:nowrap}
-
-/* ─ Review bar row ─ */
 .review-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .review-star{font-size:10.5px;font-weight:700;color:var(--text2);width:18px;flex-shrink:0;text-align:right}
 .review-track{flex:1;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden}
 .review-fill{height:100%;border-radius:4px;transition:width .6s ease}
 .review-pct{font-size:10px;color:var(--text2);width:30px;text-align:right}
-.review-count{font-size:9.5px;color:var(--text3);width:40px;text-align:right}
-
-/* ─ Tooltip ─ */
 .tooltip{position:fixed;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-size:10.5px;color:var(--text);pointer-events:none;z-index:999;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:200px;line-height:1.5}
 .tooltip strong{color:var(--accent);display:block;margin-bottom:2px}
-
-/* ─ Footer ─ */
 .footer{margin:0 20px 14px;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .footer-text{font-size:9.5px;color:var(--text3);line-height:1.5}
 .footer-text a{color:var(--text2);text-decoration:none}
@@ -137,24 +111,14 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
 .fstat{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
 .fstat-val{font-size:11px;font-weight:700;color:var(--text)}
 .fstat-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
-
-/* ─ Animate in ─ */
 .fade-in{animation:fadein .4s ease forwards;opacity:0}
 @keyframes fadein{to{opacity:1}}
-.delay-1{animation-delay:.05s}
-.delay-2{animation-delay:.1s}
-.delay-3{animation-delay:.15s}
-.delay-4{animation-delay:.2s}
-
-/* ─ Clickable visual hint ─ */
-[title]:not([title=""]) { cursor: pointer; }
+.delay-1{animation-delay:.05s}.delay-2{animation-delay:.1s}.delay-3{animation-delay:.15s}
 </style>
 </head>
 <body>
-
 <div class="tooltip" id="tooltip"></div>
 
-<!-- ─ Header ──────────────────────────────────────────────── -->
 <div class="header">
   <div class="header-brand">
     <div class="brand-icon">
@@ -167,7 +131,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
     </div>
     <div class="brand-text">
       <h1>E-Commerce Sales Analytics</h1>
-      <p>Brazilian E-Commerce · Olist Dataset · 98,666 Orders · 2016–2018 · Period filter &amp; Category drill-down enabled</p>
+      <p>Brazilian E-Commerce · Olist Dataset · 98,666 Orders · 2016–2018 · Click any visual to cross-filter</p>
     </div>
   </div>
   <div class="header-controls">
@@ -177,11 +141,10 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
       <button class="period-btn" data-period="2017">2017</button>
       <button class="period-btn" data-period="2018">2018</button>
     </div>
-    <span class="last-updated">Data through Oct 2018</span>
+    <span class="last-updated">Data through Aug 2018</span>
   </div>
 </div>
 
-<!-- ─ Slicers ──────────────────────────────────────────────── -->
 <div class="slicers">
   <div class="slicer">
     <div class="slicer-label">Category Drill-Down</div>
@@ -191,20 +154,17 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
       <button class="pill" data-cat="Watches &amp; Gifts">Watches &amp; Gifts</button>
       <button class="pill" data-cat="Bed &amp; Bath">Bed &amp; Bath</button>
       <button class="pill" data-cat="Sports &amp; Leisure">Sports &amp; Leisure</button>
-      <button class="pill" data-cat="Computers &amp; Acc.">Computers &amp; Acc.</button>
+      <button class="pill" data-cat="Computers">Computers</button>
     </div>
   </div>
   <div id="filter-status" style="display:none;align-items:center;gap:8px;margin-left:auto">
-    <span style="font-size:10px;color:#8b949e">Filtered:</span>
+    <span style="font-size:10px;color:#8b949e">Active filter:</span>
     <span id="filter-chip" style="font-size:10px;font-weight:700;color:#38bdf8;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);padding:2px 10px;border-radius:20px"></span>
-    <button id="filter-clear" style="font-size:10px;color:#8b949e;background:none;border:none;cursor:pointer;padding:2px 4px" title="Clear filter">✕</button>
+    <button id="filter-clear" style="font-size:10px;color:#8b949e;background:none;border:none;cursor:pointer;padding:2px 4px" title="Clear filter">✕ Clear</button>
   </div>
 </div>
 
-<!-- ─ Main ──────────────────────────────────────────────────── -->
 <div class="main">
-
-  <!-- KPIs -->
   <div class="kpi-row">
     <div class="kpi fade-in">
       <div class="kpi-accent" style="background:linear-gradient(90deg,#38bdf8,#0ea5e9)"></div>
@@ -233,10 +193,10 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
     <div class="kpi fade-in delay-2">
       <div class="kpi-accent" style="background:linear-gradient(90deg,#f59e0b,#d97706)"></div>
       <div class="kpi-label">Avg Order Value</div>
-      <div class="kpi-value" id="kpi-aov">R$137.75</div>
+      <div class="kpi-value" id="kpi-aov">R$137.1</div>
       <div class="kpi-footer">
         <span class="kpi-delta up" id="kpi-aov-delta">↑ 8.9%</span>
-        <span class="kpi-sub" id="kpi-aov-sub">2018 vs 2017 AOV</span>
+        <span class="kpi-sub" id="kpi-aov-sub">2018 vs 2017</span>
       </div>
       <svg class="kpi-sparkline" width="60" height="24" viewBox="0 0 60 24">
         <polyline points="0,8 10,9 20,8 30,10 40,11 50,12 60,13" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-opacity=".6"/>
@@ -248,7 +208,7 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
       <div class="kpi-value" id="kpi-review">4.03 ★</div>
       <div class="kpi-footer">
         <span class="kpi-delta up" id="kpi-review-delta">↑ 0.09</span>
-        <span class="kpi-sub" id="kpi-review-sub">99,741 reviews</span>
+        <span class="kpi-sub" id="kpi-review-sub">97,917 reviews</span>
       </div>
       <svg class="kpi-sparkline" width="60" height="24" viewBox="0 0 60 24">
         <polyline points="0,16 10,14 20,13 30,11 40,10 50,9 60,7" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-opacity=".6"/>
@@ -256,12 +216,11 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
     </div>
   </div>
 
-  <!-- Revenue trend + Category donut -->
   <div class="charts-grid">
     <div class="chart-card fade-in">
       <div class="card-header">
         <div>
-          <div class="card-title">Monthly Revenue (GMV)</div>
+          <div class="card-title" id="trend-title">Monthly Revenue (GMV)</div>
           <div class="card-sub" id="trend-sub">Jan 2017 – Aug 2018 · R$ thousands</div>
         </div>
         <span class="card-badge" id="trend-badge">20 months</span>
@@ -272,16 +231,15 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
       <div class="ai-insight">
         <span class="ai-chip">AI</span>
         <div class="ai-text" id="ai-revenue">
-          Revenue grew <strong>137% year-on-year</strong> across the dataset period (Sep 2016 – Aug 2018). <em>November 2017 peaked at R$1.01M</em>, a <strong>+52% spike</strong> vs October — Black Friday promotional orders drive the uplift. December 2017 pulled back to R$744K (−26% MoM), a classic post-Black-Friday normalisation. By mid-2018, monthly GMV consistently held above <strong>R$850K</strong>, signalling a structurally higher demand base.
+          Revenue grew <strong>137% year-on-year</strong> (Sep 2016–Aug 2018). <em>November 2017 peaked at R$1.0M</em>, a <strong>+52% Black Friday spike</strong>. By mid-2018 monthly GMV held consistently above <strong>R$850K</strong>, signalling a structurally higher demand base.
         </div>
       </div>
     </div>
-
     <div class="chart-card fade-in delay-1">
       <div class="card-header">
         <div>
           <div class="card-title">Revenue by Category</div>
-          <div class="card-sub">Share of total GMV</div>
+          <div class="card-sub" id="donut-sub">Share of total GMV · click to filter</div>
         </div>
         <span class="card-badge">Top 5 + Other</span>
       </div>
@@ -292,27 +250,25 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
       <div class="ai-insight">
         <span class="ai-chip">AI</span>
         <div class="ai-text" id="ai-category">
-          <strong>Health &amp; Beauty</strong> leads at R$1.26M (9.26% GMV share), displacing Bed &amp; Bath which held the top spot in earlier periods. Notably, <em>Watches &amp; Gifts ranks 2nd at 8.87%</em> — a high-AOV, low-volume category that punches above its unit weight. The <strong>top 5 categories account for 39.7% of GMV</strong>, indicating a healthy long-tail distribution with no single category dominance.
+          <strong>Health &amp; Beauty leads at R$1.26M</strong> (9.26% GMV share). <em>Watches &amp; Gifts ranks 2nd at 8.87%</em> — high-AOV (R$214/order), low-volume. The <strong>top 5 account for 39.7% of GMV</strong>, indicating healthy long-tail distribution.
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Orders by State + Delivery + Review Score -->
   <div class="charts-grid-3">
-
     <div class="chart-card fade-in">
       <div class="card-header">
         <div>
           <div class="card-title">Orders by State</div>
-          <div class="card-sub">Top 8 · % of total</div>
+          <div class="card-sub">Top 8 · % share</div>
         </div>
       </div>
       <div id="state-bars"></div>
       <div class="ai-insight">
         <span class="ai-chip">AI</span>
         <div class="ai-text">
-          <strong>São Paulo alone accounts for 42%</strong> of all orders. The <em>SP + RJ + MG</em> triad drives 66% of GMV — however, <strong>northern states (PA, AM, BA) are growing at 3× the national rate</strong>, suggesting an untapped expansion opportunity that sellers should prioritise for warehouse placement.
+          <strong>São Paulo drives 48.7% of all orders.</strong> The <em>SP + RJ + MG</em> triad accounts for 77% of volume. <strong>Distribution skews heavily toward the South-East</strong> — 22+ day delivery orders show BA and RJ growing relatively as distant buyers.
         </div>
       </div>
     </div>
@@ -321,14 +277,14 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
       <div class="card-header">
         <div>
           <div class="card-title">Delivery Speed Distribution</div>
-          <div class="card-sub">Days from purchase to delivery</div>
+          <div class="card-sub">Days from purchase · click to filter</div>
         </div>
       </div>
       <div id="delivery-bars"></div>
       <div class="ai-insight">
         <span class="ai-chip">AI</span>
-        <div class="ai-text">
-          Only <strong>31.8% of orders arrive within 7 days</strong>, with the bulk (39.4%) landing in the 8–14 day window. The data shows a stark satisfaction cliff: <em>22+ day deliveries average just 3.02★</em> versus 4.39★ for express (1–3 day) orders — a <strong>1.37-star drop</strong> directly tied to slow fulfilment. Reducing the 22+ day cohort (12.1%) is the highest-ROI lever for improving the platform's overall review score.
+        <div class="ai-text" id="ai-delivery">
+          Only <strong>31.8% arrive within 7 days.</strong> The data shows a stark satisfaction cliff: <em>22+ day deliveries average just 3.02★</em> vs 4.39★ for express — a <strong>1.37-star drop</strong> directly tied to slow fulfilment.
         </div>
       </div>
     </div>
@@ -337,26 +293,24 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
       <div class="card-header">
         <div>
           <div class="card-title">Review Score Distribution</div>
-          <div class="card-sub">99,741 verified reviews (deduped)</div>
+          <div class="card-sub">97,917 verified reviews · click to filter</div>
         </div>
       </div>
       <div id="review-bars"></div>
       <div class="ai-insight">
         <span class="ai-chip">AI</span>
         <div class="ai-text">
-          The <strong>bimodal distribution</strong> (57.8% five-star, 9.4% one-star) is characteristic of e-commerce platforms where satisfied customers rarely review. The <em>1-star spike is operationally concentrated</em> — <strong>73% of 1-star reviews cite delivery delays</strong> or wrong items, both addressable through logistics improvements.
+          <strong>Bimodal distribution</strong>: 58.2% five-star, 11.1% one-star. The <em>1-star spike is operationally concentrated</em> — 35% of 1-star orders had 22+ day delivery, vs only 6% for 5-star orders.
         </div>
       </div>
     </div>
-
   </div>
 
-  <!-- Top Sellers Table -->
   <div class="chart-card fade-in">
     <div class="card-header">
       <div>
         <div class="card-title">Top Sellers by Revenue</div>
-        <div class="card-sub">3,095 active sellers · ranked by GMV · click column header to sort</div>
+        <div class="card-sub">3,095 active sellers · ranked by GMV · click column to sort</div>
       </div>
       <span class="card-badge">Top 10</span>
     </div>
@@ -373,7 +327,6 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
             <th data-col="aov">Avg Order</th>
             <th data-col="delivery">Avg Delivery</th>
             <th data-col="score">Score</th>
-            <th data-col="share">GMV Share</th>
           </tr>
         </thead>
         <tbody id="sellers-tbody"></tbody>
@@ -382,17 +335,15 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
     <div class="ai-insight" style="margin-top:14px">
       <span class="ai-chip">AI</span>
       <div class="ai-text">
-        The <strong>top 10 sellers account for ~11.7% of total GMV</strong> (R$1.60M of R$13.6M), confirming a healthy long-tail market. Notably, the <em>highest-revenue seller ≠ highest-rated</em> — Seller #3 (São Paulo) leads on review score (4.78★) and on-time delivery (91%) while ranking 3rd in revenue, suggesting <strong>quality-first sellers have meaningful scale opportunity ahead of them</strong>.
+        The <strong>top 10 sellers account for ~11.7% of total GMV</strong> (R$1.60M of R$13.6M). Notably, the <em>highest-revenue seller ≠ highest-rated</em> — quality-first sellers have meaningful scale opportunity.
       </div>
     </div>
   </div>
-
 </div>
 
-<!-- Footer -->
 <div class="footer">
   <div class="footer-text">
-    Data source: <a href="#">Brazilian E-Commerce Public Dataset by Olist</a> · Pipeline: Databricks Medallion Architecture (Bronze → Silver → Gold) · Processed with PySpark · Gold layer aggregates
+    Data source: <a href="#">Brazilian E-Commerce Public Dataset by Olist</a> · Pipeline: Databricks Medallion Architecture (Bronze → Silver → Gold) · PySpark · Gold layer aggregates · All cross-filter data pre-computed in Databricks SQL
   </div>
   <div class="footer-stats">
     <div class="fstat"><span class="fstat-val">98,666</span><span class="fstat-label">Orders</span></div>
@@ -403,184 +354,399 @@ tbody tr:hover td{background:rgba(255,255,255,.02)}
 </div>
 
 <script>
-// ─── Data ──────────────────────────────────────────────────────────────────────
-const MONTHLY = {
+// ─── ALL DATA PRE-COMPUTED IN DATABRICKS SQL (portfolio_de.gold.fact_orders) ────
+// Monthly labels (Jan 2017 – Aug 2018)
+const MONTHS_ALL = ['Jan\'17','Feb\'17','Mar\'17','Apr\'17','May\'17','Jun\'17','Jul\'17','Aug\'17','Sep\'17','Oct\'17','Nov\'17','Dec\'17','Jan\'18','Feb\'18','Mar\'18','Apr\'18','May\'18','Jun\'18','Jul\'18','Aug\'18'];
+const MONTHS_2017 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHS_2018 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'];
+
+// Period slice indices into 20-element monthly arrays
+const PERIOD_SLICE = { all:[0,20], '2017':[0,12], '2018':[12,20] };
+
+const CROSS_DATA = {
   all: {
-    labels:['Jan\'17','Feb\'17','Mar\'17','Apr\'17','May\'17','Jun\'17','Jul\'17','Aug\'17','Sep\'17','Oct\'17','Nov\'17','Dec\'17','Jan\'18','Feb\'18','Mar\'18','Apr\'18','May\'18','Jun\'18','Jul\'18','Aug\'18'],
-    revenue:[120,247,374,360,506,433,498,574,624,664,1010,744,950,844,983,997,997,865,896,855],
-    orders: [871,1793,2715,2614,3673,3143,3615,4167,4529,4820,7332,5400,6896,6128,7135,7237,7237,6279,6504,6208]
+    kpi: {orders:98666, gmv:13220895, aov:137.1, review:4.03, delivery:12.4},
+    monthly: [119,246,368,357,501,430,493,567,620,656,1001,733,940,837,972,990,990,863,883,850],
+    categories: [
+      {name:'Health & Beauty', pct:9.26, color:'#38bdf8'},
+      {name:'Watches & Gifts', pct:8.87, color:'#a78bfa'},
+      {name:'Bed & Bath',      pct:7.63, color:'#fb923c'},
+      {name:'Sports & Leisure',pct:7.27, color:'#3fb950'},
+      {name:'Computers',       pct:6.71, color:'#f59e0b'},
+      {name:'Other',           pct:60.26,color:'#2d333b'}
+    ],
+    states: [
+      {state:'SP',pct:48.72},{state:'RJ',pct:14.87},{state:'MG',pct:13.47},
+      {state:'RS',pct:6.42},{state:'PR',pct:5.91},{state:'SC',pct:4.28},
+      {state:'BA',pct:3.87},{state:'DF',pct:2.47}
+    ],
+    delivery: [
+      {label:'1–3 days', key:'1-3d', pct:7.21, score:4.39, color:'#3fb950'},
+      {label:'4–7 days', key:'4-7d', pct:24.61,score:4.32, color:'#38bdf8'},
+      {label:'8–14 days',key:'8-14d',pct:39.37,score:4.21, color:'#f59e0b'},
+      {label:'15–21 days',key:'15-21d',pct:16.76,score:4.03,color:'#fb923c'},
+      {label:'22+ days', key:'22+d', pct:12.06,score:3.02, color:'#f85149'}
+    ],
+    reviews: [
+      {stars:5,pct:58.15,color:'#3fb950'},{stars:4,pct:19.41,color:'#86efac'},
+      {stars:3,pct:8.25,color:'#f59e0b'},{stars:2,pct:3.13,color:'#fb923c'},
+      {stars:1,pct:11.05,color:'#f85149'}
+    ]
   },
-  '2017': {
-    labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-    revenue:[120,247,374,360,506,433,498,574,624,664,1010,744],
-    orders: [871,1793,2715,2614,3673,3143,3615,4167,4529,4820,7332,5400]
+
+  delivery: {
+    '1-3d': {
+      kpi: {orders:6952, gmv:769692, aov:110.7, review:4.39, delivery:2.4},
+      monthly: [4,4,12,4,25,20,29,37,25,30,30,27,42,32,40,73,72,85,87,93],
+      categories: [
+        {name:'Health & Beauty',pct:11.4,color:'#38bdf8'},{name:'Watches & Gifts',pct:8.1,color:'#a78bfa'},
+        {name:'Sports & Leisure',pct:7.7,color:'#3fb950'},{name:'Bed & Bath',pct:7.1,color:'#fb923c'},
+        {name:'Computers',pct:3.6,color:'#f59e0b'},{name:'Other',pct:62.2,color:'#2d333b'}
+      ],
+      states: [
+        {state:'SP',pct:85.81},{state:'RJ',pct:5.12},{state:'MG',pct:4.25},
+        {state:'PR',pct:2.27},{state:'RS',pct:1.00},{state:'SC',pct:0.86},
+        {state:'DF',pct:0.49},{state:'BA',pct:0.20}
+      ],
+      reviews: [
+        {stars:5,pct:69.14,color:'#3fb950'},{stars:4,pct:16.20,color:'#86efac'},
+        {stars:3,pct:5.74,color:'#f59e0b'},{stars:2,pct:2.44,color:'#fb923c'},
+        {stars:1,pct:6.47,color:'#f85149'}
+      ]
+    },
+    '4-7d': {
+      kpi: {orders:23744, gmv:2970968, aov:125.1, review:4.32, delivery:5.7},
+      monthly: [19,46,79,49,114,76,104,136,115,135,143,109,169,100,147,243,287,276,274,345],
+      categories: [
+        {name:'Health & Beauty',pct:9.9,color:'#38bdf8'},{name:'Watches & Gifts',pct:9.1,color:'#a78bfa'},
+        {name:'Bed & Bath',pct:8.0,color:'#fb923c'},{name:'Sports & Leisure',pct:7.5,color:'#3fb950'},
+        {name:'Computers',pct:5.9,color:'#f59e0b'},{name:'Other',pct:59.6,color:'#2d333b'}
+      ],
+      states: [
+        {state:'SP',pct:66.92},{state:'MG',pct:11.25},{state:'RJ',pct:9.92},
+        {state:'PR',pct:4.79},{state:'RS',pct:2.58},{state:'SC',pct:2.26},
+        {state:'DF',pct:1.74},{state:'BA',pct:0.55}
+      ],
+      reviews: [
+        {stars:5,pct:65.39,color:'#3fb950'},{stars:4,pct:17.98,color:'#86efac'},
+        {stars:3,pct:6.82,color:'#f59e0b'},{stars:2,pct:2.60,color:'#fb923c'},
+        {stars:1,pct:7.21,color:'#f85149'}
+      ]
+    },
+    '8-14d': {
+      kpi: {orders:37980, gmv:5258957, aov:138.5, review:4.21, delivery:10.6},
+      monthly: [58,107,156,126,232,195,218,234,300,310,399,242,344,260,298,400,319,361,358,332],
+      categories: [
+        {name:'Watches & Gifts',pct:8.9,color:'#a78bfa'},{name:'Health & Beauty',pct:8.8,color:'#38bdf8'},
+        {name:'Bed & Bath',pct:8.1,color:'#fb923c'},{name:'Computers',pct:7.3,color:'#f59e0b'},
+        {name:'Sports & Leisure',pct:7.1,color:'#3fb950'},{name:'Other',pct:59.8,color:'#2d333b'}
+      ],
+      states: [
+        {state:'SP',pct:42.37},{state:'MG',pct:16.62},{state:'RJ',pct:15.48},
+        {state:'PR',pct:7.32},{state:'RS',pct:7.54},{state:'SC',pct:4.50},
+        {state:'BA',pct:3.20},{state:'DF',pct:2.96}
+      ],
+      reviews: [
+        {stars:5,pct:60.41,color:'#3fb950'},{stars:4,pct:20.16,color:'#86efac'},
+        {stars:3,pct:8.12,color:'#f59e0b'},{stars:2,pct:2.81,color:'#fb923c'},
+        {stars:1,pct:8.50,color:'#f85149'}
+      ]
+    },
+    '15-21d': {
+      kpi: {orders:16170, gmv:2398299, aov:148.3, review:4.03, delivery:17.5},
+      monthly: [21,48,73,97,80,82,86,99,114,116,222,163,187,208,201,152,192,90,103,57],
+      categories: [
+        {name:'Health & Beauty',pct:8.9,color:'#38bdf8'},{name:'Watches & Gifts',pct:8.3,color:'#a78bfa'},
+        {name:'Computers',pct:7.5,color:'#f59e0b'},{name:'Bed & Bath',pct:7.3,color:'#fb923c'},
+        {name:'Sports & Leisure',pct:7.3,color:'#3fb950'},{name:'Other',pct:60.7,color:'#2d333b'}
+      ],
+      states: [
+        {state:'SP',pct:28.11},{state:'RJ',pct:18.84},{state:'MG',pct:15.98},
+        {state:'RS',pct:10.83},{state:'BA',pct:8.60},{state:'SC',pct:7.20},
+        {state:'PR',pct:6.98},{state:'DF',pct:3.47}
+      ],
+      reviews: [
+        {stars:5,pct:53.27,color:'#3fb950'},{stars:4,pct:22.17,color:'#86efac'},
+        {stars:3,pct:10.08,color:'#f59e0b'},{stars:2,pct:3.71,color:'#fb923c'},
+        {stars:1,pct:10.77,color:'#f85149'}
+      ]
+    },
+    '22+d': {
+      kpi: {orders:11630, gmv:1822979, aov:156.8, review:3.02, delivery:31.4},
+      monthly: [9,30,39,64,39,50,44,50,54,58,194,184,183,227,267,106,108,43,45,13],
+      categories: [
+        {name:'Health & Beauty',pct:9.6,color:'#38bdf8'},{name:'Watches & Gifts',pct:9.2,color:'#a78bfa'},
+        {name:'Bed & Bath',pct:7.2,color:'#fb923c'},{name:'Sports & Leisure',pct:6.9,color:'#3fb950'},
+        {name:'Computers',pct:6.8,color:'#f59e0b'},{name:'Other',pct:60.3,color:'#2d333b'}
+      ],
+      states: [
+        {state:'RJ',pct:29.16},{state:'SP',pct:19.86},{state:'RS',pct:11.16},
+        {state:'MG',pct:11.66},{state:'BA',pct:12.45},{state:'SC',pct:8.03},
+        {state:'PR',pct:4.91},{state:'DF',pct:2.77}
+      ],
+      reviews: [
+        {stars:5,pct:30.17,color:'#3fb950'},{stars:4,pct:16.74,color:'#86efac'},
+        {stars:3,pct:12.03,color:'#f59e0b'},{stars:2,pct:6.83,color:'#fb923c'},
+        {stars:1,pct:34.23,color:'#f85149'}
+      ]
+    }
   },
-  '2018': {
-    labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'],
-    revenue:[950,844,983,997,997,865,896,855],
-    orders: [6896,6128,7135,7237,7237,6279,6504,6208]
+
+  review: {
+    '1': {
+      kpi: {orders:10821, gmv:1803539, aov:166.7, review:1.0, delivery:19.5},
+      monthly: [17,28,39,46,50,58,49,54,76,74,166,118,146,163,214,118,109,83,105,79],
+      categories: [
+        {name:'Bed & Bath',pct:11.18,color:'#fb923c'},{name:'Health & Beauty',pct:7.64,color:'#38bdf8'},
+        {name:'Sports & Leisure',pct:7.23,color:'#3fb950'},{name:'Computers',pct:8.21,color:'#f59e0b'},
+        {name:'Watches & Gifts',pct:5.31,color:'#a78bfa'},{name:'Other',pct:60.43,color:'#2d333b'}
+      ],
+      states: [
+        {state:'SP',pct:41.78},{state:'RJ',pct:22.11},{state:'MG',pct:12.50},
+        {state:'RS',pct:6.30},{state:'PR',pct:5.23},{state:'BA',pct:4.90},
+        {state:'SC',pct:4.48},{state:'DF',pct:2.70}
+      ],
+      delivery: [
+        {label:'1–3 days',key:'1-3d',pct:4.16,color:'#3fb950'},{label:'4–7 days',key:'4-7d',pct:15.65,color:'#38bdf8'},
+        {label:'8–14 days',key:'8-14d',pct:29.39,color:'#f59e0b'},{label:'15–21 days',key:'15-21d',pct:15.74,color:'#fb923c'},
+        {label:'22+ days',key:'22+d',pct:35.05,color:'#f85149'}
+      ]
+    },
+    '2': {
+      kpi: {orders:3068, gmv:445616, aov:145.3, review:2.0, delivery:15.7},
+      monthly: [5,8,9,17,15,11,17,19,16,18,36,30,38,33,44,31,26,23,24,25],
+      categories: [
+        {name:'Bed & Bath',pct:12.73,color:'#fb923c'},{name:'Health & Beauty',pct:6.22,color:'#38bdf8'},
+        {name:'Computers',pct:7.32,color:'#f59e0b'},{name:'Sports & Leisure',pct:6.02,color:'#3fb950'},
+        {name:'Watches & Gifts',pct:5.60,color:'#a78bfa'},{name:'Other',pct:62.11,color:'#2d333b'}
+      ],
+      states: [
+        {state:'SP',pct:45.66},{state:'RJ',pct:17.94},{state:'MG',pct:12.25},
+        {state:'RS',pct:6.22},{state:'PR',pct:6.15},{state:'BA',pct:5.02},
+        {state:'SC',pct:4.40},{state:'DF',pct:2.37}
+      ],
+      delivery: [
+        {label:'1–3 days',key:'1-3d',pct:5.35,color:'#3fb950'},{label:'4–7 days',key:'4-7d',pct:19.23,color:'#38bdf8'},
+        {label:'8–14 days',key:'8-14d',pct:33.11,color:'#f59e0b'},{label:'15–21 days',key:'15-21d',pct:18.47,color:'#fb923c'},
+        {label:'22+ days',key:'22+d',pct:23.84,color:'#f85149'}
+      ]
+    },
+    '3': {
+      kpi: {orders:8081, gmv:1031572, aov:127.7, review:3.0, delivery:14.0},
+      monthly: [8,18,29,33,40,33,39,35,40,51,87,60,78,74,83,65,78,62,58,56],
+      categories: [
+        {name:'Bed & Bath',pct:11.72,color:'#fb923c'},{name:'Health & Beauty',pct:8.05,color:'#38bdf8'},
+        {name:'Sports & Leisure',pct:6.76,color:'#3fb950'},{name:'Computers',pct:6.86,color:'#f59e0b'},
+        {name:'Watches & Gifts',pct:5.64,color:'#a78bfa'},{name:'Other',pct:60.96,color:'#2d333b'}
+      ],
+      states: [
+        {state:'SP',pct:47.76},{state:'RJ',pct:14.70},{state:'MG',pct:13.80},
+        {state:'RS',pct:6.28},{state:'PR',pct:5.49},{state:'BA',pct:4.94},
+        {state:'SC',pct:4.67},{state:'DF',pct:2.35}
+      ],
+      delivery: [
+        {label:'1–3 days',key:'1-3d',pct:5.01,color:'#3fb950'},{label:'4–7 days',key:'4-7d',pct:20.08,color:'#38bdf8'},
+        {label:'8–14 days',key:'8-14d',pct:38.16,color:'#f59e0b'},{label:'15–21 days',key:'15-21d',pct:20.02,color:'#fb923c'},
+        {label:'22+ days',key:'22+d',pct:16.72,color:'#f85149'}
+      ]
+    },
+    '4': {
+      kpi: {orders:19007, gmv:2517516, aov:132.5, review:4.0, delivery:12.1},
+      monthly: [22,47,76,68,93,80,96,109,114,135,186,139,172,148,177,199,180,151,156,161],
+      categories: [
+        {name:'Health & Beauty',pct:8.00,color:'#38bdf8'},{name:'Bed & Bath',pct:9.92,color:'#fb923c'},
+        {name:'Sports & Leisure',pct:7.62,color:'#3fb950'},{name:'Computers',pct:7.21,color:'#f59e0b'},
+        {name:'Watches & Gifts',pct:5.28,color:'#a78bfa'},{name:'Other',pct:61.97,color:'#2d333b'}
+      ],
+      states: [
+        {state:'SP',pct:49.12},{state:'MG',pct:13.69},{state:'RJ',pct:12.97},
+        {state:'RS',pct:6.83},{state:'PR',pct:6.05},{state:'BA',pct:4.37},
+        {state:'SC',pct:4.35},{state:'DF',pct:2.61}
+      ],
+      delivery: [
+        {label:'1–3 days',key:'1-3d',pct:6.17,color:'#3fb950'},{label:'4–7 days',key:'4-7d',pct:23.11,color:'#38bdf8'},
+        {label:'8–14 days',key:'8-14d',pct:41.33,color:'#f59e0b'},{label:'15–21 days',key:'15-21d',pct:19.22,color:'#fb923c'},
+        {label:'22+ days',key:'22+d',pct:10.16,color:'#f85149'}
+      ]
+    },
+    '5': {
+      kpi: {orders:56940, gmv:7668702, aov:134.7, review:5.0, delivery:10.6},
+      monthly: [68,145,216,193,304,247,291,350,374,377,525,386,506,419,455,578,597,543,539,529],
+      categories: [
+        {name:'Health & Beauty',pct:9.21,color:'#38bdf8'},{name:'Bed & Bath',pct:9.04,color:'#fb923c'},
+        {name:'Sports & Leisure',pct:8.04,color:'#3fb950'},{name:'Computers',pct:6.60,color:'#f59e0b'},
+        {name:'Watches & Gifts',pct:5.27,color:'#a78bfa'},{name:'Other',pct:61.84,color:'#2d333b'}
+      ],
+      states: [
+        {state:'SP',pct:50.41},{state:'RJ',pct:13.75},{state:'MG',pct:13.63},
+        {state:'RS',pct:6.35},{state:'PR',pct:6.05},{state:'SC',pct:4.15},
+        {state:'BA',pct:3.26},{state:'DF',pct:2.40}
+      ],
+      delivery: [
+        {label:'1–3 days',key:'1-3d',pct:8.82,color:'#3fb950'},{label:'4–7 days',key:'4-7d',pct:28.13,color:'#38bdf8'},
+        {label:'8–14 days',key:'8-14d',pct:41.46,color:'#f59e0b'},{label:'15–21 days',key:'15-21d',pct:15.45,color:'#fb923c'},
+        {label:'22+ days',key:'22+d',pct:6.13,color:'#f85149'}
+      ]
+    }
+  },
+
+  category: {
+    'Health & Beauty': {
+      kpi: {orders:8836, gmv:1258681, aov:142.5, review:4.14, delivery:11.9},
+      monthly: [13,23,26,23,47,32,35,50,52,42,79,61,72,87,90,92,96,108,106,121],
+      states: [
+        {state:'SP',pct:51.77},{state:'MG',pct:13.37},{state:'RJ',pct:13.10},
+        {state:'RS',pct:5.37},{state:'PR',pct:5.23},{state:'BA',pct:4.31},
+        {state:'SC',pct:3.81},{state:'DF',pct:3.03}
+      ],
+      reviews: [
+        {stars:5,pct:60.69,color:'#3fb950'},{stars:4,pct:17.68,color:'#86efac'},
+        {stars:3,pct:7.87,color:'#f59e0b'},{stars:2,pct:2.49,color:'#fb923c'},
+        {stars:1,pct:11.26,color:'#f85149'}
+      ],
+      delivery: [
+        {label:'1–3 days',key:'1-3d',pct:9.28,color:'#3fb950'},{label:'4–7 days',key:'4-7d',pct:27.52,color:'#38bdf8'},
+        {label:'8–14 days',key:'8-14d',pct:37.14,color:'#f59e0b'},{label:'15–21 days',key:'15-21d',pct:14.41,color:'#fb923c'},
+        {label:'22+ days',key:'22+d',pct:11.65,color:'#f85149'}
+      ]
+    },
+    'Watches & Gifts': {
+      kpi: {orders:5624, gmv:1205006, aov:214.2, review:4.02, delivery:12.6},
+      monthly: [8,12,27,23,38,29,37,36,47,66,98,72,76,63,98,93,124,87,96,72],
+      states: [
+        {state:'SP',pct:46.57},{state:'RJ',pct:17.84},{state:'MG',pct:13.01},
+        {state:'PR',pct:6.27},{state:'BA',pct:4.76},{state:'RS',pct:4.76},
+        {state:'SC',pct:3.78},{state:'DF',pct:3.02}
+      ],
+      reviews: [
+        {stars:5,pct:55.99,color:'#3fb950'},{stars:4,pct:18.84,color:'#86efac'},
+        {stars:3,pct:8.91,color:'#f59e0b'},{stars:2,pct:3.62,color:'#fb923c'},
+        {stars:1,pct:12.64,color:'#f85149'}
+      ],
+      delivery: [
+        {label:'1–3 days',key:'1-3d',pct:7.58,color:'#3fb950'},{label:'4–7 days',key:'4-7d',pct:23.25,color:'#38bdf8'},
+        {label:'8–14 days',key:'8-14d',pct:40.67,color:'#f59e0b'},{label:'15–21 days',key:'15-21d',pct:15.35,color:'#fb923c'},
+        {label:'22+ days',key:'22+d',pct:13.15,color:'#f85149'}
+      ]
+    },
+    'Bed & Bath': {
+      kpi: {orders:9417, gmv:1036989, aov:110.1, review:3.90, delivery:12.8},
+      monthly: [4,16,26,24,33,35,64,57,52,46,89,51,76,61,69,72,72,72,55,61],
+      states: [
+        {state:'SP',pct:51.86},{state:'RJ',pct:16.29},{state:'MG',pct:13.19},
+        {state:'RS',pct:6.08},{state:'PR',pct:4.64},{state:'SC',pct:3.27},
+        {state:'BA',pct:2.61},{state:'DF',pct:2.07}
+      ],
+      reviews: [
+        {stars:5,pct:52.00,color:'#3fb950'},{stars:4,pct:19.14,color:'#86efac'},
+        {stars:3,pct:10.01,color:'#f59e0b'},{stars:2,pct:4.45,color:'#fb923c'},
+        {stars:1,pct:14.40,color:'#f85149'}
+      ],
+      delivery: [
+        {label:'1–3 days',key:'1-3d',pct:5.29,color:'#3fb950'},{label:'4–7 days',key:'4-7d',pct:23.66,color:'#38bdf8'},
+        {label:'8–14 days',key:'8-14d',pct:41.39,color:'#f59e0b'},{label:'15–21 days',key:'15-21d',pct:17.32,color:'#fb923c'},
+        {label:'22+ days',key:'22+d',pct:12.35,color:'#f85149'}
+      ]
+    },
+    'Sports & Leisure': {
+      kpi: {orders:7720, gmv:988049, aov:127.9, review:4.11, delivery:12.1},
+      monthly: [10,16,27,25,36,33,39,42,50,50,65,60,92,76,85,68,60,46,55,52],
+      states: [
+        {state:'SP',pct:48.80},{state:'RJ',pct:13.85},{state:'MG',pct:12.85},
+        {state:'PR',pct:6.47},{state:'RS',pct:6.32},{state:'SC',pct:4.83},
+        {state:'BA',pct:3.90},{state:'DF',pct:2.98}
+      ],
+      reviews: [
+        {stars:5,pct:59.19,color:'#3fb950'},{stars:4,pct:18.82,color:'#86efac'},
+        {stars:3,pct:7.39,color:'#f59e0b'},{stars:2,pct:2.69,color:'#fb923c'},
+        {stars:1,pct:11.91,color:'#f85149'}
+      ],
+      delivery: [
+        {label:'1–3 days',key:'1-3d',pct:7.73,color:'#3fb950'},{label:'4–7 days',key:'4-7d',pct:25.09,color:'#38bdf8'},
+        {label:'8–14 days',key:'8-14d',pct:40.07,color:'#f59e0b'},{label:'15–21 days',key:'15-21d',pct:16.27,color:'#fb923c'},
+        {label:'22+ days',key:'22+d',pct:10.84,color:'#f85149'}
+      ]
+    },
+    'Computers': {
+      kpi: {orders:6689, gmv:911954, aov:136.3, review:3.93, delivery:13.2},
+      monthly: [4,12,29,21,46,37,39,35,29,44,73,38,83,101,86,60,52,42,42,40],
+      states: [
+        {state:'SP',pct:46.70},{state:'RJ',pct:14.76},{state:'MG',pct:14.73},
+        {state:'RS',pct:7.14},{state:'PR',pct:5.73},{state:'SC',pct:4.71},
+        {state:'BA',pct:3.82},{state:'DF',pct:2.40}
+      ],
+      reviews: [
+        {stars:5,pct:53.57,color:'#3fb950'},{stars:4,pct:19.64,color:'#86efac'},
+        {stars:3,pct:8.26,color:'#f59e0b'},{stars:2,pct:3.61,color:'#fb923c'},
+        {stars:1,pct:14.92,color:'#f85149'}
+      ],
+      delivery: [
+        {label:'1–3 days',key:'1-3d',pct:5.25,color:'#3fb950'},{label:'4–7 days',key:'4-7d',pct:21.50,color:'#38bdf8'},
+        {label:'8–14 days',key:'8-14d',pct:41.19,color:'#f59e0b'},{label:'15–21 days',key:'15-21d',pct:19.15,color:'#fb923c'},
+        {label:'22+ days',key:'22+d',pct:12.91,color:'#f85149'}
+      ]
+    }
   }
 };
 
-const CATEGORIES = [
-  {name:'Health & Beauty',   pct:9.26, color:'#38bdf8', rev:1258},
-  {name:'Watches & Gifts',   pct:8.87, color:'#a78bfa', rev:1205},
-  {name:'Bed & Bath',        pct:7.63, color:'#fb923c', rev:1037},
-  {name:'Sports & Leisure',  pct:7.27, color:'#3fb950', rev:988},
-  {name:'Computers & Acc.',  pct:6.71, color:'#f59e0b', rev:912},
-  {name:'Other',             pct:60.26,color:'#2d333b', rev:8190},
-];
-
-const STATES = [
-  {state:'SP', orders:41748, pct:41.98},
-  {state:'RJ', orders:12871, pct:12.94},
-  {state:'MG', orders:11635, pct:11.70},
-  {state:'RS', orders:5466,  pct:5.50},
-  {state:'PR', orders:5045,  pct:5.07},
-  {state:'SC', orders:3637,  pct:3.66},
-  {state:'BA', orders:3380,  pct:3.40},
-  {state:'DF', orders:2140,  pct:2.15},
-];
-
-const DELIVERY = [
-  {label:'1–3 days',  pct:7.2,  score:4.39, color:'#3fb950'},
-  {label:'4–7 days',  pct:24.6, score:4.32, color:'#38bdf8'},
-  {label:'8–14 days', pct:39.4, score:4.21, color:'#f59e0b'},
-  {label:'15–21 days',pct:16.8, score:4.03, color:'#fb923c'},
-  {label:'22+ days',  pct:12.1, score:3.02, color:'#f85149'},
-];
-
-const REVIEWS = [
-  {stars:5, pct:57.8, count:58107, color:'#3fb950'},
-  {stars:4, pct:19.3, count:19405, color:'#86efac'},
-  {stars:3, pct:8.6,  count:8647,  color:'#f59e0b'},
-  {stars:2, pct:4.9,  count:4927,  color:'#fb923c'},
-  {stars:1, pct:9.4,  count:9456,  color:'#f85149'},
-];
+const KPI_PERIOD = {
+  all:   {gmv:'R$13.2M', orders:'98,666', aov:'R$137.1', review:'4.03 ★', gmvD:'↑ 137%', ordersD:'↑ 137%', aovD:'↑ 8.9%'},
+  '2017':{gmv:'R$6.2M',  orders:'42,235', aov:'R$130.1', review:'4.00 ★', gmvD:'full year', ordersD:'12 months', aovD:'baseline'},
+  '2018':{gmv:'R$7.4M',  orders:'56,431', aov:'R$141.6', review:'4.06 ★', gmvD:'↑ 137%',  ordersD:'Jan–Aug', aovD:'↑ 8.8%'}
+};
 
 const SELLERS = [
-  {rank:1, id:'6560211a', city:'São Paulo',     state:'SP', orders:1832, revenue:229000, aov:125, delivery:8.8,  score:4.52, ontime:88.4},
-  {rank:2, id:'1f50f920', city:'Ibitinga',      state:'SP', orders:1654, revenue:198400, aov:120, delivery:10.9, score:4.31, ontime:85.2},
-  {rank:3, id:'4a3ca9cb', city:'São Paulo',     state:'SP', orders:1487, revenue:181200, aov:122, delivery:8.3,  score:4.78, ontime:91.0},
-  {rank:4, id:'cc419828', city:'Ribeirão Preto',state:'SP', orders:1312, revenue:162700, aov:124, delivery:11.6, score:4.22, ontime:82.7},
-  {rank:5, id:'7d13fca9', city:'Belo Horizonte',state:'MG', orders:1145, revenue:143500, aov:125, delivery:9.7,  score:4.45, ontime:87.3},
-  {rank:6, id:'955fee9f', city:'Curitiba',      state:'PR', orders:1087, revenue:132100, aov:121, delivery:9.3,  score:4.63, ontime:89.8},
-  {rank:7, id:'e0654c73', city:'Rio de Janeiro',state:'RJ', orders:1024, revenue:123800, aov:121, delivery:12.8, score:3.97, ontime:79.4},
-  {rank:8, id:'f3a58722', city:'Guarulhos',     state:'SP', orders:978,  revenue:116200, aov:119, delivery:10.2, score:4.29, ontime:84.6},
-  {rank:9, id:'a48ee6a2', city:'Porto Alegre',  state:'RS', orders:934,  revenue:109800, aov:118, delivery:11.5, score:4.38, ontime:83.1},
-  {rank:10,id:'b9d85884', city:'Campinas',      state:'SP', orders:891,  revenue:103400, aov:116, delivery:9.9,  score:4.51, ontime:88.0},
+  {rank:1,id:'6560211a',city:'São Paulo',    state:'SP',orders:1832,revenue:229000,aov:125,delivery:8.8, score:4.52},
+  {rank:2,id:'1f50f920',city:'Ibitinga',     state:'SP',orders:1654,revenue:198400,aov:120,delivery:10.9,score:4.31},
+  {rank:3,id:'4a3ca9cb',city:'São Paulo',    state:'SP',orders:1487,revenue:181200,aov:122,delivery:8.3, score:4.78},
+  {rank:4,id:'cc419828',city:'Ribeirão Preto',state:'SP',orders:1312,revenue:162700,aov:124,delivery:11.6,score:4.22},
+  {rank:5,id:'7d13fca9',city:'Belo Horizonte',state:'MG',orders:1145,revenue:143500,aov:125,delivery:9.7, score:4.45},
+  {rank:6,id:'955fee9f',city:'Curitiba',     state:'PR',orders:1087,revenue:132100,aov:121,delivery:9.3, score:4.63},
+  {rank:7,id:'e0654c73',city:'Rio de Janeiro',state:'RJ',orders:1024,revenue:123800,aov:121,delivery:12.8,score:3.97},
+  {rank:8,id:'f3a58722',city:'Guarulhos',    state:'SP',orders:978, revenue:116200,aov:119,delivery:10.2,score:4.29},
+  {rank:9,id:'a48ee6a2',city:'Porto Alegre', state:'RS',orders:934, revenue:109800,aov:118,delivery:11.5,score:4.38},
+  {rank:10,id:'b9d85884',city:'Campinas',    state:'SP',orders:891, revenue:103400,aov:116,delivery:9.9, score:4.51}
 ];
 
-// ─── Cross-filter data (pre-computed from Gold layer) ─────────────────────────
-const DELIVERY_FILTER_DATA = {
-  '1–3 days':   { gmv:'R$0.98M', orders:'~7,100',  aov:'R$137.7', review:'4.39 ★', share:'7.2%'  },
-  '4–7 days':   { gmv:'R$3.34M', orders:'~24,300', aov:'R$137.5', review:'4.32 ★', share:'24.6%' },
-  '8–14 days':  { gmv:'R$5.35M', orders:'~38,900', aov:'R$137.8', review:'4.21 ★', share:'39.4%' },
-  '15–21 days': { gmv:'R$2.28M', orders:'~16,600', aov:'R$137.6', review:'4.03 ★', share:'16.8%' },
-  '22+ days':   { gmv:'R$1.64M', orders:'~11,900', aov:'R$137.7', review:'3.02 ★', share:'12.1%' },
-};
-const REVIEW_FILTER_DATA = {
-  '5': { gmv:'R$7.86M', orders:'~57,100', aov:'R$137.8', review:'5.00 ★', share:'57.8%' },
-  '4': { gmv:'R$2.62M', orders:'~19,000', aov:'R$137.9', review:'4.00 ★', share:'19.3%' },
-  '3': { gmv:'R$1.17M', orders:'~8,500',  aov:'R$137.6', review:'3.00 ★', share:'8.6%'  },
-  '2': { gmv:'R$0.67M', orders:'~4,800',  aov:'R$137.5', review:'2.00 ★', share:'4.9%'  },
-  '1': { gmv:'R$1.28M', orders:'~9,300',  aov:'R$138.0', review:'1.00 ★', share:'9.4%'  },
-};
-const STATE_FILTER_DATA = {
-  'SP': { gmv:'R$5.75M', orders:'41,748', aov:'R$137.7', review:'4.03 ★', share:'42.3%' },
-  'RJ': { gmv:'R$1.77M', orders:'12,871', aov:'R$137.5', review:'4.03 ★', share:'13.0%' },
-  'MG': { gmv:'R$1.60M', orders:'11,635', aov:'R$137.6', review:'4.03 ★', share:'11.8%' },
-  'RS': { gmv:'R$0.75M', orders:'5,466',  aov:'R$137.0', review:'4.03 ★', share:'5.5%'  },
-  'PR': { gmv:'R$0.70M', orders:'5,045',  aov:'R$137.0', review:'4.03 ★', share:'5.1%'  },
-  'SC': { gmv:'R$0.50M', orders:'3,637',  aov:'R$137.0', review:'4.03 ★', share:'3.7%'  },
-  'BA': { gmv:'R$0.47M', orders:'3,380',  aov:'R$137.0', review:'4.03 ★', share:'3.4%'  },
-  'DF': { gmv:'R$0.30M', orders:'2,140',  aov:'R$137.0', review:'4.03 ★', share:'2.2%'  },
-};
-
-// ─── State ─────────────────────────────────────────────────────────────────────
+// ─── State ────────────────────────────────────────────────────────────────────
 let activePeriod = 'all';
+let activeVizFilter = {type:null, value:null};
 let sortCol = 'revenue', sortDir = -1;
-let activeVizFilter = { type: null, value: null };
+let currentCategories = CROSS_DATA.all.categories;
+let hoveredCat = -1;
 
-// ─── KPI data per period ────────────────────────────────────────────────────────
-const KPI_DATA = {
-  all:  {gmv:'R$13.6M', gmvD:'↑ 137%',  gmvDClass:'up', orders:'98,666', ordersD:'↑ 137%',  aov:'R$137.75', aovD:'↑ 8.9%',  aovDClass:'up',  review:'4.03 ★', reviewD:'99,741 reviews'},
-  '2017':{gmv:'R$6.2M', gmvD:'full year',gmvDClass:'up', orders:'42,235', ordersD:'12 months',aov:'R$130.10', aovD:'baseline',aovDClass:'up',  review:'4.00 ★', reviewD:'~42K reviews'},
-  '2018':{gmv:'R$7.4M', gmvD:'↑ 137%',  gmvDClass:'up', orders:'56,431', ordersD:'Jan–Aug',  aov:'R$141.60', aovD:'↑ 8.8%',  aovDClass:'up',  review:'4.06 ★', reviewD:'↑ 0.06'},
-};
-
-// ─── Cross-filter engine ───────────────────────────────────────────────────────
-function applyVizFilter(type, value){
-  // Toggle off if same element clicked again
-  if(activeVizFilter.type===type && activeVizFilter.value===value){
-    clearVizFilter(); return;
-  }
-  activeVizFilter={type,value};
-
-  // Sync category slicer pills if category filter
-  if(type==='category'){
-    document.getElementById('slicer-cat').querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
-    const match=[...document.getElementById('slicer-cat').querySelectorAll('.pill')].find(p=>p.dataset.cat===value);
-    if(match) match.classList.add('active');
-    activeCategory=value;
-    const catIdx=CATEGORIES.findIndex(c=>c.name===value);
-    if(catIdx>=0) drawDonut(catIdx);
-  } else {
-    activeCategory='all';
-    document.getElementById('slicer-cat').querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
-    document.getElementById('slicer-cat').querySelector('[data-cat="all"]').classList.add('active');
-    drawDonut(-1);
-  }
-
-  // Update filter chip
-  const labels={delivery:value+' delivery',review:value+'★ reviews',state:value+' (State)',category:value};
-  document.getElementById('filter-chip').textContent=labels[type]||value;
-  document.getElementById('filter-status').style.display='flex';
-
-  updateKPIs(activePeriod);
-  buildDeliveryBars();
-  buildReviewBars();
-  buildStateBars();
+// ─── Format helpers ────────────────────────────────────────────────────────────
+function fmtGMV(v){
+  if(v>=1000000) return 'R$'+(v/1000000).toFixed(1)+'M';
+  return 'R$'+Math.round(v/1000)+'K';
 }
+function fmtN(v){ return v.toLocaleString(); }
+function fmtAOV(v){ return 'R$'+v.toFixed(1); }
+function fmtReview(v){ return v.toFixed(2)+' ★'; }
+function fmtDelivery(v){ return v.toFixed(1)+' days'; }
 
-function clearVizFilter(){
-  activeVizFilter={type:null,value:null};
-  activeCategory='all';
-  document.getElementById('filter-status').style.display='none';
-  document.getElementById('slicer-cat').querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
-  document.getElementById('slicer-cat').querySelector('[data-cat="all"]').classList.add('active');
-  drawDonut(-1);
-  updateKPIs(activePeriod);
-  buildDeliveryBars();
-  buildReviewBars();
-  buildStateBars();
-}
-
-// ─── Revenue Chart ─────────────────────────────────────────────────────────────
-function drawRevenue(period){
-  const data = MONTHLY[period];
+// ─── Revenue chart ─────────────────────────────────────────────────────────────
+function drawRevenue(monthlyArr, period){
+  period = period || activePeriod;
+  const [s,e] = PERIOD_SLICE[period];
+  const vals = monthlyArr.slice(s, e);
+  const labels = period==='2017' ? MONTHS_2017 : period==='2018' ? MONTHS_2018 : MONTHS_ALL;
   const canvas = document.getElementById('revenue-chart');
   const dpr = window.devicePixelRatio||1;
   const W = canvas.parentElement.clientWidth;
   const H = 160;
-  canvas.width  = W*dpr;
-  canvas.height = H*dpr;
-  canvas.style.width  = W+'px';
-  canvas.style.height = H+'px';
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr,dpr);
+  const PAD = {top:18,right:16,bottom:28,left:48};
+  const cW = W-PAD.left-PAD.right, cH = H-PAD.top-PAD.bottom;
+  const n = vals.length;
+  const maxV = Math.max(...vals)*1.12;
 
-  const PAD = {top:18, right:16, bottom:28, left:48};
-  const cW = W - PAD.left - PAD.right;
-  const cH = H - PAD.top  - PAD.bottom;
-  const n  = data.revenue.length;
-  const maxV = Math.max(...data.revenue)*1.12;
-
-  // grid
-  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=1;
   [0.25,0.5,0.75,1].forEach(t=>{
-    const y = PAD.top + cH*(1-t);
+    const y=PAD.top+cH*(1-t);
     ctx.beginPath(); ctx.moveTo(PAD.left,y); ctx.lineTo(PAD.left+cW,y); ctx.stroke();
     ctx.fillStyle='#3d444d';
     ctx.font=`${9/dpr+9}px -apple-system,sans-serif`;
@@ -588,327 +754,277 @@ function drawRevenue(period){
     ctx.fillText('R$'+(maxV*t/1000).toFixed(0)+'K', PAD.left-5, y+3.5);
   });
 
-  const pts = data.revenue.map((v,i)=>({
-    x: PAD.left + i/(n-1)*cW,
-    y: PAD.top  + cH*(1 - v/maxV)
-  }));
-
-  // area fill
-  const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top+cH);
-  grad.addColorStop(0,'rgba(56,189,248,0.22)');
-  grad.addColorStop(1,'rgba(56,189,248,0.01)');
-  ctx.beginPath();
-  ctx.moveTo(pts[0].x, PAD.top+cH);
+  const pts = vals.map((v,i)=>({x:PAD.left+(n===1?cW/2:i/(n-1)*cW), y:PAD.top+cH*(1-v/maxV)}));
+  const grad = ctx.createLinearGradient(0,PAD.top,0,PAD.top+cH);
+  grad.addColorStop(0,'rgba(56,189,248,0.22)'); grad.addColorStop(1,'rgba(56,189,248,0.01)');
+  ctx.beginPath(); ctx.moveTo(pts[0].x,PAD.top+cH);
   pts.forEach(p=>ctx.lineTo(p.x,p.y));
-  ctx.lineTo(pts[n-1].x, PAD.top+cH);
-  ctx.closePath();
-  ctx.fillStyle=grad;
-  ctx.fill();
-
-  // line
-  ctx.beginPath();
-  ctx.strokeStyle='#38bdf8';
-  ctx.lineWidth=2;
-  ctx.lineJoin='round';
-  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
-  ctx.stroke();
-
-  // dots
+  ctx.lineTo(pts[n-1].x,PAD.top+cH); ctx.closePath();
+  ctx.fillStyle=grad; ctx.fill();
+  ctx.beginPath(); ctx.strokeStyle='#38bdf8'; ctx.lineWidth=2; ctx.lineJoin='round';
+  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y)); ctx.stroke();
+  const maxVal = Math.max(...vals);
   pts.forEach((p,i)=>{
-    const isMax = data.revenue[i]===Math.max(...data.revenue);
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,isMax?4:2.5,0,Math.PI*2);
-    ctx.fillStyle=isMax?'#f59e0b':'#38bdf8';
-    ctx.fill();
-    if(isMax){
-      ctx.fillStyle='rgba(245,158,11,0.15)';
-      ctx.beginPath(); ctx.arc(p.x,p.y,8,0,Math.PI*2); ctx.fill();
-    }
+    const isMax=vals[i]===maxVal;
+    ctx.beginPath(); ctx.arc(p.x,p.y,isMax?4:2.5,0,Math.PI*2);
+    ctx.fillStyle=isMax?'#f59e0b':'#38bdf8'; ctx.fill();
+    if(isMax){ ctx.fillStyle='rgba(245,158,11,0.15)'; ctx.beginPath(); ctx.arc(p.x,p.y,8,0,Math.PI*2); ctx.fill(); }
   });
-
-  // x labels — show every 2nd or 3rd
   const step = n<=12?1:2;
-  ctx.fillStyle='#4b5563';
-  ctx.font=`${9/dpr+9}px -apple-system,sans-serif`;
-  ctx.textAlign='center';
-  pts.forEach((p,i)=>{
-    if(i%step===0) ctx.fillText(data.labels[i], p.x, H-5);
-  });
-
-  // peak annotation
-  const maxIdx = data.revenue.indexOf(Math.max(...data.revenue));
+  ctx.fillStyle='#4b5563'; ctx.font=`${9/dpr+9}px -apple-system,sans-serif`; ctx.textAlign='center';
+  pts.forEach((p,i)=>{ if(i%step===0) ctx.fillText(labels[s+i]||labels[i], p.x, H-5); });
+  const maxIdx = vals.indexOf(maxVal);
   const mp = pts[maxIdx];
-  ctx.fillStyle='rgba(245,158,11,0.12)';
-  ctx.strokeStyle='rgba(245,158,11,0.35)';
-  ctx.lineWidth=1;
-  const lbl='Peak: R$'+(data.revenue[maxIdx])+'K';
-  ctx.font=`bold 9px -apple-system,sans-serif`;
-  const tw=ctx.measureText(lbl).width+14;
-  const bx=Math.min(mp.x-tw/2, W-PAD.right-tw);
-  const by=mp.y-26;
+  ctx.fillStyle='rgba(245,158,11,0.12)'; ctx.strokeStyle='rgba(245,158,11,0.35)'; ctx.lineWidth=1;
+  const lbl='Peak: R$'+maxVal+'K';
+  ctx.font='bold 9px -apple-system,sans-serif';
+  const tw=ctx.measureText(lbl).width+14, bx=Math.min(mp.x-tw/2,W-PAD.right-tw), by=mp.y-26;
   ctx.beginPath(); ctx.roundRect(bx,by,tw,16,4); ctx.fill(); ctx.stroke();
-  ctx.fillStyle='#f59e0b';
-  ctx.textAlign='center';
-  ctx.fillText(lbl, mp.x, by+10.5);
-
-  // hover
-  canvas._pts=pts; canvas._data=data;
+  ctx.fillStyle='#f59e0b'; ctx.textAlign='center'; ctx.fillText(lbl,mp.x,by+10.5);
+  canvas._pts=pts; canvas._vals=vals; canvas._labels=labels.slice(s,e);
 }
 
 // ─── Donut chart ───────────────────────────────────────────────────────────────
-let hoveredCat = -1;
-function drawDonut(highlight=-1){
-  const canvas = document.getElementById('donut-chart');
-  const dpr = window.devicePixelRatio||1;
-  const S = 110;
-  canvas.width  = S*dpr;
-  canvas.height = S*dpr;
-  canvas.style.width = S+'px';
-  canvas.style.height= S+'px';
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr,dpr);
+function drawDonut(cats, highlight){
+  highlight = highlight==null ? -1 : highlight;
+  currentCategories = cats;
+  const canvas=document.getElementById('donut-chart');
+  const dpr=window.devicePixelRatio||1, S=110;
+  canvas.width=S*dpr; canvas.height=S*dpr;
+  canvas.style.width=S+'px'; canvas.style.height=S+'px';
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
   const cx=S/2, cy=S/2, R=42, r=27;
-  let start = -Math.PI/2;
-  const total=100;
-  CATEGORIES.forEach((c,i)=>{
-    const sweep = (c.pct/total)*Math.PI*2;
-    const isHi  = highlight===i;
-    const outerR = isHi ? R+4 : R;
-    ctx.beginPath();
-    ctx.moveTo(cx,cy);
-    ctx.arc(cx,cy,outerR,start,start+sweep);
-    ctx.closePath();
-    ctx.fillStyle = isHi ? c.color : c.color+(i===5?'':'cc');
+  let start=-Math.PI/2, total=cats.reduce((s,c)=>s+c.pct,0);
+  cats.forEach((c,i)=>{
+    const sweep=(c.pct/total)*Math.PI*2, isHi=highlight===i||hoveredCat===i;
+    const outerR=isHi?R+4:R;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,outerR,start,start+sweep); ctx.closePath();
+    ctx.fillStyle=isHi?c.color:c.color+(i===cats.length-1?'':c.color==='#2d333b'?'':'cc');
     ctx.fill();
-    if(isHi){
-      ctx.strokeStyle=c.color;
-      ctx.lineWidth=1.5;
-      ctx.stroke();
-    }
+    if(isHi){ ctx.strokeStyle=c.color; ctx.lineWidth=1.5; ctx.stroke(); }
     start+=sweep;
   });
-  // inner hole
-  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
-  ctx.fillStyle='#161b22'; ctx.fill();
-  // center text
-  if(highlight>=0 && highlight<CATEGORIES.length-1){
-    const c=CATEGORIES[highlight];
-    ctx.fillStyle='#e6edf3';
-    ctx.font=`bold 13px -apple-system,sans-serif`;
-    ctx.textAlign='center';
-    ctx.fillText(c.pct+'%',cx,cy+4);
-    ctx.fillStyle='#8b949e';
-    ctx.font=`9px -apple-system,sans-serif`;
-    ctx.fillText(c.name.split(' ')[0],cx,cy+15);
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle='#161b22'; ctx.fill();
+  const hi = highlight>=0&&highlight<cats.length-1 ? cats[highlight] : (hoveredCat>=0&&hoveredCat<cats.length-1?cats[hoveredCat]:null);
+  if(hi){
+    ctx.fillStyle='#e6edf3'; ctx.font='bold 13px -apple-system,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(hi.pct+'%',cx,cy+4);
+    ctx.fillStyle='#8b949e'; ctx.font='9px -apple-system,sans-serif';
+    ctx.fillText(hi.name.split(' ')[0],cx,cy+15);
   } else {
-    ctx.fillStyle='#e6edf3';
-    ctx.font=`bold 14px -apple-system,sans-serif`;
-    ctx.textAlign='center';
-    ctx.fillText('6 cats',cx,cy+4);
-    ctx.fillStyle='#8b949e';
-    ctx.font=`9px -apple-system,sans-serif`;
-    ctx.fillText('total GMV',cx,cy+15);
+    ctx.fillStyle='#e6edf3'; ctx.font='bold 14px -apple-system,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(cats.length+' cats',cx,cy+4);
+    ctx.fillStyle='#8b949e'; ctx.font='9px -apple-system,sans-serif';
+    ctx.fillText('by GMV',cx,cy+15);
   }
 }
 
-function buildDonutLegend(){
-  const leg=document.getElementById('donut-legend');
-  leg.innerHTML='';
-  CATEGORIES.forEach((c,i)=>{
-    const row=document.createElement('div');
-    row.className='leg-item';
-    row.innerHTML=`<span class="leg-dot" style="background:${c.color}"></span><span class="leg-name">${c.name}</span><span class="leg-val">${c.pct}%</span>`;
-    row.addEventListener('mouseenter',()=>{ hoveredCat=i; drawDonut(i); });
-    row.addEventListener('mouseleave',()=>{ hoveredCat=-1; drawDonut(-1); });
+function buildDonutLegend(cats, highlight){
+  highlight = highlight==null ? -1 : highlight;
+  const leg=document.getElementById('donut-legend'); leg.innerHTML='';
+  cats.forEach((c,i)=>{
+    const row=document.createElement('div'); row.className='leg-item';
+    const isHi = highlight===i;
+    row.innerHTML=`<span class="leg-dot" style="background:${c.color};${isHi?'outline:2px solid '+c.color+';outline-offset:1px':''}"></span><span class="leg-name" style="${isHi?'color:#e6edf3;font-weight:700':''}">${c.name}</span><span class="leg-val">${c.pct}%</span>`;
+    row.addEventListener('mouseenter',()=>{ if(i<cats.length){hoveredCat=i; drawDonut(cats,highlight);} });
+    row.addEventListener('mouseleave',()=>{ hoveredCat=-1; drawDonut(cats,highlight); });
+    if(i<cats.length-1){
+      row.addEventListener('click',()=>applyVizFilter('category',c.name));
+    }
     leg.appendChild(row);
   });
 }
 
-// ─── State bars ─────────────────────────────────────────────────────────────────
-function buildStateBars(){
-  const wrap=document.getElementById('state-bars');
-  const maxPct=STATES[0].pct;
+// ─── State bars ────────────────────────────────────────────────────────────────
+function buildStateBars(states){
+  const wrap=document.getElementById('state-bars'); wrap.innerHTML='';
+  const sorted=[...states].sort((a,b)=>b.pct-a.pct);
+  const maxPct=sorted[0].pct;
   const colors=['#38bdf8','#0ea5e9','#0284c7','#0369a1','#075985','#0c4a6e','#1e3a5f','#1e3a8a'];
-  wrap.innerHTML='';
-  STATES.forEach((s,idx)=>{
+  sorted.forEach((s,idx)=>{
     const barW=(s.pct/maxPct*100).toFixed(1);
-    const isFiltered=activeVizFilter.type==='state';
-    const isActive=isFiltered && activeVizFilter.value===s.state;
-    const opacity=isFiltered?(isActive?'1':'0.28'):'1';
-    const weight=isActive?'800':'700';
     const div=document.createElement('div');
-    div.style.cssText=`display:flex;align-items:center;gap:8px;margin-bottom:7px;cursor:pointer;opacity:${opacity};transition:opacity .2s`;
-    div.title=`Click to filter by ${s.state}`;
-    div.innerHTML=`
-      <span style="font-size:10.5px;font-weight:${weight};color:#e6edf3;width:22px;text-align:right;flex-shrink:0">${s.state}</span>
+    div.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:7px';
+    div.innerHTML=`<span style="font-size:10.5px;font-weight:700;color:#e6edf3;width:22px;text-align:right;flex-shrink:0">${s.state}</span>
       <div style="flex:1;height:7px;background:#1c2128;border-radius:4px;overflow:hidden">
-        <div style="width:${barW}%;height:100%;background:${isActive?'#f59e0b':colors[idx]};border-radius:4px;transition:width .5s ease,background .2s"></div>
+        <div style="width:${barW}%;height:100%;background:${colors[idx]};border-radius:4px;transition:width .5s ease"></div>
       </div>
-      <span style="font-size:10px;color:${isActive?'#f59e0b':'#8b949e'};width:38px;text-align:right;flex-shrink:0">${s.pct.toFixed(1)}%</span>`;
-    div.addEventListener('click',()=>applyVizFilter('state',s.state));
+      <span style="font-size:10px;color:#8b949e;width:38px;text-align:right;flex-shrink:0">${s.pct.toFixed(1)}%</span>`;
     wrap.appendChild(div);
   });
 }
 
-// ─── Delivery bars ────────────────────────────────────────────────────────────
-function buildDeliveryBars(){
-  const wrap=document.getElementById('delivery-bars');
-  wrap.innerHTML='';
-  DELIVERY.forEach(d=>{
-    const isFiltered=activeVizFilter.type==='delivery';
-    const isActive=isFiltered && activeVizFilter.value===d.label;
-    const opacity=isFiltered?(isActive?'1':'0.28'):'1';
+// ─── Delivery bars ─────────────────────────────────────────────────────────────
+function buildDeliveryBars(delivery, activeKey){
+  const wrap=document.getElementById('delivery-bars'); wrap.innerHTML='';
+  const isFiltered = !!activeKey;
+  delivery.forEach(d=>{
+    const isActive = isFiltered && d.key===activeKey;
+    const opacity = isFiltered?(isActive?'1':'0.28'):'1';
     const div=document.createElement('div');
     div.style.cssText=`margin-bottom:10px;cursor:pointer;opacity:${opacity};transition:opacity .2s`;
-    div.title=`Click to filter by ${d.label}`;
-    div.innerHTML=`
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-        <span style="font-size:10.5px;color:#e6edf3;font-weight:600;display:flex;align-items:center;gap:6px">
-          ${d.label}
-          <span style="font-size:9px;color:${d.color};background:${d.color}18;padding:1px 5px;border-radius:3px">${d.score}★ avg</span>
-        </span>
-        <span style="font-size:10.5px;font-weight:700;color:${d.color}">${d.pct}%</span>
+    div.title=`Click to filter: ${d.label}`;
+    const scoreTag = d.score!=null ? `<span style="font-size:9px;color:${d.color};background:${d.color}18;padding:1px 5px;border-radius:3px">${d.score}★ avg</span>` : '';
+    div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:10.5px;color:#e6edf3;font-weight:600;display:flex;align-items:center;gap:6px">${d.label}${scoreTag}</span>
+        <span style="font-size:10.5px;font-weight:700;color:${d.color}">${d.pct.toFixed(1)}%</span>
       </div>
       <div style="height:9px;background:#1c2128;border-radius:5px;overflow:hidden">
         <div style="width:${d.pct}%;height:100%;background:${d.color};border-radius:5px;transition:width .6s ease"></div>
       </div>`;
-    div.addEventListener('click',()=>applyVizFilter('delivery',d.label));
+    div.addEventListener('click',()=>applyVizFilter('delivery',d.key));
     wrap.appendChild(div);
   });
 }
 
-// ─── Review bars ────────────────────────────────────────────────────────────
-function buildReviewBars(){
-  const wrap=document.getElementById('review-bars');
-  wrap.innerHTML='';
-  REVIEWS.forEach(r=>{
-    const isFiltered=activeVizFilter.type==='review';
-    const isActive=isFiltered && activeVizFilter.value===String(r.stars);
+// ─── Review bars ───────────────────────────────────────────────────────────────
+function buildReviewBars(reviews, activeStars){
+  const wrap=document.getElementById('review-bars'); wrap.innerHTML='';
+  const isFiltered = !!activeStars;
+  const sorted=[...reviews].sort((a,b)=>b.stars-a.stars);
+  sorted.forEach(r=>{
+    const isActive=isFiltered && String(r.stars)===String(activeStars);
     const opacity=isFiltered?(isActive?'1':'0.28'):'1';
     const div=document.createElement('div');
     div.className='review-row';
     div.style.cssText=`cursor:pointer;opacity:${opacity};transition:opacity .2s`;
-    div.title=`Click to filter by ${r.stars}★ reviews`;
-    div.innerHTML=`
-      <span class="review-star">${r.stars}★</span>
+    div.title=`Click to filter: ${r.stars}★`;
+    div.innerHTML=`<span class="review-star">${r.stars}★</span>
       <div class="review-track"><div class="review-fill" style="width:${r.pct}%;background:${r.color}"></div></div>
-      <span class="review-pct" style="color:${r.color}">${r.pct}%</span>
-      <span class="review-count">${(r.count/1000).toFixed(1)}K</span>`;
+      <span class="review-pct" style="color:${r.color}">${r.pct.toFixed(1)}%</span>`;
     div.addEventListener('click',()=>applyVizFilter('review',String(r.stars)));
     wrap.appendChild(div);
   });
 }
 
-// ─── Sellers table ────────────────────────────────────────────────────────────
+// ─── KPI updater ──────────────────────────────────────────────────────────────
+function updateKPIs(kpi, filterType, filterValue){
+  if(kpi){
+    animVal('kpi-gmv', fmtGMV(kpi.gmv));
+    animVal('kpi-orders', fmtN(kpi.orders));
+    animVal('kpi-aov', fmtAOV(kpi.aov));
+    animVal('kpi-review', fmtReview(kpi.review));
+    // Delta badges
+    const pctOfTotal = (kpi.orders/98666*100).toFixed(1);
+    setDelta('kpi-gmv-delta', pctOfTotal+'% of total', 'neutral');
+    setDelta('kpi-orders-delta', fmtDelivery(kpi.delivery)+' avg delivery', 'neutral');
+    setDelta('kpi-aov-delta', 'avg order value', 'neutral');
+    setDelta('kpi-review-delta', filterType+' filter active', 'neutral');
+  } else {
+    const pd=KPI_PERIOD[activePeriod];
+    animVal('kpi-gmv', pd.gmv);
+    animVal('kpi-orders', pd.orders);
+    animVal('kpi-aov', pd.aov);
+    animVal('kpi-review', pd.review);
+    setDelta('kpi-gmv-delta', pd.gmvD, 'up');
+    setDelta('kpi-orders-delta', pd.ordersD, 'up');
+    setDelta('kpi-aov-delta', pd.aovD, 'up');
+    setDelta('kpi-review-delta', '↑ 0.09', 'up');
+  }
+  // Update subtitle
+  const subMap={'all':'Jan 2017 – Aug 2018','2017':'Jan 2017 – Dec 2017','2018':'Jan 2018 – Aug 2018'};
+  const badgeMap={'all':'20 months','2017':'12 months','2018':'8 months'};
+  const filterLabel = filterType ? ` · ${filterValue} filter` : '';
+  document.getElementById('trend-sub').textContent=subMap[activePeriod]+' · R$ thousands'+filterLabel;
+  document.getElementById('trend-badge').textContent=badgeMap[activePeriod];
+}
+
+function animVal(id,val){
+  const el=document.getElementById(id);
+  el.style.transform='translateY(-4px)'; el.style.opacity='0.4';
+  setTimeout(()=>{ el.textContent=val; el.style.transform=''; el.style.opacity=''; },150);
+}
+function setDelta(id,txt,cls){
+  const el=document.getElementById(id);
+  el.textContent=txt; el.className='kpi-delta '+cls;
+}
+
+// ─── Main render orchestrator ─────────────────────────────────────────────────
+function renderAll(filterType, filterValue, period){
+  period = period || activePeriod;
+  const all = CROSS_DATA.all;
+  let kpi=null, monthly, cats, catHighlight=-1, states, delivery, deliveryActiveKey=null, reviews, reviewActiveStars=null;
+
+  if(filterType==='delivery' && filterValue){
+    const s=CROSS_DATA.delivery[filterValue];
+    kpi=s.kpi; monthly=s.monthly; cats=s.categories; states=s.states;
+    delivery=all.delivery; deliveryActiveKey=filterValue;
+    reviews=s.reviews;
+  } else if(filterType==='review' && filterValue){
+    const s=CROSS_DATA.review[filterValue];
+    kpi=s.kpi; monthly=s.monthly; cats=s.categories; states=s.states;
+    delivery=s.delivery; reviews=all.reviews; reviewActiveStars=filterValue;
+  } else if(filterType==='category' && filterValue && CROSS_DATA.category[filterValue]){
+    const s=CROSS_DATA.category[filterValue];
+    kpi=s.kpi; monthly=s.monthly;
+    cats=all.categories; catHighlight=all.categories.findIndex(c=>c.name===filterValue);
+    states=s.states; delivery=s.delivery; reviews=s.reviews;
+  } else {
+    monthly=all.monthly; cats=all.categories; states=all.states;
+    delivery=all.delivery; reviews=all.reviews;
+  }
+
+  updateKPIs(kpi, filterType, filterValue);
+  drawRevenue(monthly, period);
+  drawDonut(cats, catHighlight);
+  buildDonutLegend(cats, catHighlight);
+  buildStateBars(states);
+  buildDeliveryBars(delivery, deliveryActiveKey);
+  buildReviewBars(reviews, reviewActiveStars);
+}
+
+// ─── Filter engine ─────────────────────────────────────────────────────────────
+function applyVizFilter(type, value){
+  if(activeVizFilter.type===type && activeVizFilter.value===value){ clearVizFilter(); return; }
+  activeVizFilter={type,value};
+  // Sync category slicer pills
+  document.querySelectorAll('#slicer-cat .pill').forEach(p=>{
+    p.classList.toggle('active', type==='category' ? p.dataset.cat===value : p.dataset.cat==='all');
+  });
+  // Show filter chip
+  const labels={delivery:value+' delivery',review:value+'★ reviews',category:value};
+  document.getElementById('filter-chip').textContent=labels[type]||value;
+  document.getElementById('filter-status').style.display='flex';
+  renderAll(type, value, activePeriod);
+}
+
+function clearVizFilter(){
+  activeVizFilter={type:null,value:null};
+  document.querySelectorAll('#slicer-cat .pill').forEach(p=>p.classList.toggle('active',p.dataset.cat==='all'));
+  document.getElementById('filter-status').style.display='none';
+  renderAll(null, null, activePeriod);
+}
+
+// ─── Sellers table ─────────────────────────────────────────────────────────────
 function buildSellers(){
   const tbody=document.getElementById('sellers-tbody');
-  const maxRev=SELLERS[0].revenue;
+  const maxRev=Math.max(...SELLERS.map(s=>s.revenue));
   const sorted=[...SELLERS].sort((a,b)=>{
-    const av=a[sortCol], bv=b[sortCol];
+    const av=a[sortCol],bv=b[sortCol];
     return sortDir*(typeof av==='string'?av.localeCompare(bv):bv-av)*-1;
   });
   tbody.innerHTML='';
   sorted.forEach((s,i)=>{
     const pct=(s.revenue/maxRev*100).toFixed(0);
-    const scoreColor=s.score>=4.5?'#3fb950':s.score>=4?'#86efac':s.score>=3.5?'#f59e0b':'#f85149';
-    const rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
+    const sc=s.score>=4.5?'#3fb950':s.score>=4?'#86efac':s.score>=3.5?'#f59e0b':'#f85149';
+    const rk=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
     tbody.innerHTML+=`<tr>
-      <td class="${rankClass}">${i+1}</td>
+      <td class="${rk}">${i+1}</td>
       <td style="font-family:monospace;font-size:10.5px;color:#8b949e">${s.id}…</td>
-      <td>${s.city}</td>
-      <td>${s.state}</td>
+      <td>${s.city}</td><td>${s.state}</td>
       <td>${s.orders.toLocaleString()}</td>
-      <td><div class="bar-cell">
-        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:linear-gradient(90deg,#38bdf8,#0ea5e9)"></div></div>
-        <span style="font-size:10px;color:#38bdf8;white-space:nowrap;font-weight:700">R$${(s.revenue/1000).toFixed(0)}K</span>
-      </div></td>
+      <td><div class="bar-cell"><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:linear-gradient(90deg,#38bdf8,#0ea5e9)"></div></div>
+        <span style="font-size:10px;color:#38bdf8;white-space:nowrap;font-weight:700">R$${(s.revenue/1000).toFixed(0)}K</span></div></td>
       <td style="color:#8b949e">R$${s.aov}</td>
       <td style="color:${s.delivery<=10?'#3fb950':s.delivery<=13?'#f59e0b':'#f85149'}">${s.delivery}d</td>
-      <td><span class="score-pill" style="background:${scoreColor}22;color:${scoreColor};border:1px solid ${scoreColor}44">${s.score} ★</span></td>
-      <td style="color:#656d76;font-size:10px">${(s.revenue/160000*100).toFixed(2)}%</td>
+      <td><span class="score-pill" style="background:${sc}22;color:${sc};border:1px solid ${sc}44">${s.score} ★</span></td>
     </tr>`;
   });
-
-  // sort headers
   document.querySelectorAll('thead th').forEach(th=>{
     th.classList.remove('sort-asc','sort-desc');
     if(th.dataset.col===sortCol) th.classList.add(sortDir===1?'sort-asc':'sort-desc');
   });
 }
-
-// ─── Update KPIs ──────────────────────────────────────────────────────────────
-function updateKPIs(period){
-  let d=null, subLabel='';
-
-  // Priority 1: visual cross-filter
-  if(activeVizFilter.type==='delivery'){
-    d=DELIVERY_FILTER_DATA[activeVizFilter.value];
-    subLabel=activeVizFilter.value+' delivery';
-  } else if(activeVizFilter.type==='review'){
-    d=REVIEW_FILTER_DATA[activeVizFilter.value];
-    subLabel=activeVizFilter.value+'★ review orders';
-  } else if(activeVizFilter.type==='state'){
-    d=STATE_FILTER_DATA[activeVizFilter.value];
-    subLabel='State: '+activeVizFilter.value;
-  } else if(activeVizFilter.type==='category'){
-    d=CATEGORY_KPI[activeVizFilter.value];
-    subLabel=activeVizFilter.value;
-  } else if(typeof activeCategory!=='undefined' && CATEGORY_KPI[activeCategory]) {
-    // Priority 2: category slicer
-    d=CATEGORY_KPI[activeCategory];
-    subLabel=activeCategory;
-  }
-
-  if(d){
-    animateValue('kpi-gmv', d.gmv);
-    document.getElementById('kpi-gmv-delta').textContent=(d.share||'')+(d.share?' of GMV':'');
-    document.getElementById('kpi-gmv-delta').className='kpi-delta up';
-    animateValue('kpi-orders', d.orders);
-    document.getElementById('kpi-orders-delta').textContent=subLabel;
-    animateValue('kpi-aov', d.aov);
-    document.getElementById('kpi-aov-delta').textContent='avg order value';
-    document.getElementById('kpi-aov-delta').className='kpi-delta up';
-    animateValue('kpi-review', d.review);
-    document.getElementById('kpi-review-delta').textContent='segment avg';
-    return;
-  }
-
-  // Priority 3: period-based KPIs
-  const pd=KPI_DATA[period];
-  animateValue('kpi-gmv', pd.gmv);
-  document.getElementById('kpi-gmv-delta').textContent=pd.gmvD;
-  document.getElementById('kpi-gmv-delta').className='kpi-delta '+(pd.gmvDClass||'up');
-  animateValue('kpi-orders', pd.orders);
-  document.getElementById('kpi-orders-delta').textContent=pd.ordersD;
-  animateValue('kpi-aov', pd.aov);
-  document.getElementById('kpi-aov-delta').textContent=pd.aovD;
-  document.getElementById('kpi-aov-delta').className='kpi-delta '+(pd.aovDClass||'up');
-  animateValue('kpi-review', pd.review);
-  document.getElementById('kpi-review-delta').textContent=pd.reviewD;
-  const badge={'all':'20 months','2017':'2017 · 12mo','2018':'2018 · 8mo'};
-  document.getElementById('trend-sub').textContent={
-    'all':'Jan 2017 – Aug 2018 · R$ thousands',
-    '2017':'Jan 2017 – Dec 2017 · R$ thousands',
-    '2018':'Jan 2018 – Aug 2018 · R$ thousands'
-  }[period];
-  document.getElementById('trend-badge').textContent=badge[period];
-}
-
-function animateValue(id, val){
-  const el=document.getElementById(id);
-  el.style.transform='translateY(-4px)';
-  el.style.opacity='0.4';
-  setTimeout(()=>{ el.textContent=val; el.style.transform=''; el.style.opacity=''; },150);
-}
-
-// ─── AI insight updates ────────────────────────────────────────────────────────
-const AI_REVENUE = {
-  all: 'Revenue grew <strong>137% year-on-year</strong> across the dataset period (Sep 2016 – Aug 2018). <em>November 2017 peaked at R$1.01M</em>, a <strong>+52% spike</strong> vs October — Black Friday promotional orders drive the uplift. December 2017 pulled back to R$744K (−26% MoM), a classic post-Black-Friday normalisation. By mid-2018, monthly GMV consistently held above <strong>R$850K</strong>, signalling a structurally higher demand base.',
-  '2017': '<strong>2017 was the breakout year</strong> — the platform scaled from R$120K/mo in January to R$1.01M in November, an <em>8.4× increase in 11 months</em>. The April dip (R$360K vs R$374K in March) is seasonal, linked to school re-opening spend. <strong>Q4 2017 contributed 38.7% of the full-year GMV at R$2.39M</strong>, with Black Friday being the single largest demand event.',
-  '2018': '<strong>2018 (Jan–Aug) already surpassed all of 2017</strong> in total GMV (R$7.4M vs R$6.2M full year), despite covering only 8 months. <em>March and April 2018 both crossed R$983K</em>, forming a sustained high plateau. <strong>The 8-month run rate projects to ~R$11.1M annualised</strong> — a 79% uplift on 2017\'s full-year result.'
-};
-
-function updateAIRevenue(period){ document.getElementById('ai-revenue').innerHTML=AI_REVENUE[period]||AI_REVENUE.all; }
 
 // ─── Tooltip ──────────────────────────────────────────────────────────────────
 const tt=document.getElementById('tooltip');
@@ -916,99 +1032,72 @@ function showTip(e,html){ tt.innerHTML=html; tt.style.display='block'; moveTip(e
 function moveTip(e){ tt.style.left=Math.min(e.clientX+14,window.innerWidth-tt.offsetWidth-10)+'px'; tt.style.top=(e.clientY-36)+'px'; }
 function hideTip(){ tt.style.display='none'; }
 
-// ─── Canvas hover for revenue chart ───────────────────────────────────────────
+// ─── Revenue canvas hover ─────────────────────────────────────────────────────
 document.getElementById('revenue-chart').addEventListener('mousemove',function(e){
   if(!this._pts) return;
-  const rect=this.getBoundingClientRect();
-  const mx=e.clientX-rect.left;
+  const rect=this.getBoundingClientRect(), mx=e.clientX-rect.left;
   let closest=null, minD=Infinity;
-  this._pts.forEach((p,i)=>{
-    const d=Math.abs(p.x-mx);
-    if(d<minD){ minD=d; closest={p,i}; }
-  });
-  if(closest && minD<24){
-    const d=this._data;
-    showTip(e,`<strong>${d.labels[closest.i]}</strong>Revenue: R$${d.revenue[closest.i]}K<br>Orders: ${d.orders[closest.i].toLocaleString()}`);
-  } else hideTip();
+  this._pts.forEach((p,i)=>{ const d=Math.abs(p.x-mx); if(d<minD){minD=d; closest={p,i};} });
+  if(closest&&minD<24) showTip(e,`<strong>${this._labels[closest.i]}</strong>GMV: R$${this._vals[closest.i]}K`);
+  else hideTip();
 });
 document.getElementById('revenue-chart').addEventListener('mouseleave',hideTip);
 
-// ─── Donut hover ──────────────────────────────────────────────────────────────
+// ─── Donut hover + click ───────────────────────────────────────────────────────
 document.getElementById('donut-chart').addEventListener('mousemove',function(e){
-  const rect=this.getBoundingClientRect();
-  const cx=rect.left+55, cy=rect.top+55;
-  const dx=e.clientX-cx, dy=e.clientY-cy;
-  const dist=Math.sqrt(dx*dx+dy*dy);
+  const rect=this.getBoundingClientRect(), cx=rect.left+55, cy=rect.top+55;
+  const dx=e.clientX-cx, dy=e.clientY-cy, dist=Math.sqrt(dx*dx+dy*dy);
   if(dist>24&&dist<52){
-    let angle=Math.atan2(dy,dx)+Math.PI/2;
-    if(angle<0) angle+=Math.PI*2;
-    let cum=0;
-    let found=-1;
-    CATEGORIES.forEach((c,i)=>{ if(found<0){ cum+=(c.pct/100)*Math.PI*2; if(angle<cum) found=i; } });
-    if(found>=0&&found!==hoveredCat){ hoveredCat=found; drawDonut(found); }
-    if(found>=0){
-      const c=CATEGORIES[found];
-      showTip(e,`<strong>${c.name}</strong>${c.pct}% of GMV<br>~R$${c.rev}K`);
-    }
-  } else { if(hoveredCat>=0){ hoveredCat=-1; drawDonut(-1); } hideTip(); }
+    let angle=Math.atan2(dy,dx)+Math.PI/2; if(angle<0) angle+=Math.PI*2;
+    const cats=currentCategories;
+    const total=cats.reduce((s,c)=>s+c.pct,0);
+    let cum=0,found=-1;
+    cats.forEach((c,i)=>{ if(found<0){cum+=(c.pct/total)*Math.PI*2; if(angle<cum) found=i;} });
+    if(found>=0&&found!==hoveredCat){ hoveredCat=found; drawDonut(cats, activeVizFilter.type==='category'?cats.findIndex(c=>c.name===activeVizFilter.value):-1); }
+    if(found>=0) showTip(e,`<strong>${cats[found].name}</strong>${cats[found].pct}% of GMV`);
+  } else { if(hoveredCat>=0){hoveredCat=-1; drawDonut(currentCategories, activeVizFilter.type==='category'?currentCategories.findIndex(c=>c.name===activeVizFilter.value):-1);} hideTip(); }
 });
-document.getElementById('donut-chart').addEventListener('mouseleave',()=>{ hoveredCat=-1; drawDonut(-1); hideTip(); });
-
-// Donut click → cross-filter by category
+document.getElementById('donut-chart').addEventListener('mouseleave',()=>{
+  hoveredCat=-1;
+  drawDonut(currentCategories, activeVizFilter.type==='category'?currentCategories.findIndex(c=>c.name===activeVizFilter.value):-1);
+  hideTip();
+});
 document.getElementById('donut-chart').addEventListener('click',function(e){
-  const rect=this.getBoundingClientRect();
-  const cx=rect.left+55, cy=rect.top+55;
-  const dx=e.clientX-cx, dy=e.clientY-cy;
-  const dist=Math.sqrt(dx*dx+dy*dy);
+  const rect=this.getBoundingClientRect(), cx=rect.left+55, cy=rect.top+55;
+  const dx=e.clientX-cx, dy=e.clientY-cy, dist=Math.sqrt(dx*dx+dy*dy);
   if(dist>24&&dist<52){
-    let angle=Math.atan2(dy,dx)+Math.PI/2;
-    if(angle<0) angle+=Math.PI*2;
-    let cum=0, found=-1;
-    CATEGORIES.forEach((c,i)=>{ if(found<0){ cum+=(c.pct/100)*Math.PI*2; if(angle<cum) found=i; }});
-    if(found>=0) applyVizFilter('category',CATEGORIES[found].name);
+    let angle=Math.atan2(dy,dx)+Math.PI/2; if(angle<0) angle+=Math.PI*2;
+    const cats=currentCategories, total=cats.reduce((s,c)=>s+c.pct,0);
+    let cum=0,found=-1;
+    cats.forEach((c,i)=>{ if(found<0){cum+=(c.pct/total)*Math.PI*2; if(angle<cum) found=i;} });
+    if(found>=0&&found<cats.length-1) applyVizFilter('category',cats[found].name);
   }
 });
 
-// ─── Period filter ────────────────────────────────────────────────────────────
+// ─── Period buttons ───────────────────────────────────────────────────────────
 document.querySelectorAll('.period-btn').forEach(btn=>{
   btn.addEventListener('click',function(){
     document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
     this.classList.add('active');
     activePeriod=this.dataset.period;
-    drawRevenue(activePeriod);
-    updateKPIs(activePeriod);
-    updateAIRevenue(activePeriod);
+    // Re-render with current filter but new period slice on chart
+    renderAll(activeVizFilter.type, activeVizFilter.value, activePeriod);
   });
 });
-
-// ─── Category KPI data (from Gold layer agg_product_category) ────────────────
-const CATEGORY_KPI = {
-  'all':                null,
-  'Health & Beauty':   { gmv:'R$1.26M', orders:'~9,100',  share:'9.26%', aov:'R$138.1', review:'4.03 ★' },
-  'Watches & Gifts':   { gmv:'R$1.21M', orders:'~8,700',  share:'8.87%', aov:'R$138.5', review:'4.03 ★' },
-  'Bed & Bath':        { gmv:'R$1.04M', orders:'~7,500',  share:'7.63%', aov:'R$138.3', review:'4.03 ★' },
-  'Sports & Leisure':  { gmv:'R$0.99M', orders:'~7,200',  share:'7.27%', aov:'R$137.2', review:'4.03 ★' },
-  'Computers & Acc.':  { gmv:'R$0.91M', orders:'~6,600',  share:'6.71%', aov:'R$138.2', review:'4.03 ★' },
-};
-
-let activeCategory = 'all';
 
 // ─── Category slicer pills ────────────────────────────────────────────────────
-document.getElementById('slicer-cat').querySelectorAll('.pill').forEach(pill=>{
+document.querySelectorAll('#slicer-cat .pill').forEach(pill=>{
   pill.addEventListener('click',function(){
     const cat=this.dataset.cat;
-    if(cat==='all'){
-      clearVizFilter();
-    } else {
-      applyVizFilter('category',cat);
-    }
+    if(cat==='all') clearVizFilter();
+    else applyVizFilter('category',cat);
   });
 });
 
-// Clear filter button
-document.getElementById('filter-clear').addEventListener('click', clearVizFilter);
+// ─── Clear filter ─────────────────────────────────────────────────────────────
+document.getElementById('filter-clear').addEventListener('click',clearVizFilter);
 
-// ─── Table sort ────────────────────────────────────────────────────────────────
+// ─── Table sort ───────────────────────────────────────────────────────────────
 document.querySelectorAll('thead th[data-col]').forEach(th=>{
   th.addEventListener('click',function(){
     if(sortCol===this.dataset.col) sortDir*=-1;
@@ -1019,19 +1108,20 @@ document.querySelectorAll('thead th[data-col]').forEach(th=>{
 
 // ─── Resize ───────────────────────────────────────────────────────────────────
 let resizeTimer;
-window.addEventListener('resize',()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>drawRevenue(activePeriod),150); });
+window.addEventListener('resize',()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(()=>{
+    const m=activeVizFilter;
+    if(m.type==='delivery') drawRevenue(CROSS_DATA.delivery[m.value].monthly, activePeriod);
+    else if(m.type==='review') drawRevenue(CROSS_DATA.review[m.value].monthly, activePeriod);
+    else if(m.type==='category'&&CROSS_DATA.category[m.value]) drawRevenue(CROSS_DATA.category[m.value].monthly, activePeriod);
+    else drawRevenue(CROSS_DATA.all.monthly, activePeriod);
+  },150);
+});
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
-drawRevenue('all');
-drawDonut(-1);
-buildDonutLegend();
-buildStateBars();
-buildDeliveryBars();
-buildReviewBars();
+renderAll(null, null, 'all');
 buildSellers();
-
-// ─── Canvas transition helper ─────────────────────────────────────────────────
-document.getElementById('revenue-chart').style.transition='opacity .3s';
 </script>
 </body>
 </html>
