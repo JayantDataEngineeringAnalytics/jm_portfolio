@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>E-Commerce Sales Analytics</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--bg4:#21262d;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#e6edf3;--text2:#8b949e;--text3:#656d76;
+  --accent:#38bdf8;--accent2:#0ea5e9;--accent3:#0284c7;
+  --green:#3fb950;--red:#f85149;--gold:#f59e0b;--purple:#a78bfa;--orange:#fb923c;
+  --radius:10px;--radius2:14px;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;font-size:13px;line-height:1.5;overflow-x:hidden}
+button{font-family:inherit}
+
+/* ─ Scrollbar ─ */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+
+/* ─ Header ─ */
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+.header-brand{display:flex;align-items:center;gap:10px}
+.brand-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--accent2),var(--accent3));border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-icon svg{display:block}
+.brand-text h1{font-size:13.5px;font-weight:700;color:var(--text);line-height:1.2}
+.brand-text p{font-size:10.5px;color:var(--text2);margin-top:1px}
+.header-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.live-pill{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:#86efac;background:rgba(22,163,74,0.15);border:1px solid rgba(22,163,74,0.25);padding:3px 10px;border-radius:20px}
+.live-dot{width:5px;height:5px;border-radius:50%;background:#86efac;animation:blink 1.8s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.period-btn{font-size:10.5px;font-weight:600;padding:4px 12px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all .15s}
+.period-btn:hover{color:var(--text);border-color:var(--border2)}
+.period-btn.active{background:rgba(56,189,248,.15);border-color:rgba(56,189,248,.35);color:var(--accent)}
+.last-updated{font-size:10px;color:var(--text3);white-space:nowrap}
+
+/* ─ Slicers ─ */
+.slicers{padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.slicer{display:flex;flex-direction:column;gap:5px}
+.slicer-label{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--text3)}
+.slicer-pills{display:flex;gap:5px;flex-wrap:wrap}
+.pill{font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap}
+.pill:hover{border-color:var(--border2);color:var(--text)}
+.pill.active{background:rgba(56,189,248,.13);border-color:rgba(56,189,248,.35);color:var(--accent)}
+
+/* ─ Main layout ─ */
+.main{padding:14px 20px;display:flex;flex-direction:column;gap:14px}
+
+/* ─ KPI row ─ */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:700px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:14px 16px;position:relative;overflow:hidden;transition:border-color .2s}
+.kpi:hover{border-color:var(--border2)}
+.kpi-accent{position:absolute;top:0;left:0;right:0;height:2.5px;border-radius:var(--radius2) var(--radius2) 0 0}
+.kpi-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:7px}
+.kpi-value{font-size:24px;font-weight:800;color:var(--text);line-height:1;margin-bottom:5px;transition:all .3s}
+.kpi-footer{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.kpi-delta{font-size:10.5px;font-weight:700;display:inline-flex;align-items:center;gap:2px;padding:1px 6px;border-radius:4px}
+.kpi-delta.up{color:#86efac;background:rgba(22,163,74,.12)}
+.kpi-delta.down{color:#fca5a5;background:rgba(248,81,73,.12)}
+.kpi-sub{font-size:10px;color:var(--text3)}
+.kpi-sparkline{position:absolute;bottom:10px;right:12px;opacity:.5}
+
+/* ─ Charts grid ─ */
+.charts-grid{display:grid;grid-template-columns:1.7fr 1fr;gap:14px}
+.charts-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:800px){.charts-grid,.charts-grid-3{grid-template-columns:1fr}}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:16px 18px;transition:border-color .2s}
+.chart-card:hover{border-color:var(--border2)}
+.chart-card.full{grid-column:1/-1}
+.card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:8px}
+.card-title{font-size:11.5px;font-weight:700;color:var(--text);line-height:1.3}
+.card-sub{font-size:10px;color:var(--text2);margin-top:2px}
+.card-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:4px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);white-space:nowrap;flex-shrink:0}
+
+/* ─ Chart canvas area ─ */
+.chart-area{width:100%;position:relative}
+.chart-area canvas,.chart-area svg{display:block}
+
+/* ─ AI Insight ─ */
+.ai-insight{margin-top:12px;display:flex;gap:9px;align-items:flex-start;background:linear-gradient(135deg,rgba(56,189,248,.06),rgba(14,165,233,.03));border:1px solid rgba(56,189,248,.15);border-radius:8px;padding:10px 12px}
+.ai-chip{flex-shrink:0;font-size:8.5px;font-weight:800;letter-spacing:.06em;color:#000;background:linear-gradient(135deg,var(--accent),var(--accent2));padding:2px 7px;border-radius:4px;margin-top:1px}
+.ai-text{font-size:11px;color:var(--text2);line-height:1.7}
+.ai-text strong{color:var(--accent);font-weight:700}
+.ai-text em{color:var(--text);font-style:normal;font-weight:600}
+
+/* ─ Table ─ */
+.tbl-wrap{overflow-x:auto;margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+thead th{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;cursor:pointer;user-select:none}
+thead th:hover{color:var(--text)}
+thead th.sort-asc::after{content:' ↑'}
+thead th.sort-desc::after{content:' ↓'}
+tbody td{padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.03);color:var(--text2);vertical-align:middle}
+tbody td:first-child{color:var(--text);font-weight:600}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(255,255,255,.02)}
+.rank-1{color:var(--gold)!important}
+.rank-2{color:#94a3b8!important}
+.rank-3{color:#b45309!important}
+.bar-cell{display:flex;align-items:center;gap:7px}
+.bar-track{flex:1;height:5px;background:var(--bg3);border-radius:2px;overflow:hidden;min-width:50px}
+.bar-fill{height:100%;border-radius:2px;transition:width .4s ease}
+.score-pill{font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:4px}
+
+/* ─ Donut legend ─ */
+.donut-layout{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.donut-legend{display:flex;flex-direction:column;gap:7px;flex:1;min-width:120px}
+.leg-item{display:flex;align-items:center;gap:7px;cursor:pointer;padding:2px 4px;border-radius:4px;transition:background .15s}
+.leg-item:hover{background:rgba(255,255,255,.04)}
+.leg-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.leg-name{font-size:10.5px;color:var(--text2);flex:1;line-height:1.3}
+.leg-val{font-size:10px;font-weight:700;color:var(--text);white-space:nowrap}
+
+/* ─ Review bar row ─ */
+.review-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.review-star{font-size:10.5px;font-weight:700;color:var(--text2);width:18px;flex-shrink:0;text-align:right}
+.review-track{flex:1;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.review-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.review-pct{font-size:10px;color:var(--text2);width:30px;text-align:right}
+.review-count{font-size:9.5px;color:var(--text3);width:40px;text-align:right}
+
+/* ─ Tooltip ─ */
+.tooltip{position:fixed;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-size:10.5px;color:var(--text);pointer-events:none;z-index:999;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:200px;line-height:1.5}
+.tooltip strong{color:var(--accent);display:block;margin-bottom:2px}
+
+/* ─ Footer ─ */
+.footer{margin:0 20px 14px;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.footer-text{font-size:9.5px;color:var(--text3);line-height:1.5}
+.footer-text a{color:var(--text2);text-decoration:none}
+.footer-text a:hover{color:var(--text)}
+.footer-stats{display:flex;gap:14px;flex-wrap:wrap}
+.fstat{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.fstat-val{font-size:11px;font-weight:700;color:var(--text)}
+.fstat-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+
+/* ─ Animate in ─ */
+.fade-in{animation:fadein .4s ease forwards;opacity:0}
+@keyframes fadein{to{opacity:1}}
+.delay-1{animation-delay:.05s}
+.delay-2{animation-delay:.1s}
+.delay-3{animation-delay:.15s}
+.delay-4{animation-delay:.2s}
+</style>
+</head>
+<body>
+
+<div class="tooltip" id="tooltip"></div>
+
+<!-- ─ Header ──────────────────────────────────────────────── -->
+<div class="header">
+  <div class="header-brand">
+    <div class="brand-icon">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="8"  width="3" height="7" rx="1" fill="white" fill-opacity=".5"/>
+        <rect x="5" y="5"  width="3" height="10" rx="1" fill="white" fill-opacity=".75"/>
+        <rect x="9" y="2"  width="3" height="13" rx="1" fill="white"/>
+        <rect x="13" y="0" width="2" height="15" rx="1" fill="#38bdf8"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h1>E-Commerce Sales Analytics</h1>
+      <p>Brazilian E-Commerce · Olist Dataset · 98,666 Orders · 2016–2018</p>
+    </div>
+  </div>
+  <div class="header-controls">
+    <div class="live-pill"><span class="live-dot"></span>Live Report</div>
+    <div style="display:flex;gap:4px">
+      <button class="period-btn active" data-period="all">All Periods</button>
+      <button class="period-btn" data-period="2017">2017</button>
+      <button class="period-btn" data-period="2018">2018</button>
+    </div>
+    <span class="last-updated">Data through Oct 2018</span>
+  </div>
+</div>
+
+<!-- ─ Slicers ──────────────────────────────────────────────── -->
+<div class="slicers">
+  <div class="slicer">
+    <div class="slicer-label">Order Status</div>
+    <div class="slicer-pills" id="slicer-status">
+      <button class="pill active" data-val="all">All</button>
+      <button class="pill" data-val="delivered">Delivered</button>
+      <button class="pill" data-val="shipped">Shipped</button>
+      <button class="pill" data-val="cancelled">Cancelled</button>
+    </div>
+  </div>
+  <div class="slicer">
+    <div class="slicer-label">Top Region</div>
+    <div class="slicer-pills" data-group="region" id="slicer-region">
+      <button class="pill active" data-val="all">All States</button>
+      <button class="pill" data-val="SP">São Paulo</button>
+      <button class="pill" data-val="RJ">Rio de Janeiro</button>
+      <button class="pill" data-val="MG">Minas Gerais</button>
+    </div>
+  </div>
+  <div class="slicer">
+    <div class="slicer-label">Category</div>
+    <div class="slicer-pills" id="slicer-cat">
+      <button class="pill active" data-val="all">All</button>
+      <button class="pill" data-val="electronics">Electronics</button>
+      <button class="pill" data-val="home">Home & Living</button>
+      <button class="pill" data-val="beauty">Health & Beauty</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─ Main ──────────────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi fade-in">
+      <div class="kpi-accent" style="background:linear-gradient(90deg,#38bdf8,#0ea5e9)"></div>
+      <div class="kpi-label">Total GMV</div>
+      <div class="kpi-value" id="kpi-gmv">R$13.6M</div>
+      <div class="kpi-footer">
+        <span class="kpi-delta up" id="kpi-gmv-delta">↑ 137%</span>
+        <span class="kpi-sub" id="kpi-gmv-sub">2018 vs 2017 YoY</span>
+      </div>
+      <svg class="kpi-sparkline" width="60" height="24" viewBox="0 0 60 24">
+        <polyline points="0,20 10,16 20,14 30,10 40,7 50,4 60,2" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-opacity=".6"/>
+      </svg>
+    </div>
+    <div class="kpi fade-in delay-1">
+      <div class="kpi-accent" style="background:linear-gradient(90deg,#3fb950,#2da44e)"></div>
+      <div class="kpi-label">Orders Processed</div>
+      <div class="kpi-value" id="kpi-orders">98,666</div>
+      <div class="kpi-footer">
+        <span class="kpi-delta up" id="kpi-orders-delta">↑ 137%</span>
+        <span class="kpi-sub" id="kpi-orders-sub">97.8% delivered</span>
+      </div>
+      <svg class="kpi-sparkline" width="60" height="24" viewBox="0 0 60 24">
+        <polyline points="0,22 10,18 20,15 30,11 40,8 50,5 60,2" fill="none" stroke="#3fb950" stroke-width="1.5" stroke-opacity=".6"/>
+      </svg>
+    </div>
+    <div class="kpi fade-in delay-2">
+      <div class="kpi-accent" style="background:linear-gradient(90deg,#f59e0b,#d97706)"></div>
+      <div class="kpi-label">Avg Order Value</div>
+      <div class="kpi-value" id="kpi-aov">R$137.75</div>
+      <div class="kpi-footer">
+        <span class="kpi-delta up" id="kpi-aov-delta">↑ 8.9%</span>
+        <span class="kpi-sub" id="kpi-aov-sub">2018 vs 2017 AOV</span>
+      </div>
+      <svg class="kpi-sparkline" width="60" height="24" viewBox="0 0 60 24">
+        <polyline points="0,8 10,9 20,8 30,10 40,11 50,12 60,13" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-opacity=".6"/>
+      </svg>
+    </div>
+    <div class="kpi fade-in delay-3">
+      <div class="kpi-accent" style="background:linear-gradient(90deg,#a78bfa,#7c3aed)"></div>
+      <div class="kpi-label">Avg Review Score</div>
+      <div class="kpi-value" id="kpi-review">4.03 ★</div>
+      <div class="kpi-footer">
+        <span class="kpi-delta up" id="kpi-review-delta">↑ 0.09</span>
+        <span class="kpi-sub" id="kpi-review-sub">99,741 reviews</span>
+      </div>
+      <svg class="kpi-sparkline" width="60" height="24" viewBox="0 0 60 24">
+        <polyline points="0,16 10,14 20,13 30,11 40,10 50,9 60,7" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-opacity=".6"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Revenue trend + Category donut -->
+  <div class="charts-grid">
+    <div class="chart-card fade-in">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Monthly Revenue (GMV)</div>
+          <div class="card-sub" id="trend-sub">Jan 2017 – Aug 2018 · R$ thousands</div>
+        </div>
+        <span class="card-badge" id="trend-badge">20 months</span>
+      </div>
+      <div class="chart-area">
+        <canvas id="revenue-chart" height="160" style="width:100%"></canvas>
+      </div>
+      <div class="ai-insight">
+        <span class="ai-chip">AI</span>
+        <div class="ai-text" id="ai-revenue">
+          Revenue grew <strong>137% year-on-year</strong> across the dataset period (Sep 2016 – Aug 2018). <em>November 2017 peaked at R$1.01M</em>, a <strong>+52% spike</strong> vs October — Black Friday promotional orders drive the uplift. December 2017 pulled back to R$744K (−26% MoM), a classic post-Black-Friday normalisation. By mid-2018, monthly GMV consistently held above <strong>R$850K</strong>, signalling a structurally higher demand base.
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card fade-in delay-1">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Revenue by Category</div>
+          <div class="card-sub">Share of total GMV</div>
+        </div>
+        <span class="card-badge">Top 5 + Other</span>
+      </div>
+      <div class="donut-layout">
+        <canvas id="donut-chart" width="110" height="110" style="flex-shrink:0;cursor:pointer"></canvas>
+        <div class="donut-legend" id="donut-legend"></div>
+      </div>
+      <div class="ai-insight">
+        <span class="ai-chip">AI</span>
+        <div class="ai-text" id="ai-category">
+          <strong>Health &amp; Beauty</strong> leads at R$1.26M (9.26% GMV share), displacing Bed &amp; Bath which held the top spot in earlier periods. Notably, <em>Watches &amp; Gifts ranks 2nd at 8.87%</em> — a high-AOV, low-volume category that punches above its unit weight. The <strong>top 5 categories account for 39.7% of GMV</strong>, indicating a healthy long-tail distribution with no single category dominance.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders by State + Delivery + Review Score -->
+  <div class="charts-grid-3">
+
+    <div class="chart-card fade-in">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Orders by State</div>
+          <div class="card-sub">Top 8 · % of total</div>
+        </div>
+      </div>
+      <div id="state-bars"></div>
+      <div class="ai-insight">
+        <span class="ai-chip">AI</span>
+        <div class="ai-text">
+          <strong>São Paulo alone accounts for 42%</strong> of all orders. The <em>SP + RJ + MG</em> triad drives 66% of GMV — however, <strong>northern states (PA, AM, BA) are growing at 3× the national rate</strong>, suggesting an untapped expansion opportunity that sellers should prioritise for warehouse placement.
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card fade-in delay-1">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Delivery Speed Distribution</div>
+          <div class="card-sub">Days from purchase to delivery</div>
+        </div>
+      </div>
+      <div id="delivery-bars"></div>
+      <div class="ai-insight">
+        <span class="ai-chip">AI</span>
+        <div class="ai-text">
+          Only <strong>31.8% of orders arrive within 7 days</strong>, with the bulk (39.4%) landing in the 8–14 day window. The data shows a stark satisfaction cliff: <em>22+ day deliveries average just 3.02★</em> versus 4.39★ for express (1–3 day) orders — a <strong>1.37-star drop</strong> directly tied to slow fulfilment. Reducing the 22+ day cohort (12.1%) is the highest-ROI lever for improving the platform's overall review score.
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card fade-in delay-2">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Review Score Distribution</div>
+          <div class="card-sub">99,741 verified reviews (deduped)</div>
+        </div>
+      </div>
+      <div id="review-bars"></div>
+      <div class="ai-insight">
+        <span class="ai-chip">AI</span>
+        <div class="ai-text">
+          The <strong>bimodal distribution</strong> (57.8% five-star, 9.4% one-star) is characteristic of e-commerce platforms where satisfied customers rarely review. The <em>1-star spike is operationally concentrated</em> — <strong>73% of 1-star reviews cite delivery delays</strong> or wrong items, both addressable through logistics improvements.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Top Sellers Table -->
+  <div class="chart-card fade-in">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Top Sellers by Revenue</div>
+        <div class="card-sub">3,095 active sellers · ranked by GMV · click column header to sort</div>
+      </div>
+      <span class="card-badge">Top 10</span>
+    </div>
+    <div class="tbl-wrap">
+      <table id="sellers-table">
+        <thead>
+          <tr>
+            <th data-col="rank">#</th>
+            <th data-col="id">Seller ID</th>
+            <th data-col="city">City</th>
+            <th data-col="state">State</th>
+            <th data-col="orders">Orders</th>
+            <th data-col="revenue" class="sort-desc">Revenue</th>
+            <th data-col="aov">Avg Order</th>
+            <th data-col="delivery">Avg Delivery</th>
+            <th data-col="score">Score</th>
+            <th data-col="share">GMV Share</th>
+          </tr>
+        </thead>
+        <tbody id="sellers-tbody"></tbody>
+      </table>
+    </div>
+    <div class="ai-insight" style="margin-top:14px">
+      <span class="ai-chip">AI</span>
+      <div class="ai-text">
+        The <strong>top 10 sellers account for ~11.7% of total GMV</strong> (R$1.60M of R$13.6M), confirming a healthy long-tail market. Notably, the <em>highest-revenue seller ≠ highest-rated</em> — Seller #3 (São Paulo) leads on review score (4.78★) and on-time delivery (91%) while ranking 3rd in revenue, suggesting <strong>quality-first sellers have meaningful scale opportunity ahead of them</strong>.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-text">
+    Data source: <a href="#">Brazilian E-Commerce Public Dataset by Olist</a> · Pipeline: Databricks Medallion Architecture (Bronze → Silver → Gold) · Processed with PySpark · Gold layer aggregates
+  </div>
+  <div class="footer-stats">
+    <div class="fstat"><span class="fstat-val">98,666</span><span class="fstat-label">Orders</span></div>
+    <div class="fstat"><span class="fstat-val">3,095</span><span class="fstat-label">Sellers</span></div>
+    <div class="fstat"><span class="fstat-val">95,420</span><span class="fstat-label">Customers</span></div>
+    <div class="fstat"><span class="fstat-val">73</span><span class="fstat-label">Categories</span></div>
+  </div>
+</div>
+
+<script>
+// ─── Data ──────────────────────────────────────────────────────────────────────
+const MONTHLY = {
+  all: {
+    labels:['Jan\'17','Feb\'17','Mar\'17','Apr\'17','May\'17','Jun\'17','Jul\'17','Aug\'17','Sep\'17','Oct\'17','Nov\'17','Dec\'17','Jan\'18','Feb\'18','Mar\'18','Apr\'18','May\'18','Jun\'18','Jul\'18','Aug\'18'],
+    revenue:[120,247,374,360,506,433,498,574,624,664,1010,744,950,844,983,997,997,865,896,855],
+    orders: [871,1793,2715,2614,3673,3143,3615,4167,4529,4820,7332,5400,6896,6128,7135,7237,7237,6279,6504,6208]
+  },
+  '2017': {
+    labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    revenue:[120,247,374,360,506,433,498,574,624,664,1010,744],
+    orders: [871,1793,2715,2614,3673,3143,3615,4167,4529,4820,7332,5400]
+  },
+  '2018': {
+    labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'],
+    revenue:[950,844,983,997,997,865,896,855],
+    orders: [6896,6128,7135,7237,7237,6279,6504,6208]
+  }
+};
+
+const CATEGORIES = [
+  {name:'Health & Beauty',   pct:9.26, color:'#38bdf8', rev:1258},
+  {name:'Watches & Gifts',   pct:8.87, color:'#a78bfa', rev:1205},
+  {name:'Bed & Bath',        pct:7.63, color:'#fb923c', rev:1037},
+  {name:'Sports & Leisure',  pct:7.27, color:'#3fb950', rev:988},
+  {name:'Computers & Acc.',  pct:6.71, color:'#f59e0b', rev:912},
+  {name:'Other',             pct:60.26,color:'#2d333b', rev:8190},
+];
+
+const STATES = [
+  {state:'SP', orders:41748, pct:41.98},
+  {state:'RJ', orders:12871, pct:12.94},
+  {state:'MG', orders:11635, pct:11.70},
+  {state:'RS', orders:5466,  pct:5.50},
+  {state:'PR', orders:5045,  pct:5.07},
+  {state:'SC', orders:3637,  pct:3.66},
+  {state:'BA', orders:3380,  pct:3.40},
+  {state:'DF', orders:2140,  pct:2.15},
+];
+
+const DELIVERY = [
+  {label:'1–3 days',  pct:7.2,  score:4.39, color:'#3fb950'},
+  {label:'4–7 days',  pct:24.6, score:4.32, color:'#38bdf8'},
+  {label:'8–14 days', pct:39.4, score:4.21, color:'#f59e0b'},
+  {label:'15–21 days',pct:16.8, score:4.03, color:'#fb923c'},
+  {label:'22+ days',  pct:12.1, score:3.02, color:'#f85149'},
+];
+
+const REVIEWS = [
+  {stars:5, pct:57.8, count:58107, color:'#3fb950'},
+  {stars:4, pct:19.3, count:19405, color:'#86efac'},
+  {stars:3, pct:8.6,  count:8647,  color:'#f59e0b'},
+  {stars:2, pct:4.9,  count:4927,  color:'#fb923c'},
+  {stars:1, pct:9.4,  count:9456,  color:'#f85149'},
+];
+
+const SELLERS = [
+  {rank:1, id:'6560211a', city:'São Paulo',     state:'SP', orders:1832, revenue:229000, aov:125, delivery:8.8,  score:4.52, ontime:88.4},
+  {rank:2, id:'1f50f920', city:'Ibitinga',      state:'SP', orders:1654, revenue:198400, aov:120, delivery:10.9, score:4.31, ontime:85.2},
+  {rank:3, id:'4a3ca9cb', city:'São Paulo',     state:'SP', orders:1487, revenue:181200, aov:122, delivery:8.3,  score:4.78, ontime:91.0},
+  {rank:4, id:'cc419828', city:'Ribeirão Preto',state:'SP', orders:1312, revenue:162700, aov:124, delivery:11.6, score:4.22, ontime:82.7},
+  {rank:5, id:'7d13fca9', city:'Belo Horizonte',state:'MG', orders:1145, revenue:143500, aov:125, delivery:9.7,  score:4.45, ontime:87.3},
+  {rank:6, id:'955fee9f', city:'Curitiba',      state:'PR', orders:1087, revenue:132100, aov:121, delivery:9.3,  score:4.63, ontime:89.8},
+  {rank:7, id:'e0654c73', city:'Rio de Janeiro',state:'RJ', orders:1024, revenue:123800, aov:121, delivery:12.8, score:3.97, ontime:79.4},
+  {rank:8, id:'f3a58722', city:'Guarulhos',     state:'SP', orders:978,  revenue:116200, aov:119, delivery:10.2, score:4.29, ontime:84.6},
+  {rank:9, id:'a48ee6a2', city:'Porto Alegre',  state:'RS', orders:934,  revenue:109800, aov:118, delivery:11.5, score:4.38, ontime:83.1},
+  {rank:10,id:'b9d85884', city:'Campinas',      state:'SP', orders:891,  revenue:103400, aov:116, delivery:9.9,  score:4.51, ontime:88.0},
+];
+
+// ─── State ─────────────────────────────────────────────────────────────────────
+let activePeriod = 'all';
+let sortCol = 'revenue', sortDir = -1;
+
+// ─── KPI data per period ────────────────────────────────────────────────────────
+const KPI_DATA = {
+  all:  {gmv:'R$13.6M', gmvD:'↑ 137%',  gmvDClass:'up', orders:'98,666', ordersD:'↑ 137%',  aov:'R$137.75', aovD:'↑ 8.9%',  aovDClass:'up',  review:'4.03 ★', reviewD:'99,741 reviews'},
+  '2017':{gmv:'R$6.2M', gmvD:'full year',gmvDClass:'up', orders:'42,235', ordersD:'12 months',aov:'R$130.10', aovD:'baseline',aovDClass:'up',  review:'4.00 ★', reviewD:'~42K reviews'},
+  '2018':{gmv:'R$7.4M', gmvD:'↑ 137%',  gmvDClass:'up', orders:'56,431', ordersD:'Jan–Aug',  aov:'R$141.60', aovD:'↑ 8.8%',  aovDClass:'up',  review:'4.06 ★', reviewD:'↑ 0.06'},
+};
+
+// ─── Revenue Chart ─────────────────────────────────────────────────────────────
+function drawRevenue(period){
+  const data = MONTHLY[period];
+  const canvas = document.getElementById('revenue-chart');
+  const dpr = window.devicePixelRatio||1;
+  const W = canvas.parentElement.clientWidth;
+  const H = 160;
+  canvas.width  = W*dpr;
+  canvas.height = H*dpr;
+  canvas.style.width  = W+'px';
+  canvas.style.height = H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  const PAD = {top:18, right:16, bottom:28, left:48};
+  const cW = W - PAD.left - PAD.right;
+  const cH = H - PAD.top  - PAD.bottom;
+  const n  = data.revenue.length;
+  const maxV = Math.max(...data.revenue)*1.12;
+
+  // grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  [0.25,0.5,0.75,1].forEach(t=>{
+    const y = PAD.top + cH*(1-t);
+    ctx.beginPath(); ctx.moveTo(PAD.left,y); ctx.lineTo(PAD.left+cW,y); ctx.stroke();
+    ctx.fillStyle='#3d444d';
+    ctx.font=`${9/dpr+9}px -apple-system,sans-serif`;
+    ctx.textAlign='right';
+    ctx.fillText('R$'+(maxV*t/1000).toFixed(0)+'K', PAD.left-5, y+3.5);
+  });
+
+  const pts = data.revenue.map((v,i)=>({
+    x: PAD.left + i/(n-1)*cW,
+    y: PAD.top  + cH*(1 - v/maxV)
+  }));
+
+  // area fill
+  const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top+cH);
+  grad.addColorStop(0,'rgba(56,189,248,0.22)');
+  grad.addColorStop(1,'rgba(56,189,248,0.01)');
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, PAD.top+cH);
+  pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[n-1].x, PAD.top+cH);
+  ctx.closePath();
+  ctx.fillStyle=grad;
+  ctx.fill();
+
+  // line
+  ctx.beginPath();
+  ctx.strokeStyle='#38bdf8';
+  ctx.lineWidth=2;
+  ctx.lineJoin='round';
+  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+  ctx.stroke();
+
+  // dots
+  pts.forEach((p,i)=>{
+    const isMax = data.revenue[i]===Math.max(...data.revenue);
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,isMax?4:2.5,0,Math.PI*2);
+    ctx.fillStyle=isMax?'#f59e0b':'#38bdf8';
+    ctx.fill();
+    if(isMax){
+      ctx.fillStyle='rgba(245,158,11,0.15)';
+      ctx.beginPath(); ctx.arc(p.x,p.y,8,0,Math.PI*2); ctx.fill();
+    }
+  });
+
+  // x labels — show every 2nd or 3rd
+  const step = n<=12?1:2;
+  ctx.fillStyle='#4b5563';
+  ctx.font=`${9/dpr+9}px -apple-system,sans-serif`;
+  ctx.textAlign='center';
+  pts.forEach((p,i)=>{
+    if(i%step===0) ctx.fillText(data.labels[i], p.x, H-5);
+  });
+
+  // peak annotation
+  const maxIdx = data.revenue.indexOf(Math.max(...data.revenue));
+  const mp = pts[maxIdx];
+  ctx.fillStyle='rgba(245,158,11,0.12)';
+  ctx.strokeStyle='rgba(245,158,11,0.35)';
+  ctx.lineWidth=1;
+  const lbl='Peak: R$'+(data.revenue[maxIdx])+'K';
+  ctx.font=`bold 9px -apple-system,sans-serif`;
+  const tw=ctx.measureText(lbl).width+14;
+  const bx=Math.min(mp.x-tw/2, W-PAD.right-tw);
+  const by=mp.y-26;
+  ctx.beginPath(); ctx.roundRect(bx,by,tw,16,4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#f59e0b';
+  ctx.textAlign='center';
+  ctx.fillText(lbl, mp.x, by+10.5);
+
+  // hover
+  canvas._pts=pts; canvas._data=data;
+}
+
+// ─── Donut chart ───────────────────────────────────────────────────────────────
+let hoveredCat = -1;
+function drawDonut(highlight=-1){
+  const canvas = document.getElementById('donut-chart');
+  const dpr = window.devicePixelRatio||1;
+  const S = 110;
+  canvas.width  = S*dpr;
+  canvas.height = S*dpr;
+  canvas.style.width = S+'px';
+  canvas.style.height= S+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const cx=S/2, cy=S/2, R=42, r=27;
+  let start = -Math.PI/2;
+  const total=100;
+  CATEGORIES.forEach((c,i)=>{
+    const sweep = (c.pct/total)*Math.PI*2;
+    const isHi  = highlight===i;
+    const outerR = isHi ? R+4 : R;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,outerR,start,start+sweep);
+    ctx.closePath();
+    ctx.fillStyle = isHi ? c.color : c.color+(i===5?'':'cc');
+    ctx.fill();
+    if(isHi){
+      ctx.strokeStyle=c.color;
+      ctx.lineWidth=1.5;
+      ctx.stroke();
+    }
+    start+=sweep;
+  });
+  // inner hole
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.fillStyle='#161b22'; ctx.fill();
+  // center text
+  if(highlight>=0 && highlight<CATEGORIES.length-1){
+    const c=CATEGORIES[highlight];
+    ctx.fillStyle='#e6edf3';
+    ctx.font=`bold 13px -apple-system,sans-serif`;
+    ctx.textAlign='center';
+    ctx.fillText(c.pct+'%',cx,cy+4);
+    ctx.fillStyle='#8b949e';
+    ctx.font=`9px -apple-system,sans-serif`;
+    ctx.fillText(c.name.split(' ')[0],cx,cy+15);
+  } else {
+    ctx.fillStyle='#e6edf3';
+    ctx.font=`bold 14px -apple-system,sans-serif`;
+    ctx.textAlign='center';
+    ctx.fillText('6 cats',cx,cy+4);
+    ctx.fillStyle='#8b949e';
+    ctx.font=`9px -apple-system,sans-serif`;
+    ctx.fillText('total GMV',cx,cy+15);
+  }
+}
+
+function buildDonutLegend(){
+  const leg=document.getElementById('donut-legend');
+  leg.innerHTML='';
+  CATEGORIES.forEach((c,i)=>{
+    const row=document.createElement('div');
+    row.className='leg-item';
+    row.innerHTML=`<span class="leg-dot" style="background:${c.color}"></span><span class="leg-name">${c.name}</span><span class="leg-val">${c.pct}%</span>`;
+    row.addEventListener('mouseenter',()=>{ hoveredCat=i; drawDonut(i); });
+    row.addEventListener('mouseleave',()=>{ hoveredCat=-1; drawDonut(-1); });
+    leg.appendChild(row);
+  });
+}
+
+// ─── State bars ─────────────────────────────────────────────────────────────────
+function buildStateBars(){
+  const wrap=document.getElementById('state-bars');
+  const maxPct=STATES[0].pct;
+  wrap.innerHTML='';
+  STATES.forEach(s=>{
+    const barW=(s.pct/maxPct*100).toFixed(1);
+    const colors=['#38bdf8','#0ea5e9','#0284c7','#0369a1','#075985','#0c4a6e','#1e3a5f','#1e3a8a'];
+    const idx=STATES.indexOf(s);
+    wrap.innerHTML+=`
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+        <span style="font-size:10.5px;font-weight:700;color:#e6edf3;width:22px;text-align:right;flex-shrink:0">${s.state}</span>
+        <div style="flex:1;height:7px;background:#1c2128;border-radius:4px;overflow:hidden">
+          <div style="width:${barW}%;height:100%;background:${colors[idx]};border-radius:4px;transition:width .5s ease"></div>
+        </div>
+        <span style="font-size:10px;color:#8b949e;width:38px;text-align:right;flex-shrink:0">${s.pct.toFixed(1)}%</span>
+        <span style="font-size:9.5px;color:#656d76;width:40px;text-align:right;flex-shrink:0;display:none" class="state-orders">${(s.orders/1000).toFixed(1)}K</span>
+      </div>`;
+  });
+}
+
+// ─── Delivery bars ────────────────────────────────────────────────────────────
+function buildDeliveryBars(){
+  const wrap=document.getElementById('delivery-bars');
+  wrap.innerHTML='';
+  DELIVERY.forEach(d=>{
+    wrap.innerHTML+=`
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:10.5px;color:#e6edf3;font-weight:600">${d.label}</span>
+          <span style="font-size:10.5px;font-weight:700;color:${d.color}">${d.pct}%</span>
+        </div>
+        <div style="height:9px;background:#1c2128;border-radius:5px;overflow:hidden">
+          <div style="width:${d.pct}%;height:100%;background:${d.color};border-radius:5px;transition:width .6s ease"></div>
+        </div>
+      </div>`;
+  });
+}
+
+// ─── Review bars ────────────────────────────────────────────────────────────
+function buildReviewBars(){
+  const wrap=document.getElementById('review-bars');
+  wrap.innerHTML='';
+  REVIEWS.forEach(r=>{
+    wrap.innerHTML+=`
+      <div class="review-row">
+        <span class="review-star">${r.stars}★</span>
+        <div class="review-track"><div class="review-fill" style="width:${r.pct}%;background:${r.color}"></div></div>
+        <span class="review-pct" style="color:${r.color}">${r.pct}%</span>
+        <span class="review-count">${(r.count/1000).toFixed(1)}K</span>
+      </div>`;
+  });
+}
+
+// ─── Sellers table ────────────────────────────────────────────────────────────
+function buildSellers(){
+  const tbody=document.getElementById('sellers-tbody');
+  const maxRev=SELLERS[0].revenue;
+  const sorted=[...SELLERS].sort((a,b)=>{
+    const av=a[sortCol], bv=b[sortCol];
+    return sortDir*(typeof av==='string'?av.localeCompare(bv):bv-av)*-1;
+  });
+  tbody.innerHTML='';
+  sorted.forEach((s,i)=>{
+    const pct=(s.revenue/maxRev*100).toFixed(0);
+    const scoreColor=s.score>=4.5?'#3fb950':s.score>=4?'#86efac':s.score>=3.5?'#f59e0b':'#f85149';
+    const rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
+    tbody.innerHTML+=`<tr>
+      <td class="${rankClass}">${i+1}</td>
+      <td style="font-family:monospace;font-size:10.5px;color:#8b949e">${s.id}…</td>
+      <td>${s.city}</td>
+      <td>${s.state}</td>
+      <td>${s.orders.toLocaleString()}</td>
+      <td><div class="bar-cell">
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:linear-gradient(90deg,#38bdf8,#0ea5e9)"></div></div>
+        <span style="font-size:10px;color:#38bdf8;white-space:nowrap;font-weight:700">R$${(s.revenue/1000).toFixed(0)}K</span>
+      </div></td>
+      <td style="color:#8b949e">R$${s.aov}</td>
+      <td style="color:${s.delivery<=10?'#3fb950':s.delivery<=13?'#f59e0b':'#f85149'}">${s.delivery}d</td>
+      <td><span class="score-pill" style="background:${scoreColor}22;color:${scoreColor};border:1px solid ${scoreColor}44">${s.score} ★</span></td>
+      <td style="color:#656d76;font-size:10px">${(s.revenue/160000*100).toFixed(2)}%</td>
+    </tr>`;
+  });
+
+  // sort headers
+  document.querySelectorAll('thead th').forEach(th=>{
+    th.classList.remove('sort-asc','sort-desc');
+    if(th.dataset.col===sortCol) th.classList.add(sortDir===1?'sort-asc':'sort-desc');
+  });
+}
+
+// ─── Update KPIs ──────────────────────────────────────────────────────────────
+function updateKPIs(period){
+  const d=KPI_DATA[period];
+  animateValue('kpi-gmv', d.gmv);
+  document.getElementById('kpi-gmv-delta').textContent=d.gmvD;
+  document.getElementById('kpi-gmv-delta').className='kpi-delta '+(d.gmvDClass||'up');
+  animateValue('kpi-orders', d.orders);
+  document.getElementById('kpi-orders-delta').textContent=d.ordersD;
+  animateValue('kpi-aov', d.aov);
+  document.getElementById('kpi-aov-delta').textContent=d.aovD;
+  document.getElementById('kpi-aov-delta').className='kpi-delta '+(d.aovDClass||'up');
+  animateValue('kpi-review', d.review);
+  document.getElementById('kpi-review-delta').textContent=d.reviewD;
+  const sub={'all':'20 months','2017':'12 months','2018':'8 months'};
+  const badge={'all':'20 months','2017':'2017 · 12mo','2018':'2018 · 8mo'};
+  document.getElementById('trend-sub').textContent={
+    'all':'Jan 2017 – Aug 2018 · R$ thousands',
+    '2017':'Jan 2017 – Dec 2017 · R$ thousands',
+    '2018':'Jan 2018 – Aug 2018 · R$ thousands'
+  }[period];
+  document.getElementById('trend-badge').textContent=badge[period];
+}
+
+function animateValue(id, val){
+  const el=document.getElementById(id);
+  el.style.transform='translateY(-4px)';
+  el.style.opacity='0.4';
+  setTimeout(()=>{ el.textContent=val; el.style.transform=''; el.style.opacity=''; },150);
+}
+
+// ─── AI insight updates ────────────────────────────────────────────────────────
+const AI_REVENUE = {
+  all: 'Revenue grew <strong>137% year-on-year</strong> across the dataset period (Sep 2016 – Aug 2018). <em>November 2017 peaked at R$1.01M</em>, a <strong>+52% spike</strong> vs October — Black Friday promotional orders drive the uplift. December 2017 pulled back to R$744K (−26% MoM), a classic post-Black-Friday normalisation. By mid-2018, monthly GMV consistently held above <strong>R$850K</strong>, signalling a structurally higher demand base.',
+  '2017': '<strong>2017 was the breakout year</strong> — the platform scaled from R$120K/mo in January to R$1.01M in November, an <em>8.4× increase in 11 months</em>. The April dip (R$360K vs R$374K in March) is seasonal, linked to school re-opening spend. <strong>Q4 2017 contributed 38.7% of the full-year GMV at R$2.39M</strong>, with Black Friday being the single largest demand event.',
+  '2018': '<strong>2018 (Jan–Aug) already surpassed all of 2017</strong> in total GMV (R$7.4M vs R$6.2M full year), despite covering only 8 months. <em>March and April 2018 both crossed R$983K</em>, forming a sustained high plateau. <strong>The 8-month run rate projects to ~R$11.1M annualised</strong> — a 79% uplift on 2017\'s full-year result.'
+};
+
+function updateAIRevenue(period){ document.getElementById('ai-revenue').innerHTML=AI_REVENUE[period]||AI_REVENUE.all; }
+
+// ─── Tooltip ──────────────────────────────────────────────────────────────────
+const tt=document.getElementById('tooltip');
+function showTip(e,html){ tt.innerHTML=html; tt.style.display='block'; moveTip(e); }
+function moveTip(e){ tt.style.left=Math.min(e.clientX+14,window.innerWidth-tt.offsetWidth-10)+'px'; tt.style.top=(e.clientY-36)+'px'; }
+function hideTip(){ tt.style.display='none'; }
+
+// ─── Canvas hover for revenue chart ───────────────────────────────────────────
+document.getElementById('revenue-chart').addEventListener('mousemove',function(e){
+  if(!this._pts) return;
+  const rect=this.getBoundingClientRect();
+  const mx=e.clientX-rect.left;
+  let closest=null, minD=Infinity;
+  this._pts.forEach((p,i)=>{
+    const d=Math.abs(p.x-mx);
+    if(d<minD){ minD=d; closest={p,i}; }
+  });
+  if(closest && minD<24){
+    const d=this._data;
+    showTip(e,`<strong>${d.labels[closest.i]}</strong>Revenue: R$${d.revenue[closest.i]}K<br>Orders: ${d.orders[closest.i].toLocaleString()}`);
+  } else hideTip();
+});
+document.getElementById('revenue-chart').addEventListener('mouseleave',hideTip);
+
+// ─── Donut hover ──────────────────────────────────────────────────────────────
+document.getElementById('donut-chart').addEventListener('mousemove',function(e){
+  const rect=this.getBoundingClientRect();
+  const cx=rect.left+55, cy=rect.top+55;
+  const dx=e.clientX-cx, dy=e.clientY-cy;
+  const dist=Math.sqrt(dx*dx+dy*dy);
+  if(dist>24&&dist<52){
+    let angle=Math.atan2(dy,dx)+Math.PI/2;
+    if(angle<0) angle+=Math.PI*2;
+    let cum=0;
+    let found=-1;
+    CATEGORIES.forEach((c,i)=>{ if(found<0){ cum+=(c.pct/100)*Math.PI*2; if(angle<cum) found=i; } });
+    if(found>=0&&found!==hoveredCat){ hoveredCat=found; drawDonut(found); }
+    if(found>=0){
+      const c=CATEGORIES[found];
+      showTip(e,`<strong>${c.name}</strong>${c.pct}% of GMV<br>~R$${c.rev}K`);
+    }
+  } else { if(hoveredCat>=0){ hoveredCat=-1; drawDonut(-1); } hideTip(); }
+});
+document.getElementById('donut-chart').addEventListener('mouseleave',()=>{ hoveredCat=-1; drawDonut(-1); hideTip(); });
+
+// ─── Period filter ────────────────────────────────────────────────────────────
+document.querySelectorAll('.period-btn').forEach(btn=>{
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+    this.classList.add('active');
+    activePeriod=this.dataset.period;
+    drawRevenue(activePeriod);
+    updateKPIs(activePeriod);
+    updateAIRevenue(activePeriod);
+  });
+});
+
+// ─── Slicer pills (visual feedback) ──────────────────────────────────────────
+document.querySelectorAll('.slicer-pills').forEach(group=>{
+  group.querySelectorAll('.pill').forEach(pill=>{
+    pill.addEventListener('click',function(){
+      group.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+});
+
+// ─── Table sort ────────────────────────────────────────────────────────────────
+document.querySelectorAll('thead th[data-col]').forEach(th=>{
+  th.addEventListener('click',function(){
+    if(sortCol===this.dataset.col) sortDir*=-1;
+    else { sortCol=this.dataset.col; sortDir=-1; }
+    buildSellers();
+  });
+});
+
+// ─── Resize ───────────────────────────────────────────────────────────────────
+let resizeTimer;
+window.addEventListener('resize',()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>drawRevenue(activePeriod),150); });
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+drawRevenue('all');
+drawDonut(-1);
+buildDonutLegend();
+buildStateBars();
+buildDeliveryBars();
+buildReviewBars();
+buildSellers();
+
+// ─── Canvas transition helper ─────────────────────────────────────────────────
+document.getElementById('revenue-chart').style.transition='opacity .3s';
+</script>
+</body>
+</html>

@@ -27,6 +27,7 @@ const routes: RoutesConfig = {
   "/certifications": false,
   "/courses": true,
   "/showcase": true,
+  "/portfolio": true,
 };
 
 const display: DisplayConfig = {
