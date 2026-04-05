@@ -550,6 +550,177 @@ export const PROJECTS: PortfolioProject[] = [
     },
   },
   {
+    id: "finance-analytics",
+    status: "live",
+    category: "Financial Risk & Credit Analytics",
+    title: "Financial Risk & Credit Analytics",
+    subtitle: "Loan default analysis, credit risk scoring model, and portfolio benchmarking on Databricks",
+    description:
+      "Built a full Medallion pipeline on Databricks to analyse 32,581 loan applications — Bronze ingestion, Silver enrichment with 9 derived columns (grade bands, income bands, rate bands, DTI flags), Gold reporting aggregates, and a custom weighted Credit Default Risk Model that scores each loan 0–100. Model validated against actual defaults: Critical-band loans default at 92.8% vs 11.7% for Low band.",
+    color1: "#d97706",
+    color2: "#b45309",
+    accent: "#f59e0b",
+    stack: ["Databricks", "Delta Lake", "PySpark", "SQL", "Python", "Power BI"],
+    metrics: [
+      { label: "Loans Analysed", value: "32,581" },
+      { label: "Portfolio Default Rate", value: "21.8%" },
+      { label: "Total Loan Portfolio", value: "$312M" },
+      { label: "Critical Risk Default Rate", value: "92.8%" },
+    ],
+    highlights: ["Medallion Architecture", "Credit Default Risk Model", "Grade Benchmarking", "Portfolio Risk Analytics", "Unity Catalog", "Kaggle Dataset"],
+    github: "https://github.com/JayantDataEngineeringAnalytics/portfolio-finance",
+    slug: "finance-analytics",
+    dataset: "Credit Risk Dataset",
+    datasetSource: "Kaggle (laotse) — 32,581 loans · 12 columns · synthetic credit applications",
+    problem:
+      "Lenders lack a systematic, explainable way to score individual loan default risk before origination. Relying solely on loan grade misses multi-factor risk signals — a Grade C borrower with a prior default and high debt-to-income is far riskier than one without those factors, but both receive the same grade.",
+    solution:
+      "End-to-end Databricks pipeline: Bronze ingests the credit risk CSV (with employment length outlier capping), Silver derives 9 business columns (age bands, income bands, rate bands, DTI ratio, grade risk order), Gold produces 8 reporting aggregates. The Credit Default Risk Model assigns each loan a weighted 0–100 score across 7 factors — grade, prior default, DTI, interest rate, income, credit history, and intent-size risk. Validated against actual defaults: Critical-band loans default at 92.8%, 7.9× the Low-band rate.",
+    pipeline: [
+      {
+        name: "Bronze",
+        color: "#b45309",
+        textColor: "#fde68a",
+        description: "Raw ingestion — CSV loaded from Unity Catalog volume into Delta Lake with audit columns",
+        steps: [
+          "read_files() from /Volumes/portfolio_finance/landing_zone/raw_files/",
+          "All 12 original columns preserved with original names",
+          "Added _ingested_at (timestamp) and _source_file audit columns",
+          "32,581 rows ingested — employment length outliers identified (123yr entries)",
+        ],
+      },
+      {
+        name: "Silver",
+        color: "#475569",
+        textColor: "#e2e8f0",
+        description: "Cleansed & enriched — 9 derived columns, outlier capping, type casting",
+        steps: [
+          "emp_length_years: capped at 50 to remove data entry errors (123yr outliers)",
+          "default_flag: boolean cast of loan_status for ML-ready target variable",
+          "prior_default_flag: boolean of cb_person_default_on_file = 'Y'",
+          "age_band: 18-25 / 26-35 / 36-45 / 46-55 / 56+",
+          "income_band: Low (<$30K) / Mid ($30-60K) / High ($60-100K) / Top ($100K+)",
+          "rate_band: Low (<8%) / Mid (8-12%) / High (12-16%) / Very High (16%+)",
+          "grade_risk_order: numeric 1–7 (A=1 lowest risk, G=7 highest)",
+        ],
+      },
+      {
+        name: "Gold",
+        color: "#92400e",
+        textColor: "#fef3c7",
+        description: "Business-ready aggregates + Credit Default Risk Scoring Model",
+        steps: [
+          "agg_default_by_grade — 7 grades, default rate, avg rate, avg DTI",
+          "agg_default_by_intent — 6 loan purposes, default rate by intent",
+          "agg_default_by_income — default rate by income band (Low → Top)",
+          "agg_default_by_rate_band — default rate by interest rate tier",
+          "agg_loan_benchmarks — min/avg/median/max loan amounts and rates per grade",
+          "credit_default_risk_scores — per-loan weighted score (7 factors, max 120 pts, normalised 0–100)",
+          "agg_risk_by_grade — risk band distribution per loan grade",
+        ],
+      },
+    ],
+    dashboardEmbed: "/reports/finance-analytics.html",
+    powerbi: {
+      modelTables: [
+        {
+          name: "fact_loans",
+          type: "fact",
+          columns: ["loan_id (PK)", "loan_grade (FK)", "loan_intent (FK)", "person_age", "person_income", "income_band", "loan_amount", "interest_rate", "loan_pct_income", "default_flag", "prior_default_flag", "credit_hist_years", "rate_band", "age_band"],
+        },
+        {
+          name: "credit_default_risk_scores",
+          type: "fact",
+          columns: ["loan_id (PK)", "credit_risk_score", "risk_band", "raw_score", "score_grade", "score_prior_default", "score_dti", "score_rate", "score_income", "score_cred_hist", "score_intent_risk"],
+        },
+        {
+          name: "dim_grade",
+          type: "dimension",
+          columns: ["loan_grade (PK)", "grade_risk_order", "avg_rate", "avg_default_rate", "total_loans"],
+        },
+        {
+          name: "dim_intent",
+          type: "dimension",
+          columns: ["loan_intent (PK)", "avg_loan_amount", "avg_default_rate", "total_loans"],
+        },
+        {
+          name: "dim_date",
+          type: "dimension",
+          columns: ["date_id (PK)", "year", "quarter", "month", "month_name"],
+        },
+      ],
+      measures: [
+        {
+          name: "Portfolio Default Rate",
+          description: "Percentage of loans that defaulted, respecting all active filters (grade, intent, income band, risk band).",
+          dax: `Portfolio Default Rate =\nDIVIDE(\n    CALCULATE(\n        COUNTROWS(fact_loans),\n        fact_loans[default_flag] = TRUE()\n    ),\n    COUNTROWS(fact_loans),\n    0\n)`,
+        },
+        {
+          name: "Avg Credit Risk Score",
+          description: "Average credit default risk score (0–100) for the current filter context — higher means greater default probability.",
+          dax: `Avg Credit Risk Score =\nAVERAGEX(\n    RELATEDTABLE(credit_default_risk_scores),\n    credit_default_risk_scores[credit_risk_score]\n)`,
+        },
+        {
+          name: "Pct High or Critical Risk",
+          description: "Share of loans in the High or Critical credit risk band — primary risk KPI for portfolio monitoring.",
+          dax: `Pct High or Critical Risk =\nDIVIDE(\n    CALCULATE(\n        COUNTROWS(credit_default_risk_scores),\n        credit_default_risk_scores[risk_band] IN { \"High\", \"Critical\" }\n    ),\n    COUNTROWS(credit_default_risk_scores),\n    0\n)`,
+        },
+        {
+          name: "Expected Default Loss",
+          description: "Estimated total dollar loss from defaults — loan amount × actual default rate per risk band, summed across portfolio.",
+          dax: `Expected Default Loss =\nSUMX(\n    fact_loans,\n    fact_loans[loan_amount] *\n    CALCULATE(\n        [Portfolio Default Rate],\n        RELATEDTABLE(credit_default_risk_scores)\n    )\n)`,
+        },
+        {
+          name: "Prior Default Rate",
+          description: "Share of borrowers with a prior default on their credit bureau file — an independent leading indicator of future default.",
+          dax: `Prior Default Rate =\nDIVIDE(\n    CALCULATE(\n        COUNTROWS(fact_loans),\n        fact_loans[prior_default_flag] = TRUE()\n    ),\n    COUNTROWS(fact_loans),\n    0\n)`,
+        },
+        {
+          name: "Avg Debt-to-Income",
+          description: "Average loan amount as a percentage of annual income — key affordability metric used in risk underwriting.",
+          dax: `Avg Debt to Income =\nAVERAGE(fact_loans[loan_pct_income]) * 100`,
+        },
+        {
+          name: "Grade Risk Concentration",
+          description: "Share of total loan volume in Grades D–G — measures portfolio concentration in sub-prime segments.",
+          dax: `Grade Risk Concentration =\nDIVIDE(\n    CALCULATE(\n        SUM(fact_loans[loan_amount]),\n        fact_loans[loan_grade] IN { \"D\", \"E\", \"F\", \"G\" }\n    ),\n    SUM(fact_loans[loan_amount]),\n    0\n)`,
+        },
+        {
+          name: "Default Rate vs Grade Avg",
+          description: "Variance between a segment's actual default rate and the avg default rate for its loan grade — identifies underperforming sub-segments.",
+          dax: `Default Rate vs Grade Avg =\n[Portfolio Default Rate] -\nCALCULATE(\n    [Portfolio Default Rate],\n    ALL(fact_loans[person_income]),\n    ALL(fact_loans[loan_intent]),\n    ALL(fact_loans[age_band])\n)`,
+        },
+      ],
+      reportPages: [
+        {
+          name: "Portfolio Overview",
+          icon: "💼",
+          visuals: ["KPI cards: total loans, default rate, avg loan, portfolio value", "Default rate by loan grade bar chart", "Loan volume by intent donut", "Risk band distribution gauge"],
+        },
+        {
+          name: "Default Risk Deep-Dive",
+          icon: "📉",
+          visuals: ["Default rate by grade (key visual — A to G)", "Default rate by income band", "Default rate by interest rate band", "Prior default vs no prior default comparison"],
+        },
+        {
+          name: "Credit Risk Dashboard",
+          icon: "⚠️",
+          visuals: ["Risk band distribution (Low / Medium / High / Critical)", "High+Critical loans table (grade, intent, score, top factor)", "Risk score vs actual default validation chart", "Expected default loss by segment KPI"],
+        },
+        {
+          name: "Loan Benchmarks",
+          icon: "📊",
+          visuals: ["Loan amount range by grade (min/avg/median/max box)", "Interest rate benchmarks by grade", "Avg DTI by income band", "Grade risk concentration waterfall"],
+        },
+        {
+          name: "Borrower Segmentation",
+          icon: "👤",
+          visuals: ["Default rate by age band", "Income distribution by loan grade", "Employment length vs default scatter", "Home ownership type breakdown"],
+        },
+      ],
+    },
+  },
+  {
     id: "real-time-streaming",
     status: "wip",
     category: "Data Engineering",
