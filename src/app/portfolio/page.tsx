@@ -7,61 +7,104 @@ import { PROJECTS, type PortfolioProject } from "./portfolioData";
 const ALL_TAGS = ["All", "Data Engineering", "Analytics", "Machine Learning", "Real-Time"];
 
 // ─── Cover icons per project ──────────────────────────────────────────────────
-function MedallionIcon({ size = 56 }: { size?: number }) {
+
+// E-Commerce: rising bar chart with shopping cart tag
+function ECommerceIcon({ size = 56 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
-      <rect x="8"  y="68" width="84" height="16" rx="5" fill="white" fillOpacity="0.25" />
-      <text x="50" y="79.5" textAnchor="middle" fill="white" fontSize="8" fontWeight="700" fillOpacity="0.8">BRONZE</text>
-      <rect x="16" y="48" width="68" height="16" rx="5" fill="white" fillOpacity="0.45" />
-      <text x="50" y="59.5" textAnchor="middle" fill="white" fontSize="8" fontWeight="700" fillOpacity="0.9">SILVER</text>
-      <rect x="24" y="28" width="52" height="16" rx="5" fill="#fbbf24" fillOpacity="0.9" />
-      <text x="50" y="39.5" textAnchor="middle" fill="#78350f" fontSize="8" fontWeight="800">GOLD</text>
-      <line x1="50" y1="28" x2="50" y2="20" stroke="white" strokeWidth="2" strokeOpacity="0.5" />
-      <polygon points="50,8 58,18 50,20 42,18" fill="white" fillOpacity="0.85" />
+      {/* 3 ascending bars */}
+      <rect x="10" y="62" width="18" height="28" rx="4" fill="white" fillOpacity="0.35"/>
+      <rect x="36" y="42" width="18" height="48" rx="4" fill="white" fillOpacity="0.6"/>
+      <rect x="62" y="20" width="18" height="70" rx="4" fill="white" fillOpacity="0.88"/>
+      {/* Trend line */}
+      <polyline points="19,60 45,40 71,18" stroke="white" strokeWidth="2.5" strokeOpacity="0.9" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <circle cx="71" cy="18" r="4.5" fill="white" fillOpacity="0.95"/>
+      {/* Shopping cart (top-left) */}
+      <path d="M6,8 L10,8 L14,20 L24,20 L26,14 L12,14" stroke="white" strokeWidth="1.8" strokeOpacity="0.65" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="14" cy="23" r="2" fill="white" fillOpacity="0.65"/>
+      <circle cx="23" cy="23" r="2" fill="white" fillOpacity="0.65"/>
     </svg>
   );
 }
 
-function StreamingIcon({ size = 56 }: { size?: number }) {
+// HR: org-chart hierarchy of person silhouettes
+function HRIcon({ size = 56 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
-      {/* Wave lines */}
-      <path d="M10,50 Q22.5,30 35,50 Q47.5,70 60,50 Q72.5,30 85,50 Q90,57 95,50"
-            stroke="white" strokeWidth="3" strokeOpacity="0.9" fill="none" strokeLinecap="round"/>
-      <path d="M10,65 Q22.5,45 35,65 Q47.5,85 60,65 Q72.5,45 85,65"
-            stroke="white" strokeWidth="2" strokeOpacity="0.4" fill="none" strokeLinecap="round"/>
-      <path d="M10,35 Q22.5,15 35,35 Q47.5,55 60,35 Q72.5,15 85,35"
-            stroke="white" strokeWidth="2" strokeOpacity="0.3" fill="none" strokeLinecap="round"/>
-      {/* Lightning bolt */}
-      <polygon points="58,12 46,50 54,50 42,88 70,42 58,42" fill="white" fillOpacity="0.85" />
+      {/* Top person */}
+      <circle cx="50" cy="16" r="10" fill="white" fillOpacity="0.92"/>
+      <path d="M34,40 Q34,28 50,28 Q66,28 66,40Z" fill="white" fillOpacity="0.75"/>
+      {/* Vertical stem + horizontal bar */}
+      <line x1="50" y1="40" x2="50" y2="52" stroke="white" strokeWidth="2" strokeOpacity="0.5"/>
+      <line x1="22" y1="52" x2="78" y2="52" stroke="white" strokeWidth="2" strokeOpacity="0.5"/>
+      {/* Left branch */}
+      <line x1="22" y1="52" x2="22" y2="62" stroke="white" strokeWidth="2" strokeOpacity="0.5"/>
+      <circle cx="22" cy="70" r="8" fill="white" fillOpacity="0.65"/>
+      <path d="M11,90 Q11,80 22,80 Q33,80 33,90Z" fill="white" fillOpacity="0.5"/>
+      {/* Right branch */}
+      <line x1="78" y1="52" x2="78" y2="62" stroke="white" strokeWidth="2" strokeOpacity="0.5"/>
+      <circle cx="78" cy="70" r="8" fill="white" fillOpacity="0.65"/>
+      <path d="M67,90 Q67,80 78,80 Q89,80 89,90Z" fill="white" fillOpacity="0.5"/>
     </svg>
   );
 }
 
-function MLIcon({ size = 56 }: { size?: number }) {
-  const nodes = [[50,18],[22,52],[78,52],[34,84],[66,84]];
-  const edges: [number, number][] = [[0,1],[0,2],[1,2],[1,3],[2,4],[3,4],[1,4],[2,3]];
+// Healthcare: heart silhouette with ECG line through it
+function HealthcareIcon({ size = 56 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
-      {edges.map(([a, b], i) => (
-        <line key={i}
-          x1={nodes[a][0]} y1={nodes[a][1]}
-          x2={nodes[b][0]} y2={nodes[b][1]}
-          stroke="white" strokeWidth="1.5" strokeOpacity="0.35" />
+      {/* Heart */}
+      <path d="M50,82 C50,82 12,56 12,32 C12,20 22,12 34,16 C42,19 50,28 50,28 C50,28 58,19 66,16 C78,12 88,20 88,32 C88,56 50,82 50,82Z"
+            fill="white" fillOpacity="0.18" stroke="white" strokeWidth="2" strokeOpacity="0.45"/>
+      {/* ECG line across the heart */}
+      <polyline points="5,50 24,50 30,28 37,72 44,40 51,60 58,50 76,50 95,50"
+                stroke="white" strokeWidth="3" strokeOpacity="0.95" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    </svg>
+  );
+}
+
+// Finance: loan grade bars A→G descending with a risk needle
+function FinanceIcon({ size = 56 }: { size?: number }) {
+  const bars = [
+    { h: 55, op: 0.9 }, // A
+    { h: 46, op: 0.8 }, // B
+    { h: 38, op: 0.7 }, // C
+    { h: 30, op: 0.6 }, // D
+    { h: 22, op: 0.5 }, // E
+    { h: 15, op: 0.4 }, // F
+    { h: 9,  op: 0.3 }, // G
+  ];
+  const baseY = 82;
+  const startX = 7;
+  const barW = 10;
+  const gap = 13;
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
+      {bars.map((b, i) => (
+        <rect key={i}
+          x={startX + i * gap} y={baseY - b.h}
+          width={barW} height={b.h} rx="2"
+          fill="white" fillOpacity={b.op}/>
       ))}
-      {nodes.map(([cx, cy], i) => (
-        <circle key={i} cx={cx} cy={cy} r={i === 0 ? 10 : 7}
-          fill="white" fillOpacity={i === 0 ? 0.95 : 0.65} />
-      ))}
-      <circle cx="50" cy="18" r="4" fill="#34d399" fillOpacity="0.9" />
+      {/* Dashed trend line from A to G */}
+      <polyline
+        points={bars.map((b, i) => `${startX + i * gap + barW / 2},${baseY - b.h}`).join(" ")}
+        stroke="white" strokeWidth="1.5" strokeOpacity="0.45" strokeDasharray="4,3" fill="none"/>
+      {/* Grade labels A / G */}
+      <text x="12" y="96" textAnchor="middle" fill="white" fontSize="8" fontWeight="700" fillOpacity="0.8">A</text>
+      <text x="90" y="96" textAnchor="middle" fill="white" fontSize="8" fontWeight="700" fillOpacity="0.5">G</text>
+      {/* Risk arrow at top-right */}
+      <path d="M76,10 L90,10 L90,24" stroke="white" strokeWidth="2.5" strokeOpacity="0.8" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <line x1="76" y1="10" x2="90" y2="24" stroke="white" strokeWidth="2.5" strokeOpacity="0.8" strokeLinecap="round"/>
     </svg>
   );
 }
 
 const COVER_ICONS: Record<string, React.FC<{ size?: number }>> = {
-  "e-commerce-analytics":   MedallionIcon,
-  "real-time-streaming":    StreamingIcon,
-  "ml-churn-prediction":    MLIcon,
+  "e-commerce-analytics": ECommerceIcon,
+  "hr-analytics":         HRIcon,
+  "health-analytics":     HealthcareIcon,
+  "finance-analytics":    FinanceIcon,
 };
 
 function StackBadge({ name }: { name: string }) {
