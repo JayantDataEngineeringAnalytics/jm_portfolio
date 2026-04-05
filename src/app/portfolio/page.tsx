@@ -130,7 +130,7 @@ function StackBadge({ name }: { name: string }) {
 
 // ─── Project Card ─────────────────────────────────────────────────────────────
 function ProjectCard({ project }: { project: PortfolioProject }) {
-  const Icon = COVER_ICONS[project.id] || MedallionIcon;
+  const Icon = COVER_ICONS[project.id] || ECommerceIcon;
   const isDisabled = project.status === "soon";
 
   return (
