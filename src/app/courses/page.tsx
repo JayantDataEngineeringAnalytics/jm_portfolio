@@ -1294,6 +1294,170 @@ function CourseCover({ course }: { course: Course }) {
   );
 }
 
+// ─── PDF Generator ───────────────────────────────────────────────────────────
+function generateOutlinePDF(course: Course) {
+  const totalHours = course.modules.reduce((s, m) => s + m.hours, 0);
+
+  const modulesHTML = course.modules.map((mod, i) => `
+    <div class="module">
+      <div class="module-header">
+        <span class="module-num">${i + 1}</span>
+        <span class="module-title">${mod.title}</span>
+        <span class="module-hours">${mod.hours}h</span>
+      </div>
+      <ul class="topic-list">
+        ${mod.topics.map(t => `<li>${t}</li>`).join("")}
+      </ul>
+    </div>
+  `).join("");
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>${course.title} — Training Outline</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:10pt;color:#1a1a1a;background:#fff;line-height:1.5}
+    .page{width:210mm;min-height:297mm;margin:0 auto;background:#fff}
+    @media print{body{margin:0}.page{margin:0;width:100%}.page-break{page-break-before:always}.no-break{page-break-inside:avoid}}
+    .accent-bar{height:6px;background:linear-gradient(90deg,${course.accent} 0%,${course.color2} 100%)}
+    .header{padding:20px 32px 16px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #e5e7eb}
+    .header-brand{font-size:13pt;font-weight:800;color:#111;letter-spacing:-0.02em}
+    .header-brand span{color:${course.accent}}
+    .header-label{font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#6b7280;margin-top:3px}
+    .header-contact{text-align:right;font-size:8pt;color:#6b7280;line-height:1.7}
+    .header-contact a{color:${course.accent};text-decoration:none}
+    .cover{padding:28px 32px 24px;background:linear-gradient(135deg,${course.color1} 0%,${course.color2} 100%);color:#fff}
+    .cover-tag{display:inline-block;font-size:7pt;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.12);border-radius:20px;padding:3px 10px;margin-bottom:12px}
+    .cover-title{font-size:22pt;font-weight:800;letter-spacing:-0.03em;line-height:1.1;margin-bottom:5px}
+    .cover-subtitle{font-size:10pt;color:rgba(255,255,255,0.7);margin-bottom:18px}
+    .cover-stats{display:flex;background:rgba(255,255,255,0.1);border-radius:10px;overflow:hidden}
+    .cover-stat{flex:1;padding:10px 14px;border-right:1px solid rgba(255,255,255,0.15)}
+    .cover-stat:last-child{border-right:none}
+    .cover-stat-value{font-size:13pt;font-weight:800;color:#fff;display:block;line-height:1;margin-bottom:2px}
+    .cover-stat-label{font-size:7pt;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.6)}
+    .body{padding:24px 32px}
+    .section{margin-bottom:20px}
+    .section-title{font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:${course.accent};margin-bottom:8px;padding-bottom:5px;border-bottom:1.5px solid ${course.accent}30}
+    .outcomes{display:flex;flex-direction:column;gap:6px}
+    .outcome{display:flex;gap:8px;align-items:flex-start;font-size:9.5pt;color:#374151;line-height:1.5}
+    .outcome-check{color:${course.accent};font-weight:700;font-size:10pt;flex-shrink:0;margin-top:1px}
+    .prereq-chips{display:flex;flex-wrap:wrap;gap:6px}
+    .prereq-chip{font-size:8pt;color:#374151;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:20px;padding:3px 10px}
+    .delivery-badges{display:flex;gap:8px}
+    .delivery-badge{font-size:8pt;font-weight:600;border-radius:20px;padding:3px 12px}
+    .corporate{background:rgba(99,102,241,0.1);color:#4338ca}
+    .online{background:rgba(16,185,129,0.1);color:#065f46}
+    .divider{height:1px;background:#e5e7eb;margin:0 32px}
+    .footer{padding:14px 32px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center}
+    .footer-cta{font-size:8.5pt;color:#111;font-weight:600}
+    .footer-cta a{color:${course.accent};text-decoration:none}
+    .footer-right{font-size:8pt;color:#9ca3af}
+    .page-break{page-break-before:always}
+    .outline-header{padding:18px 32px 12px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center}
+    .outline-header-title{font-size:10pt;font-weight:700;color:#111}
+    .outline-header-sub{font-size:8pt;color:#6b7280}
+    .modules{padding:18px 32px;display:flex;flex-direction:column;gap:14px}
+    .module{display:flex;flex-direction:column;gap:5px;page-break-inside:avoid}
+    .module-header{display:flex;align-items:center;gap:10px}
+    .module-num{width:22px;height:22px;border-radius:50%;background:${course.color2};color:#fff;font-size:7.5pt;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+    .module-title{font-size:9.5pt;font-weight:700;color:#111;flex:1}
+    .module-hours{font-size:8pt;font-weight:600;color:#6b7280;background:#f3f4f6;padding:2px 8px;border-radius:20px;white-space:nowrap}
+    .topic-list{margin:0;padding-left:32px;list-style:disc;display:flex;flex-direction:column;gap:2px}
+    .topic-list li{font-size:8.5pt;color:#4b5563;line-height:1.5}
+    .total-row{margin:8px 32px 0;display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;font-size:9pt;color:#6b7280}
+    .total-row strong{font-size:9.5pt;color:${course.accent};font-weight:700}
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="accent-bar"></div>
+  <div class="header">
+    <div>
+      <div class="header-brand">JM <span>Analytics</span></div>
+      <div class="header-label">Training Outline</div>
+    </div>
+    <div class="header-contact">hello@jayantmohite.com<br/><a href="https://jayantmohite.com">jayantmohite.com</a></div>
+  </div>
+  <div class="cover">
+    <div class="cover-tag">${course.track} · ${course.level}</div>
+    <div class="cover-title">${course.title}</div>
+    <div class="cover-subtitle">${course.subtitle}</div>
+    <div class="cover-stats">
+      <div class="cover-stat"><span class="cover-stat-value">${totalHours}h</span><span class="cover-stat-label">Duration</span></div>
+      <div class="cover-stat"><span class="cover-stat-value">${course.modules.length}</span><span class="cover-stat-label">Modules</span></div>
+      <div class="cover-stat"><span class="cover-stat-value">${course.labHours}h</span><span class="cover-stat-label">Labs</span></div>
+      <div class="cover-stat"><span class="cover-stat-value">30d</span><span class="cover-stat-label">Support</span></div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="section">
+      <div class="section-title">What You'll Achieve</div>
+      <div class="outcomes">${course.outcomes.map(o => `<div class="outcome"><span class="outcome-check">✓</span><span>${o}</span></div>`).join("")}</div>
+    </div>
+    <div class="section">
+      <div class="section-title">Target Audience</div>
+      <p style="font-size:9.5pt;color:#374151">${course.audience}</p>
+    </div>
+    <div class="section">
+      <div class="section-title">Prerequisites</div>
+      <div class="prereq-chips">${course.prerequisites.map(p => `<span class="prereq-chip">${p}</span>`).join("")}</div>
+    </div>
+    <div class="section">
+      <div class="section-title">Delivery Formats</div>
+      <div class="delivery-badges">${course.delivery.map(d => `<span class="delivery-badge ${d === "Corporate" ? "corporate" : "online"}">${d === "Corporate" ? "🏢 Corporate Training" : "💻 Live Online"}</span>`).join("")}</div>
+    </div>
+    <div class="section">
+      <div class="section-title">What's Included</div>
+      <div class="outcomes">
+        <div class="outcome"><span class="outcome-check">✓</span><span>Hands-on lab exercise on live datasets for every module</span></div>
+        <div class="outcome"><span class="outcome-check">✓</span><span>Comprehensive slide decks, code notebooks, and reference guides</span></div>
+        <div class="outcome"><span class="outcome-check">✓</span><span>30-day post-training support via email and async Slack</span></div>
+        <div class="outcome"><span class="outcome-check">✓</span><span>Private GitHub repository access — all lab solutions, sample pipelines, and templates</span></div>
+        <div class="outcome"><span class="outcome-check">✓</span><span>Lifetime access to course material updates as the platform evolves</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="footer">
+    <div class="footer-cta">Enquire: <a href="mailto:hello@jayantmohite.com?subject=${encodeURIComponent(course.title + " Training Enquiry")}">hello@jayantmohite.com</a></div>
+    <div class="footer-right">Page 1 of 2</div>
+  </div>
+</div>
+
+<div class="page page-break">
+  <div class="accent-bar"></div>
+  <div class="header">
+    <div>
+      <div class="header-brand">JM <span>Analytics</span></div>
+      <div class="header-label">Training Outline</div>
+    </div>
+    <div class="header-contact">hello@jayantmohite.com<br/><a href="https://jayantmohite.com">jayantmohite.com</a></div>
+  </div>
+  <div class="outline-header">
+    <div class="outline-header-title">${course.title} — Full Course Outline</div>
+    <div class="outline-header-sub">${course.modules.length} modules · ${totalHours} hours · ${course.labHours}h labs</div>
+  </div>
+  <div class="modules">${modulesHTML}</div>
+  <div class="total-row"><span>Total course duration</span><strong>${totalHours} hours · ${course.labHours}h hands-on labs · ${course.modules.length} modules</strong></div>
+  <div style="height:20px"></div>
+  <div class="divider"></div>
+  <div class="footer">
+    <div class="footer-cta">Enquire: <a href="mailto:hello@jayantmohite.com?subject=${encodeURIComponent(course.title + " Training Enquiry")}">hello@jayantmohite.com</a></div>
+    <div class="footer-right">Page 2 of 2 · jayantmohite.com</div>
+  </div>
+</div>
+<script>window.onload=()=>{window.print()}</script>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, "_blank");
+  if (win) setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
 // ─── Course Card ──────────────────────────────────────────────────────────────
 function CourseCard({ course, open, onToggle }: { course: Course; open: boolean; onToggle: () => void }) {
   const totalHours = course.modules.reduce((s, m) => s + m.hours, 0);
@@ -1369,15 +1533,25 @@ function CourseCard({ course, open, onToggle }: { course: Course; open: boolean;
           </div>
         </div>
 
-        {/* Outline toggle */}
-        <button
-          type="button"
-          className={styles.outlineToggle}
-          style={{ color: course.accent, borderColor: `${course.accent}40` }}
-          onClick={onToggle}
-        >
-          {open ? "Hide Course Outline ↑" : "View Full Course Outline ↓"}
-        </button>
+        {/* Outline toggle + PDF download */}
+        <div className={styles.outlineActions}>
+          <button
+            type="button"
+            className={styles.outlineToggle}
+            style={{ color: course.accent, borderColor: `${course.accent}40` }}
+            onClick={onToggle}
+          >
+            {open ? "Hide Course Outline ↑" : "View Full Course Outline ↓"}
+          </button>
+          <button
+            type="button"
+            className={styles.downloadBtn}
+            onClick={() => generateOutlinePDF(course)}
+            title="Download training outline as PDF"
+          >
+            ⬇ PDF
+          </button>
+        </div>
 
         {/* Expandable outline */}
         {open && (
