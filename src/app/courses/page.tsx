@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import styles from "./courses.module.css";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type DeliveryFormat = "Corporate" | "Online" | "Bootcamp";
+type DeliveryFormat = "Corporate" | "Online";
 type Track = "Databricks" | "Power BI" | "Microsoft Fabric";
 
 type CourseModule = { title: string; hours: number; topics: string[] };
@@ -48,7 +48,7 @@ const COURSES: Course[] = [
       "Orchestrate complex multi-task Databricks Workflows with error handling and SLA monitoring",
       "Implement Unity Catalog governance with row/column-level security and full data lineage",
     ],
-    delivery: ["Corporate", "Online", "Bootcamp"],
+    delivery: ["Corporate", "Online"],
     color1: "#1a0a00",
     color2: "#c0290f",
     accent: "#FF3621",
@@ -407,7 +407,7 @@ const COURSES: Course[] = [
       "Implement RAG pipelines with Databricks Vector Search, embedding models, and LLM evaluation",
       "Deploy models to serverless endpoints with canary releases, A/B testing, and drift monitoring",
     ],
-    delivery: ["Corporate", "Online", "Bootcamp"],
+    delivery: ["Corporate", "Online"],
     color1: "#1a0a30",
     color2: "#5b21b6",
     accent: "#A78BFA",
@@ -537,7 +537,7 @@ const COURSES: Course[] = [
       "Write advanced DAX including time intelligence, semi-additive measures, and calculation groups",
       "Deploy secure, production-ready reports with dynamic RLS, deployment pipelines, and sensitivity labels",
     ],
-    delivery: ["Corporate", "Online", "Bootcamp"],
+    delivery: ["Corporate", "Online"],
     color1: "#1a1200",
     color2: "#a07200",
     accent: "#F2C811",
@@ -646,199 +646,262 @@ const COURSES: Course[] = [
     ],
   },
 
+  // ── MICROSOFT FABRIC TRACK ────────────────────────────────────────────────
   {
-    id: "power-bi-advanced-developer",
-    track: "Power BI",
-    title: "Power BI Advanced Developer",
-    subtitle: "Tabular model internals, XMLA, and embedding",
-    tagline: "Go beyond reports — master VertiPaq internals, Tabular Editor, composite models, calculation groups, and Power BI Embedded for custom applications.",
-    level: "Advanced",
+    id: "azure-data-factory",
+    track: "Microsoft Fabric",
+    title: "Azure Data Factory & Pipeline Engineering",
+    subtitle: "Enterprise ETL/ELT orchestration on Azure",
+    tagline: "Build enterprise-grade data integration pipelines on Azure Data Factory — data flows, triggers, monitoring, CI/CD, and seamless integration with Azure SQL, Synapse, and Fabric.",
+    level: "Intermediate",
     duration: "32 hours",
     labHours: 14,
-    audience: "BI Developers, Solution Architects, Analytics Engineers",
-    prerequisites: ["Power BI Analyst or equivalent 1+ year Power BI experience", "DAX proficiency", "Basic Azure AD knowledge"],
+    audience: "Data Engineers, ETL Developers, Solution Architects",
+    prerequisites: ["Azure fundamentals (AZ-900 level)", "SQL proficiency", "Basic Python or PowerShell knowledge"],
     outcomes: [
-      "Optimize semantic models using VertiPaq Analyzer — reduce model size by 40%+",
-      "Build and automate calculation groups for time intelligence, currency conversion, and KPI variants",
-      "Deploy and embed Power BI reports in custom web applications using the Embed API",
+      "Design and build production-grade ADF pipelines with parameterisation, error handling, and SLA monitoring",
+      "Implement Mapping Data Flows for code-free complex transformations at scale",
+      "Deploy CI/CD pipelines for ADF using Azure DevOps, ARM templates, and Git integration",
     ],
     delivery: ["Corporate", "Online"],
-    color1: "#1a1000",
-    color2: "#916800",
-    accent: "#F59E0B",
-    logoType: "powerbi-adv",
+    color1: "#001020",
+    color2: "#004080",
+    accent: "#0EA5E9",
+    logoType: "fabric",
     modules: [
       {
-        title: "VertiPaq Engine & Model Internals",
-        hours: 5,
-        topics: [
-          "VertiPaq column store: dictionary encoding, value encoding, RLE compression",
-          "Cardinality and its impact on dictionary size and model memory",
-          "VertiPaq Analyzer: column sizes, dictionary compression ratios, relationship selectivity",
-          "Reducing cardinality: date/time splitting, binning, aggregation strategies",
-          "Calculated columns vs measures: VertiPaq memory implications",
-          "Relationship selectivity: how relationship type affects formula engine efficiency",
-          "Lab: analyze a bloated semantic model — reduce size by 40% without losing fidelity",
-        ],
-      },
-      {
-        title: "External Tools Deep Dive",
-        hours: 5,
-        topics: [
-          "Tabular Editor 2 and 3: model editing, scripting, C# automation",
-          "Best Practice Analyzer: built-in rules, custom rules, CI integration",
-          "DAX Studio: server timings, query plans (logical/physical), storage engine queries",
-          "ALM Toolkit: model comparison, selective deployment, schema diff",
-          "Power BI Projects (.pbip): Git-friendly format, report vs model separation",
-          "SSMS and Visual Studio for tabular model deployment via XMLA",
-          "Lab: create BPA rules, automate a measure generation script in Tabular Editor",
-        ],
-      },
-      {
-        title: "Advanced DAX Optimization",
-        hours: 6,
-        topics: [
-          "DAX query execution: storage engine (SE) vs formula engine (FE) division",
-          "xmSQL: reading SE queries in DAX Studio, cache hits vs misses",
-          "FE bottlenecks: callback iterators, nested CALCULATE, context transition overhead",
-          "SUMMARIZECOLUMNS vs SUMMARIZE: performance differences, visual totals",
-          "Avoiding context transition in iterators: ADDCOLUMNS + CALCULATETABLE pattern",
-          "Bidirectional relationship performance: CROSSFILTER function as controlled alternative",
-          "Measure caching: understanding when Power BI re-evaluates measures",
-          "Lab: take a 15-second visual to under 1 second using SE analysis and FE optimization",
-        ],
-      },
-      {
-        title: "Composite Models, DirectQuery & Aggregations",
-        hours: 5,
-        topics: [
-          "Composite model architecture: Import + DirectQuery in one model",
-          "User-defined aggregations: table definition, column mapping, precedence",
-          "Storage modes: Import, DirectQuery, Dual — when to assign each",
-          "DirectQuery optimization: query reduction settings, query folding verification",
-          "Field parameters: dynamic dimension and measure selection by end users",
-          "Aggregation design patterns: pre-aggregated fact tables, summary vs detail",
-          "Lab: build a hybrid model with aggregations — verify aggregation hits in Performance Analyzer",
-        ],
-      },
-      {
-        title: "Calculation Groups & Advanced Measures",
-        hours: 5,
-        topics: [
-          "Calculation group fundamentals: calculation items, ordinal, precedence",
-          "Time intelligence calculation group: all periods in one group",
-          "Currency conversion calculation group: dynamic exchange rates",
-          "KPI variant calculation group: actual, budget, forecast, variance",
-          "Precedence: handling multiple calculation groups on the same measure",
-          "Format string expressions: dynamic formatting based on SELECTEDVALUE",
-          "Lab: build a universal calculation group replacing 30 individual time intelligence measures",
-        ],
-      },
-      {
-        title: "Power BI Embedded & REST APIs",
+        title: "ADF Architecture & Core Concepts",
         hours: 4,
         topics: [
-          "Embedding scenarios: App Owns Data vs User Owns Data — auth comparison",
-          "Azure AD: app registration, service principal, OAuth 2.0 client credentials flow",
-          "Embed token generation: report embed, dataset embed, RLS in embedded",
-          "Power BI REST API: datasets, reports, dashboards, groups, gateway management",
-          "JavaScript Embed SDK: events, visual selection, filters, theme injection",
-          "Capacity management via API: scaling, pausing, utilization metrics",
-          "Lab: build a React web app that embeds a report with dynamic RLS for each logged-in user",
+          "ADF components: linked services, datasets, pipelines, triggers, integration runtimes",
+          "Azure Integration Runtime vs Self-Hosted IR: when and how to choose",
+          "Linked service types: ADLS Gen2, Azure SQL, Synapse, Snowflake, REST, HTTP, SAP",
+          "Dataset modes: binary, delimited text, Parquet, JSON, Avro — format selection guide",
+          "Pipeline canvas: activities palette, dependencies (success, failure, completion, skip)",
+          "Managed Virtual Network and private endpoints for secure connectivity",
+          "Lab: create ADF workspace, configure ADLS linked service, run first copy activity",
         ],
       },
       {
-        title: "Power BI Projects & DevOps",
+        title: "Copy Activity & Data Movement",
+        hours: 4,
+        topics: [
+          "Copy activity deep dive: source/sink configuration, mapping, column transformations",
+          "Parallel copy: degree of parallelism, data integration units (DIU) tuning",
+          "Incremental copy patterns: watermark-based, last-modified-date, change data capture",
+          "Fault tolerance: skip incompatible rows, redirect error rows to error file",
+          "Staged copy: using Blob staging for bulk load into Synapse / SQL DW",
+          "Connector-specific optimisations: bulk insert for SQL, partition copy for Oracle/SAP",
+          "Lab: build an incremental copy pipeline with watermark — migrate 10M rows from SQL to ADLS",
+        ],
+      },
+      {
+        title: "Mapping Data Flows",
+        hours: 6,
+        topics: [
+          "Data flow canvas: sources, transformations, sinks — execution on Spark clusters",
+          "Core transformations: select, filter, derived column, aggregate, join, lookup",
+          "Conditional split, union, pivot, unpivot, flatten for nested JSON",
+          "Surrogate key, window functions, rank, row number in data flows",
+          "Schema drift: allowing and handling schema changes without breaking flows",
+          "Data flow debug mode: row counts, data preview, breakpoints",
+          "Performance tuning: partition strategy, broadcast joins, cache sink",
+          "Lab: build a full SCD Type 2 dimension update using data flow transformations",
+        ],
+      },
+      {
+        title: "Pipeline Orchestration & Control Flow",
+        hours: 5,
+        topics: [
+          "ForEach activity: iterating over arrays, sequential vs parallel execution",
+          "If Condition and Switch activities: branching logic based on pipeline expressions",
+          "Until activity: polling patterns for async jobs",
+          "Execute Pipeline: modular design, parent-child pipeline patterns",
+          "Set Variable and Append Variable: managing state within a pipeline run",
+          "Pipeline expressions: dynamic content, system variables, functions library",
+          "Error handling: on-failure paths, failure notifications, retry policies per activity",
+          "Lab: build a metadata-driven pipeline that processes a dynamic list of source tables",
+        ],
+      },
+      {
+        title: "Triggers, Scheduling & Event-Based Execution",
+        hours: 4,
+        topics: [
+          "Schedule trigger: recurrence patterns, time zones, start/end windows",
+          "Tumbling window trigger: catchup runs, dependency chaining between windows",
+          "Storage event trigger: blob created/deleted events via Event Grid",
+          "Custom event trigger: Azure Event Grid topic for application-driven execution",
+          "Trigger parameterization: passing trigger metadata into pipeline parameters",
+          "Monitoring triggers: run history, re-trigger failed runs, alert rules",
+          "Lab: implement an event-driven pipeline that triggers on new file arrival in ADLS",
+        ],
+      },
+      {
+        title: "Integration with Azure Ecosystem",
+        hours: 4,
+        topics: [
+          "ADF + Azure Synapse Analytics: running Synapse notebooks and SQL pools from ADF",
+          "ADF + Databricks: notebook activity, job cluster vs existing cluster, output handling",
+          "ADF + Microsoft Fabric: invoking Fabric pipelines, lakehouse write patterns",
+          "ADF + Azure Functions: serverless pre/post-processing, webhook patterns",
+          "ADF + Azure SQL / Synapse: stored procedure activity, bulk copy, PolyBase",
+          "Key Vault integration: secrets for linked service credentials, certificate auth",
+          "Lab: orchestrate a cross-service pipeline — ADF triggers Databricks notebook → writes to Synapse",
+        ],
+      },
+      {
+        title: "Monitoring, Alerting & Observability",
+        hours: 3,
+        topics: [
+          "Monitor hub: pipeline runs, activity runs, trigger runs — filtering and search",
+          "Azure Monitor: diagnostic settings, Log Analytics workspace, ADF metrics",
+          "Alert rules: pipeline failure alerts, SLA breach notifications via email/webhook",
+          "Custom logging: writing pipeline metadata to SQL or ADLS for audit trail",
+          "Data Factory alerts with Azure Logic Apps for custom notification workflows",
+          "Lab: build an audit logging pipeline and configure Azure Monitor alert for failures",
+        ],
+      },
+      {
+        title: "CI/CD & DevOps for ADF",
         hours: 2,
         topics: [
-          "Power BI Projects format (.pbip): directory structure, report vs model files",
-          "Git integration: branching strategy for BI development",
-          "CI/CD with Fabric REST API and Azure DevOps",
-          "Automated testing with DAX query snapshots",
-          "Lab: set up a Git-integrated Power BI development workflow",
+          "Git integration: GitHub and Azure DevOps repos, collaboration mode vs live mode",
+          "Branching strategy: feature branches, PR review, protected main branch",
+          "ARM template export: linked vs single template, parameter files per environment",
+          "Azure DevOps release pipeline: deploy ADF ARM template to dev → test → prod",
+          "Parameterizing linked services for environment promotion",
+          "Lab: set up end-to-end CI/CD pipeline with automated deployment to three environments",
         ],
       },
     ],
   },
 
   {
-    id: "power-bi-admin",
-    track: "Power BI",
-    title: "Power BI Administration & Premium Governance",
-    subtitle: "Enterprise governance, capacity, and compliance at scale",
-    tagline: "Govern your Power BI estate — tenant settings, Premium capacity optimization, gateway HA, security, Microsoft Purview integration, and audit compliance.",
-    level: "Intermediate",
-    duration: "16 hours",
-    labHours: 6,
-    audience: "Power BI Admins, IT Governance Teams, Solution Architects",
-    prerequisites: ["Power BI Analyst experience", "Azure AD fundamentals", "Microsoft 365 admin exposure"],
+    id: "azure-synapse-analytics",
+    track: "Microsoft Fabric",
+    title: "Azure Synapse Analytics",
+    subtitle: "Unified analytics — SQL pools, Spark, pipelines, and Power BI",
+    tagline: "Master Azure Synapse Analytics end to end — dedicated SQL pools, serverless SQL, Apache Spark, Synapse Link, and the full integration with Power BI and Microsoft Fabric.",
+    level: "Intermediate – Advanced",
+    duration: "36 hours",
+    labHours: 16,
+    audience: "Data Engineers, Data Architects, Analytics Engineers, BI Developers",
+    prerequisites: ["SQL proficiency", "Azure fundamentals", "Python or Scala basics for Spark modules"],
     outcomes: [
-      "Configure tenant settings, export policies, and domain management for enterprise compliance",
-      "Right-size Premium capacities using the Capacity Metrics app and optimize workload settings",
-      "Implement end-to-end security: RLS at scale, Purview sensitivity labels, and full audit trail",
+      "Design and implement a Synapse Analytics workspace for enterprise data warehousing and big data processing",
+      "Optimise dedicated SQL pool performance using distributions, indexes, and workload management",
+      "Build end-to-end analytics pipelines connecting Synapse Spark, SQL pools, ADLS Gen2, and Power BI",
     ],
     delivery: ["Corporate", "Online"],
-    color1: "#1a0500",
-    color2: "#8b1a1a",
-    accent: "#EF4444",
-    logoType: "powerbi-admin",
+    color1: "#0a0020",
+    color2: "#4b0082",
+    accent: "#8B5CF6",
+    logoType: "fabric-bi",
     modules: [
       {
-        title: "Tenant Administration & Governance",
+        title: "Synapse Workspace Architecture",
         hours: 4,
         topics: [
-          "Admin portal: tenant settings — 80+ settings review, recommended defaults",
-          "Export and sharing policies: external sharing, export to Excel/PDF/CSV restrictions",
-          "Embedding settings: embed in apps, publish to web — risk assessment",
-          "Microsoft 365 group integration: workspace provisioning, lifecycle management",
-          "Domain management: domain setup, workspace assignment, certification pipeline",
-          "Power BI governance maturity model: crawl → walk → run framework",
-          "Lab: configure tenant for a financial services compliance profile",
+          "Synapse workspace components: SQL pools, Spark pools, pipelines, Link, Studio",
+          "ADLS Gen2 as primary storage: workspace account, managed identity, ACL setup",
+          "Synapse Studio overview: develop, data, integrate, monitor, manage hubs",
+          "Managed private endpoints: securing connectivity to data sources",
+          "Workspace authentication: Azure AD, service principals, Synapse RBAC roles",
+          "Synapse vs traditional data warehouse vs Databricks — decision framework",
+          "Lab: provision Synapse workspace, configure ADLS Gen2, set up managed private endpoints",
         ],
       },
       {
-        title: "Premium Capacity Management",
-        hours: 4,
+        title: "Dedicated SQL Pool (formerly SQL DW)",
+        hours: 7,
         topics: [
-          "Premium vs Premium Per User (PPU) — feature and cost comparison",
-          "Capacity SKUs: P1–P5, F SKUs in Fabric — vCore and memory limits",
-          "Workload configuration: datasets, dataflows, paginated reports, AI functions",
-          "Autoscale: configuration, cost caps, monitoring autoscale events",
-          "Capacity Metrics app: CPU smoothing, memory pressure, overload events",
-          "Pausing and scaling capacities via Admin API for cost optimization",
-          "Lab: analyze a capacity metrics report, identify and resolve overload patterns",
+          "MPP architecture: control node, compute nodes, distributions, DMS",
+          "Distribution strategies: ROUND_ROBIN, HASH, REPLICATE — selection criteria",
+          "Table types: heap, clustered columnstore index (CCI), clustered rowstore — when to use each",
+          "Partition design: partition pruning, partition switching for incremental load",
+          "Statistics: auto-create, manual update, multi-column statistics",
+          "Result-set caching and materialized views — query acceleration techniques",
+          "Workload management: workload groups, classifiers, importance, isolation",
+          "Lab: build a Star Schema in Synapse, optimise with HASH distribution and CCI, validate with EXPLAIN",
         ],
       },
       {
-        title: "Security, Compliance & Purview Integration",
-        hours: 4,
+        title: "Serverless SQL Pool",
+        hours: 5,
         topics: [
-          "Azure AD integration: service principals, B2B guests, managed identities",
-          "Workspace access governance: admin, member, contributor, viewer at scale",
-          "Row-level security at enterprise scale: automated role assignment via AD groups",
-          "Microsoft Purview: sensitivity label policies, mandatory labeling, DLP for Power BI",
-          "Information protection: label inheritance from data sources, downgrade justification",
-          "Audit logs: admin activity log, user activity log, export to Log Analytics",
-          "Lab: implement sensitivity label policy with DLP alert for external sharing",
+          "Serverless SQL architecture: pay-per-query, external tables, no data loading required",
+          "OPENROWSET: querying Parquet, Delta, CSV, JSON directly from ADLS",
+          "External tables and views: abstraction layer over ADLS for BI tools",
+          "Delta format support: time travel queries, schema evolution with serverless SQL",
+          "Performance: partitioned reads, column pruning, predicate pushdown",
+          "Security: column-level security, row-level security, managed identities",
+          "Lab: build a serverless SQL analytics layer over a Delta Lake — connect Power BI via serverless endpoint",
         ],
       },
       {
-        title: "Gateway Administration & Data Connectivity",
+        title: "Apache Spark in Synapse",
+        hours: 6,
+        topics: [
+          "Synapse Spark pools: node sizes, autoscale, auto-pause, library management",
+          "Spark notebooks: cell types, widgets, display(), mssparkutils utilities",
+          "Reading/writing Delta Lake from Synapse Spark: shared metadata tables",
+          "Synapse Spark vs Databricks: feature comparison and migration considerations",
+          "Spark structured streaming in Synapse: Event Hub source, ADLS sink",
+          "Synapse Analytics connector: reading/writing dedicated SQL pool from Spark",
+          "Lab: build a Medallion Architecture pipeline using Synapse Spark — Bronze, Silver, Gold with Delta",
+        ],
+      },
+      {
+        title: "Synapse Pipelines & Orchestration",
+        hours: 5,
+        topics: [
+          "Synapse Pipelines vs ADF: feature parity, when to use each, unified monitoring",
+          "Copy activity, data flows, notebook activities, SQL pool activities",
+          "Trigger types: schedule, tumbling window, storage event, custom event",
+          "Metadata-driven pipelines: ForEach over table lists, dynamic parameterization",
+          "Pipeline monitoring: run history, activity-level diagnostics, re-run from failure",
+          "Integration with ADF: when to orchestrate from ADF vs Synapse Pipelines",
+          "Lab: build a metadata-driven ETL pipeline in Synapse — load 20 tables with a single parameterized pipeline",
+        ],
+      },
+      {
+        title: "Synapse Link & Real-Time Analytics",
         hours: 4,
         topics: [
-          "On-premises data gateway: architecture, communication, port requirements",
-          "Gateway clustering: HA setup, load balancing, primary and member nodes",
-          "Gateway sizing: concurrent refresh capacity, memory, network throughput",
-          "Data source management: credential storage, OAuth, Windows auth",
-          "VNet data gateway: use cases, limitations, Fabric integration",
-          "Gateway monitoring: heartbeat, version management, upgrade strategies",
-          "Lab: deploy a 2-node HA gateway cluster, configure data sources with monitoring",
+          "Synapse Link for Cosmos DB: analytical store, near-real-time sync, no ETL",
+          "Synapse Link for SQL (SQL Server / Azure SQL): change feed to ADLS",
+          "Synapse Link for Dataverse: Power Platform → Synapse analytics",
+          "Azure Data Explorer pool in Synapse: time-series and log analytics use cases",
+          "Querying Synapse Link from Spark and serverless SQL",
+          "Lab: set up Synapse Link for Cosmos DB — query operational data analytically with zero ETL",
+        ],
+      },
+      {
+        title: "Security & Governance",
+        hours: 3,
+        topics: [
+          "Synapse RBAC: built-in roles (Synapse Administrator, Contributor, Artifact User)",
+          "Column-level security and row-level security in dedicated SQL pools",
+          "Dynamic data masking: masking rules for PII columns",
+          "Microsoft Purview integration: workspace scanning, lineage, data classification",
+          "Audit logging: SQL Auditing to ADLS, Synapse diagnostic logs to Log Analytics",
+          "Lab: configure RLS + dynamic data masking in dedicated SQL pool, integrate with Purview",
+        ],
+      },
+      {
+        title: "Power BI & Fabric Integration",
+        hours: 2,
+        topics: [
+          "Connecting Power BI to Synapse: dedicated SQL endpoint, serverless SQL endpoint",
+          "DirectQuery vs Import from Synapse: performance and refresh considerations",
+          "Synapse workspace as Fabric OneLake source: Delta shortcut patterns",
+          "Migrating from Synapse to Microsoft Fabric: assessment, Delta Lake alignment, tooling",
+          "Lab: connect Power BI Desktop to serverless SQL pool, build a live-connection dashboard",
         ],
       },
     ],
   },
 
-  // ── MICROSOFT FABRIC TRACK ────────────────────────────────────────────────
   {
     id: "ms-fabric-data-engineer",
     track: "Microsoft Fabric",
@@ -855,7 +918,7 @@ const COURSES: Course[] = [
       "Build real-time streaming pipelines with Eventstream, Eventhouse, and KQL analytics",
       "Implement Fabric CI/CD with Git integration, deployment pipelines, and REST API automation",
     ],
-    delivery: ["Corporate", "Online", "Bootcamp"],
+    delivery: ["Corporate", "Online"],
     color1: "#001533",
     color2: "#004c99",
     accent: "#50E6FF",
@@ -1078,7 +1141,6 @@ const COURSES: Course[] = [
 const DELIVERY_STYLES: Record<DeliveryFormat, { bg: string; color: string }> = {
   Corporate: { bg: "rgba(99,102,241,0.15)", color: "#818cf8" },
   Online:    { bg: "rgba(16,185,129,0.15)", color: "#34d399" },
-  Bootcamp:  { bg: "rgba(245,158,11,0.15)", color: "#fbbf24" },
 };
 
 // ─── SVG Logos ────────────────────────────────────────────────────────────────
@@ -1253,7 +1315,7 @@ function CourseCard({ course, open, onToggle }: { course: Course; open: boolean;
         <div className={styles.deliveryRow}>
           {course.delivery.map(d => (
             <span key={d} className={styles.deliveryBadge} style={{ background: DELIVERY_STYLES[d].bg, color: DELIVERY_STYLES[d].color }}>
-              {d === "Corporate" ? "🏢 Corporate" : d === "Online" ? "💻 Online" : "⚡ Bootcamp"}
+              {d === "Corporate" ? "🏢 Corporate" : "💻 Online"}
             </span>
           ))}
         </div>
@@ -1302,8 +1364,8 @@ function CourseCard({ course, open, onToggle }: { course: Course; open: boolean;
           </div>
           <div className={styles.courseStatDivider} />
           <div className={styles.courseStat}>
-            <strong>Cert</strong>
-            <span>included</span>
+            <strong>30d</strong>
+            <span>support</span>
           </div>
         </div>
 
@@ -1358,7 +1420,6 @@ function CourseCard({ course, open, onToggle }: { course: Course; open: boolean;
 const INCLUDED_ITEMS = [
   { icon: "🧪", title: "Hands-On Labs", desc: "Every module includes a real-world lab exercise on live datasets — not toy examples." },
   { icon: "📚", title: "Course Materials", desc: "Comprehensive slide decks, code notebooks, and reference guides for every module." },
-  { icon: "🎓", title: "Certificate of Completion", desc: "Digital certificate with course details — shareable on LinkedIn and verified on request." },
   { icon: "💬", title: "30-Day Post-Training Support", desc: "Email and async Slack access to ask follow-up questions after the training ends." },
   { icon: "🗃️", title: "Private Code Repository", desc: "Access to all lab solutions, sample pipelines, and templates via a private GitHub repo." },
   { icon: "🔄", title: "Lifetime Access to Updates", desc: "Courses are updated as platforms evolve — enrolments include all future revisions." },
@@ -1378,7 +1439,7 @@ const DELIVERY_DETAILS = [
       "Custom labs using your own data and infrastructure",
       "Pre-training skill assessment and post-training evaluation",
       "Private Slack channel for the duration of training",
-      "Group certificate of completion for all participants",
+      "30-day post-training support for all participants",
     ],
   },
   {
@@ -1394,23 +1455,7 @@ const DELIVERY_DETAILS = [
       "Session recordings available for 90 days post-training",
       "Shared lab environment provisioned for all participants",
       "Community Slack with access to all alumni",
-      "Certificate of completion with session attendance record",
-    ],
-  },
-  {
-    type: "Intensive Bootcamp",
-    icon: "⚡",
-    color: "#fbbf24",
-    bg: "rgba(245,158,11,0.08)",
-    border: "rgba(245,158,11,0.2)",
-    features: [
-      "Condensed 3-5 day intensive format (full-day sessions)",
-      "Ideal for teams that need rapid reskilling",
-      "Accelerated curriculum — theory + lab in parallel",
-      "On-site preferred but available hybrid",
-      "Daily recap sessions and Q&A workshops",
-      "Capstone project on the final day",
-      "Post-bootcamp 30-day support and mentoring",
+      "30-day post-training support and Q&A access",
     ],
   },
 ];
@@ -1436,7 +1481,7 @@ export default function CoursesPage() {
         <h1 className={styles.heroTitle}>Expert-Led Data Engineering<br />& Analytics Courses</h1>
         <p className={styles.heroSub}>
           Real-world, hands-on training for Databricks, Microsoft Fabric, and Power BI —
-          delivered as corporate on-site workshops, live online cohorts, or intensive bootcamps.
+          delivered as corporate on-site workshops or live online cohorts.
           Every course built from production experience, not textbooks.
         </p>
         <div className={styles.heroStats}>
@@ -1456,7 +1501,7 @@ export default function CoursesPage() {
           </div>
           <div className={styles.heroStatDivider} />
           <div className={styles.heroStat}>
-            <span className={styles.heroStatValue}>3</span>
+            <span className={styles.heroStatValue}>2</span>
             <span className={styles.heroStatLabel}>Delivery Formats</span>
           </div>
         </div>
@@ -1544,7 +1589,7 @@ export default function CoursesPage() {
           <div className={styles.ctaPill}>Ready to Upskill?</div>
           <h2 className={styles.ctaTitle}>Let's build your team's data capability</h2>
           <p className={styles.ctaSub}>
-            Whether you're training a team of 5 or 50, looking for a 2-day intensive or a multi-week programme —
+            Whether you're training a team of 5 or 50, looking for a focused workshop or a multi-week programme —
             get in touch and I'll put together a custom training plan with timeline and pricing.
           </p>
           <div className={styles.ctaActions}>

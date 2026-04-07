@@ -583,15 +583,24 @@
 }
 
 .includedGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 20px;
+  justify-content: center;
+}
+
+.includedCard {
+  flex: 1 1 calc(33.333% - 14px);
+  min-width: 240px;
+  max-width: calc(33.333% - 14px);
 
   @media (max-width: 900px) {
-    grid-template-columns: repeat(2, 1fr);
+    flex: 1 1 calc(50% - 10px);
+    max-width: calc(50% - 10px);
   }
   @media (max-width: 560px) {
-    grid-template-columns: 1fr;
+    flex: 1 1 100%;
+    max-width: 100%;
   }
 }
 
@@ -641,13 +650,14 @@
 
 .deliveryCards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
+  max-width: 900px;
+  margin: 0 auto;
 
-  @media (max-width: 900px) {
+  @media (max-width: 640px) {
     grid-template-columns: 1fr;
     max-width: 480px;
-    margin: 0 auto;
   }
 }
 
@@ -762,13 +772,14 @@
   border-radius: 12px;
   text-decoration: none;
   background: var(--neutral-on-background-strong);
-  color: var(--page-background);
+  color: var(--page-background) !important;
   transition: opacity 0.15s, transform 0.15s;
   letter-spacing: 0.01em;
 
   &:hover {
     opacity: 0.88;
     transform: translateY(-1px);
+    color: var(--page-background) !important;
   }
 }
 
