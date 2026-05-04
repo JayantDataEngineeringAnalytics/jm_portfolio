@@ -34,8 +34,14 @@ const certifications = [
   {
     id: "azure-administrator",
     title: "Microsoft Certified: Azure Administrator Associate",
-    image: "/images/certifications/azure-administrator-associate.png", 
+    image: "/images/certifications/azure-administrator-associate.png",
     link: "https://learn.microsoft.com/api/credentials/share/en-gb/JayantMohite-7081/E2E68E6D3AF420E2?sharingId=644BB608B7498BD6",
+  },
+  {
+    id: "agentic-ai-business-solutions-architect",
+    title: "Microsoft Certified: Agentic AI Business Solutions Architect",
+    image: "/images/certifications/agentic-ai-business-solutions-architect.png",
+    link: "https://learn.microsoft.com/api/credentials/share/en-gb/JayantMohite-7081/53450CC0CC45D428?sharingId=644BB608B7498BD6",
   },
 ];
 
