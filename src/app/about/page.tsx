@@ -3,11 +3,12 @@ import { baseURL, about, person } from "@/resources";
 import InfographicAbout from "@/components/about/InfographicAbout";
 
 const CERTIFICATIONS = [
-  { name: "Microsoft Certified: Azure AI Engineer Associate",       url: "https://learn.microsoft.com/api/credentials/share/en-gb/JayantMohite-7081/803D7B798E1AC055?sharingId=644BB608B7498BD6" },
-  { name: "Microsoft Certified: Azure Solutions Architect Expert",  url: "https://learn.microsoft.com/api/credentials/share/en-us/JayantMohite-7081/E090708CEEDE4E8C?sharingId" },
-  { name: "Databricks Certified Data Engineer Professional",        url: "https://credentials.databricks.com/b6a80224-21b2-47cc-ae8e-c66c04dbed40" },
-  { name: "Microsoft Certified: Power BI Data Analyst Associate",  url: "https://learn.microsoft.com/api/credentials/share/en-us/JayantMohite-7081/71F25526B2E042F?sharingId" },
-  { name: "Microsoft Certified: Azure Administrator Associate",    url: "https://learn.microsoft.com/api/credentials/share/en-us/JayantMohite-7081/E2E68E6D3AF420E2?sharingId" },
+  { name: "Microsoft Certified: Agentic AI Business Solutions Architect", url: "https://learn.microsoft.com/api/credentials/share/en-gb/JayantMohite-7081/53450CC0CC45D428?sharingId=644BB608B7498BD6" },
+  { name: "Microsoft Certified: Azure AI Engineer Associate",             url: "https://learn.microsoft.com/api/credentials/share/en-gb/JayantMohite-7081/803D7B798E1AC055?sharingId=644BB608B7498BD6" },
+  { name: "Microsoft Certified: Azure Solutions Architect Expert",        url: "https://learn.microsoft.com/api/credentials/share/en-us/JayantMohite-7081/E090708CEEDE4E8C?sharingId" },
+  { name: "Databricks Certified Data Engineer Professional",              url: "https://credentials.databricks.com/b6a80224-21b2-47cc-ae8e-c66c04dbed40" },
+  { name: "Microsoft Certified: Power BI Data Analyst Associate",        url: "https://learn.microsoft.com/api/credentials/share/en-us/JayantMohite-7081/71F25526B2E042F?sharingId" },
+  { name: "Microsoft Certified: Azure Administrator Associate",          url: "https://learn.microsoft.com/api/credentials/share/en-us/JayantMohite-7081/E2E68E6D3AF420E2?sharingId" },
 ];
 
 export async function generateMetadata() {
