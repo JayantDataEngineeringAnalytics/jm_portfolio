@@ -128,6 +128,62 @@ function AILogo({ size = 48 }: { size?: number }) {
   );
 }
 
+function AICourseLogo({ size = 48 }: { size?: number }) {
+  const nodes: [number, number][] = [[50,16],[22,50],[78,50],[35,84],[65,84]];
+  const edges: [number, number][] = [[0,1],[0,2],[1,2],[1,3],[2,4],[3,4]];
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
+      {edges.map(([a,b],i) => (
+        <line key={i}
+          x1={nodes[a][0]} y1={nodes[a][1]} x2={nodes[b][0]} y2={nodes[b][1]}
+          stroke="white" strokeWidth="2" strokeOpacity="0.45" />
+      ))}
+      {nodes.map(([cx,cy],i) => (
+        <circle key={i} cx={cx} cy={cy} r={i===0?10:7}
+          fill="white" fillOpacity={i===0?0.92:0.6} />
+      ))}
+      <circle cx="50" cy="16" r="5" fill="#6366F1" fillOpacity="0.95" />
+      <circle cx="35" cy="84" r="3.5" fill="#818CF8" fillOpacity="0.9" />
+      <circle cx="65" cy="84" r="3.5" fill="#818CF8" fillOpacity="0.9" />
+    </svg>
+  );
+}
+
+function AIAgenticLogo({ size = 48 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
+      <circle cx="50" cy="50" r="13" fill="white" fillOpacity="0.88"/>
+      <circle cx="50" cy="50" r="6"  fill="#A855F7" fillOpacity="0.95"/>
+      {([0,72,144,216,288] as number[]).map((deg, i) => {
+        const rad = deg * Math.PI / 180;
+        const cx = 50 + 31 * Math.cos(rad), cy = 50 + 31 * Math.sin(rad);
+        return (
+          <g key={i}>
+            <line x1={50} y1={50} x2={cx} y2={cy}
+              stroke="white" strokeWidth="1.5" strokeOpacity="0.38"/>
+            <circle cx={cx} cy={cy} r="8" fill="white" fillOpacity="0.62"/>
+            <circle cx={cx} cy={cy} r="3.5" fill="#C084FC" fillOpacity="0.85"/>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function AIStrategyLogo({ size = 48 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
+      <circle cx="50" cy="50" r="39" fill="white" fillOpacity="0.08"
+        stroke="white" strokeOpacity="0.28" strokeWidth="1.5"/>
+      <circle cx="50" cy="50" r="26" fill="white" fillOpacity="0.08"
+        stroke="white" strokeOpacity="0.2" strokeWidth="1"/>
+      <path d="M50 16 L57 42 L84 50 L57 58 L50 84 L43 58 L16 50 L43 42 Z"
+        fill="white" fillOpacity="0.82"/>
+      <circle cx="50" cy="50" r="7" fill="#4F46E5" fillOpacity="0.92"/>
+    </svg>
+  );
+}
+
 const LOGO_MAP: Record<string, React.FC<{ size?: number }>> = {
   "databricks":       DatabricksLogo,
   "databricks-sql":   DatabricksSQLLogo,
@@ -138,6 +194,9 @@ const LOGO_MAP: Record<string, React.FC<{ size?: number }>> = {
   "powerbi-admin":    PowerBIAdminLogo,
   "fabric":           FabricLogo,
   "fabric-bi":        FabricBILogo,
+  "ai-course":        AICourseLogo,
+  "ai-agentic":       AIAgenticLogo,
+  "ai-strategy":      AIStrategyLogo,
 };
 
 // ─── Course Cover ─────────────────────────────────────────────────────────────
@@ -481,10 +540,12 @@ const DELIVERY_DETAILS = [
 export default function CoursesPage() {
   const [activeTrack, setActiveTrack] = useState<"All" | Track>("All");
 
-  const tracks: ("All" | Track)[] = ["All", "Databricks", "Power BI", "Microsoft Fabric"];
+  const tracks: ("All" | Track)[] = ["All", "AI", "Databricks", "Power BI", "Microsoft Fabric"];
+
+  const TRACK_ORDER: Record<string, number> = { AI: 0, Databricks: 1, "Power BI": 2, "Microsoft Fabric": 3 };
 
   const filtered = activeTrack === "All"
-    ? COURSES
+    ? [...COURSES].sort((a, b) => (TRACK_ORDER[a.track] ?? 99) - (TRACK_ORDER[b.track] ?? 99))
     : COURSES.filter(c => c.track === activeTrack);
 
   const totalHours = COURSES.reduce((s, c) => s + c.modules.reduce((ss, m) => ss + m.hours, 0), 0);
@@ -512,7 +573,7 @@ export default function CoursesPage() {
           </div>
           <div className={styles.heroStatDivider} />
           <div className={styles.heroStat}>
-            <span className={styles.heroStatValue}>3</span>
+            <span className={styles.heroStatValue}>4</span>
             <span className={styles.heroStatLabel}>Technologies</span>
           </div>
           <div className={styles.heroStatDivider} />
@@ -533,9 +594,10 @@ export default function CoursesPage() {
             data-active={activeTrack === t}
             onClick={() => setActiveTrack(t)}
           >
-            {t === "All" ? `All Courses (${COURSES.length})`
-              : t === "Databricks" ? `🧱 Databricks (${COURSES.filter(c => c.track === "Databricks").length})`
-              : t === "Power BI" ? `📊 Power BI (${COURSES.filter(c => c.track === "Power BI").length})`
+            {t === "All"               ? `All Courses (${COURSES.length})`
+              : t === "AI"             ? `🤖 AI (${COURSES.filter(c => c.track === "AI").length})`
+              : t === "Databricks"     ? `🧱 Databricks (${COURSES.filter(c => c.track === "Databricks").length})`
+              : t === "Power BI"       ? `📊 Power BI (${COURSES.filter(c => c.track === "Power BI").length})`
               : `🔷 Microsoft Fabric (${COURSES.filter(c => c.track === "Microsoft Fabric").length})`}
           </button>
         ))}

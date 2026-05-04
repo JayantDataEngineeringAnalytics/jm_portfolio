@@ -108,7 +108,7 @@ export default function Home() {
                     </Row>
                   </Badge>
                 </Row>
-                <Row gap="12" vertical="center" horizontal="start" fillWidth wrap>
+                <Row gap="12" vertical="center" horizontal="start" wrap>
                   <Badge
                     background="brand-alpha-weak"
                     paddingX="12"
@@ -120,7 +120,7 @@ export default function Home() {
                     <Row gap="8" vertical="center">
                       <strong>Microsoft Certified</strong>
                       <Line background="brand-alpha-strong" vert height="16" />
-                      <Text onBackground="brand-medium">Agentic AI Business Solutions Architect</Text>
+                      <Text onBackground="brand-medium">Agentic AI Solutions Architect</Text>
                     </Row>
                   </Badge>
                   <Badge

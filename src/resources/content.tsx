@@ -58,7 +58,7 @@ const home: Home = {
   label: "Home",
   title: "Jayant Mohite - Certified Solutions Architect",
   description: "Certified Big Data Engineer with 13+ years of experience building scalable data platforms and analytics solutions. Specialized in Databricks, Azure, Power BI, and modern data architecture.",
-  headline: <>Turning Data into Actionable Insights</>,
+  headline: <>Where Data Meets Artificial Intelligence</>,
   featured: {
     display: true,
     title: (
@@ -74,8 +74,8 @@ const home: Home = {
   },
   subline: (
     <>
-      I'm <b>Jayant</b>, a Certified Solutions Architect. <br /> I design and build data
-      solutions that drive business growth and efficiency.
+      I'm <b>Jayant</b> — I architect and deliver AI & data solutions across Azure, Databricks, and Microsoft Fabric.
+      From strategy to production, I help organisations move from data chaos to intelligent automation.
     </>
   ),
 };
